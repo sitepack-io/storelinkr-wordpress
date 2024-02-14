@@ -15,9 +15,7 @@ class StoreLinkrRestApi
         if (spWooIsActive() === false) {
             return;
         }
-
-        global $wp_filesystem;
-
+        
         if (!class_exists('WP_Filesystem_Direct')) {
             require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
             require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
