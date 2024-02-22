@@ -58,6 +58,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
+= 2.0.3 =
+
+Release date: 2024-02-22
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Callback permission to public, return true in register REST API endpoints
+
 = 2.0.2 =
 
 Release date: 2024-02-14

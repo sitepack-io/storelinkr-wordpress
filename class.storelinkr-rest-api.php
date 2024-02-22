@@ -28,22 +28,27 @@ class StoreLinkrRestApi
         register_rest_route('storelinkr/v1', '/categories', [
             'methods' => 'GET',
             'callback' => [$this, 'renderCategories'],
+            'permission_callback' => '__return_true',
         ]);
         register_rest_route('storelinkr/v1', '/categories/create', [
             'methods' => 'POST',
             'callback' => [$this, 'renderCategoriesCreate'],
+            'permission_callback' => '__return_true',
         ]);
         register_rest_route('storelinkr/v1', '/categories/update/(?P<id>\d+)', [
             'methods' => 'POST',
             'callback' => [$this, 'renderCategoryUpdate'],
+            'permission_callback' => '__return_true',
         ]);
         register_rest_route('storelinkr/v1', '/orders', [
             'methods' => 'GET',
             'callback' => [$this, 'renderOrders'],
+            'permission_callback' => '__return_true',
         ]);
         register_rest_route('storelinkr/v1', '/products/create', [
             'methods' => 'POST',
             'callback' => [$this, 'renderCreateProduct'],
+            'permission_callback' => '__return_true',
         ]);
         register_rest_route('storelinkr/v1', '/products/(?P<id>\d+)/update', [
             'methods' => 'POST',
@@ -55,6 +60,7 @@ class StoreLinkrRestApi
                     }
                 ],
             ],
+            'permission_callback' => '__return_true',
         ]);
         register_rest_route('storelinkr/v1', '/products/(?P<id>\d+)/image', [
             'methods' => 'POST',
@@ -66,6 +72,7 @@ class StoreLinkrRestApi
                     }
                 ],
             ],
+            'permission_callback' => '__return_true',
         ]);
         register_rest_route('storelinkr/v1', '/products/(?P<id>\d+)/archive', [
             'methods' => 'POST',
@@ -77,6 +84,7 @@ class StoreLinkrRestApi
                     }
                 ],
             ],
+            'permission_callback' => '__return_true',
         ]);
     }
 
