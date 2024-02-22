@@ -6,6 +6,13 @@ if (!function_exists('wp_generate_attachment_metadata')) {
     require ABSPATH . 'wp-admin/includes/image.php';
 }
 
+if (!defined('FS_CHMOD_DIR')) {
+    define('FS_CHMOD_DIR', 0755);
+}
+if (!defined('FS_CHMOD_FILE')) {
+    define('FS_CHMOD_FILE', 0644);
+}
+
 class StoreLinkrWooCommerceService
 {
 

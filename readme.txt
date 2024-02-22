@@ -69,6 +69,7 @@ Release date: 2024-02-22
 #### Bugfixes
 
 * Category class name fixes
+* Undefined constants in class fixed FS_CHMOD_DIR and FS_CHMOD_FILE
 
 = 2.0.4 =
 
