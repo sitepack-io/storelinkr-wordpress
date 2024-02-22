@@ -41,7 +41,7 @@ class StoreLinkrCategory implements \JsonSerializable
         }
 
         if (!empty($parentsParent) && !empty($parent)) {
-            return new SitePackCategory(
+            return new StoreLinkrCategory(
                 'WOOCOMMERCE',
                 $data->term_id,
                 $parentsParent->name,
@@ -53,7 +53,7 @@ class StoreLinkrCategory implements \JsonSerializable
         }
 
         if (empty($parentsParent) && !empty($parent)) {
-            return new SitePackCategory(
+            return new StoreLinkrCategory(
                 'WOOCOMMERCE',
                 $data->term_id,
                 $parent->name,
@@ -64,7 +64,7 @@ class StoreLinkrCategory implements \JsonSerializable
             );
         }
 
-        return new SitePackCategory(
+        return new StoreLinkrCategory(
             'WOOCOMMERCE',
             $data->term_id,
             $data->name,

@@ -48,7 +48,7 @@ class StoreLinkrStock implements \JsonSerializable
      * @return StoreLinkrStock
      * @throws Exception
      */
-    public static function fromSitePackConnectData(array $apiData): StoreLinkrStock
+    public static function fromStoreLinkrData(array $apiData): StoreLinkrStock
     {
         $locations = [];
 

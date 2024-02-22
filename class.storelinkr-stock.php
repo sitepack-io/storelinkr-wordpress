@@ -1,6 +1,6 @@
 <?php
 
-require_once(SITEPACK_CONNECT_PLUGIN_DIR . 'services/class.sitepack-woocommerce.php');
+require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
 
 class StoreLinkrStock
 {

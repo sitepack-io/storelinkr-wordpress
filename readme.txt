@@ -38,7 +38,7 @@ Ja, je hebt een Storelinkr-account nodig om deze plugin te gebruiken.
 
 = Hoe kan ik mijn Storelinkr API-sleutel vinden? =
 
-Je kan de Storelinkr API-sleutel vinden in de WordPress omgeving door op de linkerkant op het SitePack menuitem te klikken. Daar staat de API sleutel en geheim die nodig is in Connect.
+Je kan de Storelinkr API-sleutel vinden in de WordPress omgeving door op de linkerkant op het Storelinkr menuitem te klikken. Daar staat de API sleutel en geheim die nodig is in Connect.
 
 = Kan ik mijn producten handmatig synchroniseren? =
 
@@ -57,6 +57,18 @@ Wellicht kan onze [online helpdesk](https://storelinkr.com) je verder helpen. An
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.0.5 =
+
+Release date: 2024-02-22
+
+#### Enhancements
+
+* Changed plugin URI in description to: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
+
+#### Bugfixes
+
+* Category class name fixes
 
 = 2.0.4 =
 
