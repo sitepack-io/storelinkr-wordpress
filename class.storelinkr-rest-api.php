@@ -351,7 +351,7 @@ class StoreLinkrRestApi
         $request->get_header('x-api-secret');
 
         if (empty($request->get_header('x-api-key'))
-            || $request->get_header('x-api-key') !== get_option(StoreLinkrAdmin::STORELINKR_API_SECRET)) {
+            || $request->get_header('x-api-key') !== get_option(StoreLinkrAdmin::STORELINKR_API_KEY)) {
             throw new Exception(self::MESSAGE_UNAUTHORIZED);
         }
 

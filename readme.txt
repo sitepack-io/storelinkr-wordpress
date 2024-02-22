@@ -58,6 +58,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
+= 2.0.4 =
+
+Release date: 2024-02-22
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* REST API authentication issue fixed
+
 = 2.0.3 =
 
 Release date: 2024-02-22

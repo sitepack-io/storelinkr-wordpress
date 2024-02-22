@@ -7,7 +7,7 @@
 Plugin Name: Storelinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress
 Description: Dropshipping made easy with storelinkr. Integrate with wholesalers, POS systems and suppliers. We synchronize products, live stock information and orders. Get started today!
-Version: 2.0.3
+Version: 2.0.4
 Author: Storelinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -22,7 +22,7 @@ if (!function_exists('add_action')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.0.3');
+define('STORELINKR_VERSION', '2.0.4');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
