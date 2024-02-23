@@ -12,7 +12,7 @@ class StoreLinkrRestApi
 
     public function init()
     {
-        if (spWooIsActive() === false) {
+        if (slWooIsActive() === false) {
             return;
         }
 

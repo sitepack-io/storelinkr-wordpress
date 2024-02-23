@@ -72,7 +72,7 @@
                         <?php echo __('eCommerce plugin', 'storelinkr') ?>
                     </h3>
 
-                    <?php if(spWooIsActive() === true) : ?>
+                    <?php if(slWooIsActive() === true) : ?>
                     <div class="input-group">
                         <label>
                             <input type="radio" name="ecommerce" value="woo" checked />

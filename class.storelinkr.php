@@ -25,7 +25,7 @@ class StoreLinkr
     public function fetchLiveStock(string $siteUuid, string $importSource, string $ean): StoreLinkrStock
     {
         $storelinkrApiHost = apply_filters('storelinkr_api_hostname', 'https://api.storelinkr.com');
-        $url = $storelinkrApiHost . '/api/v2/products/%s/%s/%s/connect/stock';
+        $url = $storelinkrApiHost . '/api/public/products/%s/%s/%s/connect/stock';
         $url = sprintf(
             $url,
             $siteUuid,

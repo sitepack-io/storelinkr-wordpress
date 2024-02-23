@@ -7,7 +7,7 @@
 Plugin Name: Storelinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Dropshipping made easy with storelinkr. Integrate with wholesalers, POS systems and suppliers. We synchronize products, live stock information and orders. Get started today!
-Version: 2.0.6
+Version: 2.0.7
 Author: Storelinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -22,7 +22,7 @@ if (!function_exists('add_action')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.0.6');
+define('STORELINKR_VERSION', '2.0.7');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -47,8 +47,8 @@ if (is_admin() === false) {
     $storelinkrFrontend->init();
 }
 
-if (!function_exists('spWooIsActive')) {
-    function spWooIsActive()
+if (!function_exists('slWooIsActive')) {
+    function slWooIsActive()
     {
         if (class_exists('woocommerce')) {
             return true;
@@ -58,14 +58,14 @@ if (!function_exists('spWooIsActive')) {
     }
 }
 
-if (!function_exists('spGetProductStockInformation')) {
+if (!function_exists('slGetProductStockInformation')) {
     /**
      * Fetch the live stock information
      *
      * @param int $productId
      * @return ?StoreLinkrStock
      */
-    function spGetProductStockInformation(int $productId): ?StoreLinkrStock
+    function slGetProductStockInformation(int $productId): ?StoreLinkrStock
     {
         $connect = StoreLinkr::getInstance();
         $product = wc_get_product($productId);
@@ -112,7 +112,7 @@ if (!function_exists('storelinkrStockAjaxHandler')) {
                 $stock = $cached;
                 $isCached = true;
             } else {
-                $stock = spGetProductStockInformation($productId);
+                $stock = slGetProductStockInformation($productId);
 
                 set_transient('storelinkr_ajax_stock_' . $productId, $stock, 10 * 60);
             }
