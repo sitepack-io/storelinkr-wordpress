@@ -3,10 +3,10 @@ Contributors: storelinkr, petervw
 Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
 Tested up to: 6.4
-Stable tag: 2.0.7
+Stable tag: 2.0.8
 License: GPLv2 or later
 
-De storelinkr plugin is ontworpen om je WordPress website te integreren met het kassasysteem, waardoor je de producten kunt synchroniseren en bestellingen kunt terugplaatsen naar het kassasysteem. Deze plugin werkt met kassasystemen zoals CycleSoftware en Wilmar.
+Dropshipping made easy with storelinkr. Integrate with wholesalers, POS systems and suppliers. We synchronize products, live stock information and orders. Get started today!
 
 == Description ==
 
@@ -57,6 +57,18 @@ Wellicht kan onze [online helpdesk](https://storelinkr.com) je verder helpen. An
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.0.8 =
+
+Release date: 2024-03-14
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Feedback implemented from the WordPress plugin team
 
 = 2.0.7 =
 

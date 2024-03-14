@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
+    exit;
+}
+
 class StoreLinkrFrontend
 {
 
@@ -22,11 +27,11 @@ class StoreLinkrFrontend
 
         echo '<div id="storelinkrStockLocations"></div>';
         echo '<script>
-var ajaxurl = "' . admin_url('admin-ajax.php') . '";
+var ajaxurl = "' . esc_url(admin_url('admin-ajax.php')) . '";
 var data = {
     action: "storelinkr_product_stock",
-    product_id: ' . $product->get_id() . ',
-    nonce: "' . wp_create_nonce('storelinkr_product_stock') . '",
+    product_id: ' . esc_attr($product->get_id()) . ',
+    nonce: "' . esc_attr(wp_create_nonce('storelinkr_product_stock')) . '",
 };
 
 fetch(ajaxurl, {

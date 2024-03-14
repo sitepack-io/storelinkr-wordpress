@@ -7,7 +7,7 @@
 Plugin Name: Storelinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Dropshipping made easy with storelinkr. Integrate with wholesalers, POS systems and suppliers. We synchronize products, live stock information and orders. Get started today!
-Version: 2.0.7
+Version: 2.0.8
 Author: Storelinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -22,7 +22,7 @@ if (!function_exists('add_action')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.0.7');
+define('STORELINKR_VERSION', '2.0.8');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -47,8 +47,8 @@ if (is_admin() === false) {
     $storelinkrFrontend->init();
 }
 
-if (!function_exists('slWooIsActive')) {
-    function slWooIsActive()
+if (!function_exists('storelinkrWooIsActive')) {
+    function storelinkrWooIsActive()
     {
         if (class_exists('woocommerce')) {
             return true;
@@ -58,14 +58,14 @@ if (!function_exists('slWooIsActive')) {
     }
 }
 
-if (!function_exists('slGetProductStockInformation')) {
+if (!function_exists('storeLinkrGetProductStockInformation')) {
     /**
      * Fetch the live stock information
      *
      * @param int $productId
      * @return ?StoreLinkrStock
      */
-    function slGetProductStockInformation(int $productId): ?StoreLinkrStock
+    function storeLinkrGetProductStockInformation(int $productId): ?StoreLinkrStock
     {
         $connect = StoreLinkr::getInstance();
         $product = wc_get_product($productId);
@@ -93,17 +93,25 @@ if (!function_exists('storelinkrStockAjaxHandler')) {
     function storelinkrStockAjaxHandler(): void
     {
         try {
-            if (empty($_POST['product_id'])) {
+            if (!isset($_POST['product_id']) || !isset($_POST['nonce'])) {
+                throw new Exception('Empty product id or nonce!');
+            }
+
+            $productId = sanitize_text_field(wp_unslash($_POST['product_id']));
+            $nonce = sanitize_text_field(wp_unslash($_POST['nonce']));
+
+            if (empty($productId)) {
                 throw new Exception('Empty product id!');
             }
-            if (empty($_POST['nonce'])) {
+
+            if (empty($nonce)) {
                 throw new Exception('Empty token!');
             }
 
-            $productId = (int)$_POST['product_id'];
+            $productId = (int)$productId;
 
-            if (!wp_verify_nonce($_POST['nonce'], 'storelinkr_product_stock')) {
-                throw new Exception('Invalid nonce given! For key: ' . $productId . ' . ' . $_POST['nonce']);
+            if (!wp_verify_nonce($nonce, 'storelinkr_product_stock')) {
+                throw new Exception('Invalid nonce given! For key: ' . esc_attr($productId) . ' . ' . esc_attr($nonce));
             }
 
             $cached = get_transient('storelinkr_ajax_stock_' . $productId);
@@ -112,7 +120,7 @@ if (!function_exists('storelinkrStockAjaxHandler')) {
                 $stock = $cached;
                 $isCached = true;
             } else {
-                $stock = slGetProductStockInformation($productId);
+                $stock = storeLinkrGetProductStockInformation($productId);
 
                 set_transient('storelinkr_ajax_stock_' . $productId, $stock, 10 * 60);
             }

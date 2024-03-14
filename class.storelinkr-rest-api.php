@@ -3,6 +3,11 @@
 require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-admin.php');
 
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
+    exit;
+}
+
 class StoreLinkrRestApi
 {
     const MESSAGE_UNAUTHORIZED = 'UNAUTHORIZED';
@@ -12,7 +17,7 @@ class StoreLinkrRestApi
 
     public function init()
     {
-        if (slWooIsActive() === false) {
+        if (storelinkrWooIsActive() === false) {
             return;
         }
 

@@ -6,11 +6,15 @@ if (!function_exists('wp_generate_attachment_metadata')) {
     require ABSPATH . 'wp-admin/includes/image.php';
 }
 
-if (!defined('FS_CHMOD_DIR')) {
-    define('FS_CHMOD_DIR', 0755);
+if (!defined('FS_CHMOD_DIR') || !defined('FS_CHMOD_FILE')) {
+    require ABSPATH . 'wp-admin/includes/file.php';
+
+    WP_Filesystem();
 }
-if (!defined('FS_CHMOD_FILE')) {
-    define('FS_CHMOD_FILE', 0644);
+
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
+    exit;
 }
 
 class StoreLinkrWooCommerceService
@@ -25,18 +29,17 @@ class StoreLinkrWooCommerceService
 
     public function getCategories(): array
     {
-        $cat_args = [
+        $product_categories = get_terms([
+            'taxonomy' => 'product_cat',
             'orderby' => 'name',
             'order' => 'asc',
             'hide_empty' => false,
-        ];
-
-        $product_categories = get_terms('product_cat', $cat_args);
+        ]);
 
         $categories = [];
 
         if (!empty($product_categories)) {
-            foreach ($product_categories as $key => $category) {
+            foreach ($product_categories as $category) {
                 $categories[$category->term_id] = $category;
             }
         }
