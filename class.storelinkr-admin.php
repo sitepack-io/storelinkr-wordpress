@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
+    exit;
+}
+
 class StoreLinkrAdmin
 {
 
@@ -36,7 +41,7 @@ class StoreLinkrAdmin
         remove_menu_page('options-general.php?page=storelinkr-settings');
 
         add_menu_page(
-            __('StoreLinkr dashboard', 'storelinkr'),
+            esc_html__('StoreLinkr dashboard', 'storelinkr'),
             'Storelinkr',
             'manage_options',
             'storelinkr',
@@ -72,7 +77,7 @@ class StoreLinkrAdmin
             )
         );
 
-        $settings_link = "<a href='" . esc_url($url) . "'>" . __('Settings', 'storelinkr') . '</a>';
+        $settings_link = "<a href='" . esc_url($url) . "'>" . esc_html__('Settings', 'storelinkr') . '</a>';
         array_push($links, $settings_link);
 
         return $links;

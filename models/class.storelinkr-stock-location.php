@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
+    exit;
+}
+
 class StoreLinkrStockLocation implements \JsonSerializable
 {
     private int $stockQuantity;

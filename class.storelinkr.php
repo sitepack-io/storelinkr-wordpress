@@ -3,6 +3,11 @@
 include STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-stock.php';
 include STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-stock-location.php';
 
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
+    exit;
+}
+
 class StoreLinkr
 {
 
