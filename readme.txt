@@ -1,62 +1,76 @@
-=== Storelinkr ===
+=== storelinkr ===
 Contributors: storelinkr, petervw
 Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
 Tested up to: 6.4
-Stable tag: 2.0.8
+Stable tag: 2.0.9
 License: GPLv2 or later
 
-Dropshipping made easy with storelinkr. Integrate with wholesalers, POS systems and suppliers. We synchronize products, live stock information and orders. Get started today!
+Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
 
 == Description ==
 
-Koppel het storelinkr platform met je WordPress website.
+Connect the storelinkr platform to your WordPress website.
 
 == Installation ==
 
-Upload de plugin-bestanden naar de /wp-content/plugins/ map.
-Activeer de plugin via het 'Plugins' menu in WordPress.
-Configureer de plugin-instellingen via het 'StoreLinkr'-menu in WordPress.
+Upload the plugin files to the `/wp-content/plugins/` directory.
+Activate the plugin through the 'Plugins' menu in WordPress.
+Configure the plugin settings via the 'storelinkr' menu in WordPress.
 
 == Configuration ==
 
-Ga naar het 'StoreLinkr'-menu in WordPress.
-Genereer de API sleutel en secret (geheim)
-Open het Storelinkr portaal en maak een nieuwe worklfow aan met bovenstaande API gegevens
-Configureer de synchronisatie-instellingen voor producten en bestellingen.
-De producten en categorieen worden binnen korte tijd automatisch aangemaakt.
+Go to the 'storelinkr' menu in WordPress.
+Generate the API key and secret.
+Open the storelinkr portal and create a new workflow using the above API credentials.
+Configure the synchronization settings for products and orders.
+The products and categories will be automatically created shortly.
 
 == Frequently Asked Questions ==
 
-= Welke kassasystemen worden ondersteund door deze plugin? =
+= Which point of sale systems are supported by this plugin? =
 
-Deze plugin werkt met kassasystemen zoals CycleSoftware en Wilmar.
+This plugin works with point of sale systems such as CycleSoftware and Wilmar.
 
-= Moet ik een Storelinkr-account hebben om deze plugin te gebruiken? =
+= Do I need a storelinkr account to use this plugin? =
 
-Ja, je hebt een Storelinkr-account nodig om deze plugin te gebruiken.
+Yes, you need a storelinkr account to use this plugin.
 
-= Hoe kan ik mijn Storelinkr API-sleutel vinden? =
+= How can I find my storelinkr API key? =
 
-Je kan de Storelinkr API-sleutel vinden in de WordPress omgeving door op de linkerkant op het Storelinkr menuitem te klikken. Daar staat de API sleutel en geheim die nodig is in Connect.
+You can find the storelinkr API key in the WordPress environment by clicking on the storelinkr menu item on the left side. The API key and secret needed in Connect are listed there.
 
-= Kan ik mijn producten handmatig synchroniseren? =
+= Can I manually synchronize my products? =
 
-Nee, wij updaten de producten meerdere malen per dag vanuit Storelinkr. Het is vaak niet nodig om dit nog handmatig uit te voeren.
+No, we update the products multiple times a day from storelinkr. It is often unnecessary to do this manually.
 
-= Hoe vaak worden producten automatisch bijgewerkt? =
+= How often are products automatically updated? =
 
-Producten worden regelmatig bijgewerkt, de interval hangt af van het gekozen [Storelinkr abbonnement](https://storelinkr.com).
+Products are regularly updated; the interval depends on the chosen [storelinkr](https://storelinkr.com) subscription.
 
-= Ik heb een andere vraag, die hier niet bijstaat =
+= I have another question not listed here =
 
-Wellicht kan onze [online helpdesk](https://storelinkr.com) je verder helpen. Anders staat onze helpdesk ook voor je klaar om je vraag te beantwoorden.
+Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Otherwise, our support team is also available to answer your question.
 
 == Developers ==
 
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.0.9 =
+
+Release date: 2024-03-19
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Even more feedback implemented from the WordPress plugin team
+* Improved security (escaping before output)
+* Minor ABSPATH improvements
 
 = 2.0.8 =
 
@@ -162,7 +176,7 @@ Release date: 2024-01-27
 
 #### Enhancements
 
-* Initial Storelinkr plugin for WordPress release
+* Initial storelinkr plugin for WordPress release
 
 #### Bugfixes
 

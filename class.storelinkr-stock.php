@@ -1,11 +1,11 @@
 <?php
 
-require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
-
 if (!defined('ABSPATH')) {
     // Exit if accessed directly
     exit;
 }
+
+require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
 
 class StoreLinkrStock
 {

@@ -1,16 +1,16 @@
 <?php
 
-require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
-require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-admin.php');
-
 if (!defined('ABSPATH')) {
     // Exit if accessed directly
     exit;
 }
 
+require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
+require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-admin.php');
+
 class StoreLinkrRestApi
 {
-    const MESSAGE_UNAUTHORIZED = 'UNAUTHORIZED';
+    private const MESSAGE_UNAUTHORIZED = 'UNAUTHORIZED';
 
     /** @var StoreLinkrWooCommerceService */
     private $eCommerceService = null;
@@ -357,12 +357,12 @@ class StoreLinkrRestApi
 
         if (empty($request->get_header('x-api-key'))
             || $request->get_header('x-api-key') !== get_option(StoreLinkrAdmin::STORELINKR_API_KEY)) {
-            throw new Exception(self::MESSAGE_UNAUTHORIZED);
+            throw new Exception(esc_attr(self::MESSAGE_UNAUTHORIZED));
         }
 
         if (empty($request->get_header('x-api-secret'))
             || $request->get_header('x-api-secret') !== get_option(StoreLinkrAdmin::STORELINKR_API_SECRET)) {
-            throw new Exception(self::MESSAGE_UNAUTHORIZED);
+            throw new Exception(esc_attr(self::MESSAGE_UNAUTHORIZED));
         }
     }
 
