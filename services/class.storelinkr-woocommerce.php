@@ -1,5 +1,10 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
+    exit;
+}
+
 require_once(STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-category.php');
 
 if (!function_exists('wp_generate_attachment_metadata')) {
@@ -10,11 +15,6 @@ if (!defined('FS_CHMOD_DIR') || !defined('FS_CHMOD_FILE')) {
     require ABSPATH . 'wp-admin/includes/file.php';
 
     WP_Filesystem();
-}
-
-if (!defined('ABSPATH')) {
-    // Exit if accessed directly
-    exit;
 }
 
 class StoreLinkrWooCommerceService
@@ -243,7 +243,12 @@ class StoreLinkrWooCommerceService
                 return $existing;
             }
 
-            throw new Exception('Could not create a new category, because it already exists! ' . print_r($term, true));
+            throw new Exception(
+                sprintf(
+                    'Could not create a new category, because it already exists! %s',
+                    print_r(esc_attr($term), true)
+                )
+            );
         }
 
         add_term_meta($term['term_id'], 'import_provider', 'STORELINKR');

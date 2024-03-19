@@ -4,25 +4,24 @@
  */
 
 /*
-Plugin Name: Storelinkr
+Plugin Name: storelinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
-Description: Dropshipping made easy with storelinkr. Integrate with wholesalers, POS systems and suppliers. We synchronize products, live stock information and orders. Get started today!
-Version: 2.0.8
-Author: Storelinkr, powered by SitePack B.V.
+Description: Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
+Version: 2.0.9
+Author: storelinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
 Text Domain: storelinkr
 */
 
-// Make sure we don't expose any info if called directly
-if (!function_exists('add_action')) {
-    echo 'Hi there!  I\'m just a plugin, please visit our site if you want to: storelinkr.com.';
+if (!defined('ABSPATH')) {
+    // Exit if accessed directly
     exit;
 }
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.0.8');
+define('STORELINKR_VERSION', '2.0.9');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -67,7 +66,7 @@ if (!function_exists('storeLinkrGetProductStockInformation')) {
      */
     function storeLinkrGetProductStockInformation(int $productId): ?StoreLinkrStock
     {
-        $connect = StoreLinkr::getInstance();
+        $storelinkrStock = StoreLinkr::getInstance();
         $product = wc_get_product($productId);
 
         if (!$product instanceof WC_Product) {
@@ -81,7 +80,7 @@ if (!function_exists('storeLinkrGetProductStockInformation')) {
             return null;
         }
 
-        return $connect->fetchLiveStock(
+        return $storelinkrStock->fetchLiveStock(
             $product->get_meta('site'),
             $product->get_meta('import_source'),
             $product->get_meta('ean')
