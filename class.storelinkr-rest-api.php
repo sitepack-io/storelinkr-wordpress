@@ -302,12 +302,13 @@ class StoreLinkrRestApi
             return [
                 'status' => 'success',
                 'product' => [
-                    'main' => $product->get_image(),
+                    'main' => wp_get_attachment_url($product->get_image_id()),
                     'gallery' => $product->get_gallery_image_ids(),
                     'thumb' => get_post_thumbnail_id($product),
                     'debug' => $images,
                 ],
                 'image_id' => $mediaId,
+                'image_url' => wp_get_attachment_url($mediaId),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());

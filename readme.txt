@@ -2,8 +2,8 @@
 Contributors: storelinkr, petervw
 Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
-Tested up to: 6.4
-Stable tag: 2.0.9
+Tested up to: 6.5
+Stable tag: 2.0.10
 License: GPLv2 or later
 
 Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
@@ -71,6 +71,18 @@ None
 * Even more feedback implemented from the WordPress plugin team
 * Improved security (escaping before output)
 * Minor ABSPATH improvements
+
+= 2.0.10 =
+
+Release date: 2024-03-24
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Improved usage of the WP_Filesystem and fallbacks implemented for constants FS_CHMOD_FILE and FS_CHMOD_DIR
 
 = 2.0.8 =
 

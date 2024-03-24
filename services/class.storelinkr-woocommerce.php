@@ -11,12 +11,6 @@ if (!function_exists('wp_generate_attachment_metadata')) {
     require ABSPATH . 'wp-admin/includes/image.php';
 }
 
-if (!defined('FS_CHMOD_DIR') || !defined('FS_CHMOD_FILE')) {
-    require ABSPATH . 'wp-admin/includes/file.php';
-
-    WP_Filesystem();
-}
-
 class StoreLinkrWooCommerceService
 {
 
@@ -197,6 +191,13 @@ class StoreLinkrWooCommerceService
             wp_rand(1, 50000)
         );
         $file_type = 'image/jpeg';
+
+        if (!defined('FS_CHMOD_FILE')) {
+            define('FS_CHMOD_FILE', 0644);
+        }
+        if (!defined('FS_CHMOD_DIR')) {
+            define('FS_CHMOD_DIR', 0755);
+        }
 
         $this->wpFileSystem->put_contents(
             $uploadPath . $filename,
