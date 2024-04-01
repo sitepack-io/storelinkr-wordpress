@@ -7,19 +7,8 @@ if (!defined('ABSPATH')) {
 
 require_once(STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-category.php');
 
-if (!function_exists('wp_generate_attachment_metadata')) {
-    require ABSPATH . 'wp-admin/includes/image.php';
-}
-
 class StoreLinkrWooCommerceService
 {
-
-    private WP_Filesystem_Direct $wpFileSystem;
-
-    public function __construct(WP_Filesystem_Direct $wpFileSystem)
-    {
-        $this->wpFileSystem = $wpFileSystem;
-    }
 
     public function getCategories(): array
     {
@@ -164,26 +153,11 @@ class StoreLinkrWooCommerceService
 
     public function saveProductImage(WC_Product $product, WP_REST_Request $request): int
     {
-        $uploadDir = wp_upload_dir();
-        $uploadPath = str_replace(
-                '/',
-                DIRECTORY_SEPARATOR,
-                $uploadDir['path']
-            ) . DIRECTORY_SEPARATOR;
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
 
-        $decoded = base64_decode(
-            str_replace([
-                'data:image/jpeg;base64,',
-                ' '
-            ],
-                [
-                    '',
-                    '+',
-                ],
-                $request['imageContent']
-            )
-        );
-
+        $decoded = base64_decode(str_replace(['data:image/jpeg;base64,', ' '], ['', '+'], $request['imageContent']));
         $filename = sprintf(
             '%d_%s_%d.jpg',
             $product->get_id(),
@@ -192,34 +166,46 @@ class StoreLinkrWooCommerceService
         );
         $file_type = 'image/jpeg';
 
-        if (!defined('FS_CHMOD_FILE')) {
-            define('FS_CHMOD_FILE', 0644);
+        $upload = wp_upload_bits($filename, null, $decoded);
+
+        if (!$upload['error']) {
+            $file_path = $upload['file'];
+
+            $attachment = [
+                'post_mime_type' => $file_type,
+                'post_title' => sanitize_text_field($product->get_name()),
+                'post_excerpt' => sanitize_text_field($product->get_name()),
+                'post_content' => sanitize_text_field($product->get_name()),
+                'post_status' => 'inherit',
+                'guid' => $upload['url']
+            ];
+
+            $mediaId = wp_insert_attachment($attachment, $file_path, $product->get_id());
+
+            if (!is_wp_error($mediaId)) {
+                $attach_data = wp_generate_attachment_metadata($mediaId, $file_path);
+
+                wp_update_attachment_metadata($mediaId, $attach_data);
+                update_post_meta($mediaId, '_wp_attachment_image_alt', sanitize_text_field($product->get_name()));
+
+                $product_gallery = (array)$product->get_gallery_image_ids();
+                $product_gallery[] = $mediaId;
+
+                if (empty($product_gallery)) {
+                    $product->set_image_id($mediaId);
+                    $product->save();
+                } else {
+                    $product->set_gallery_image_ids($product_gallery);
+                    $product->save();
+                }
+
+                return $mediaId;
+            } else {
+                return 0;
+            }
+        } else {
+            return 0;
         }
-        if (!defined('FS_CHMOD_DIR')) {
-            define('FS_CHMOD_DIR', 0755);
-        }
-
-        $this->wpFileSystem->put_contents(
-            $uploadPath . $filename,
-            $decoded
-        );
-
-        $attachment = [
-            'post_mime_type' => $file_type,
-            'post_title' => sanitize_text_field($product->get_name()),
-            'post_excerpt' => sanitize_text_field($product->get_name()),
-            'post_content' => sanitize_text_field($product->get_name()),
-            'post_status' => 'inherit',
-            'guid' => $uploadDir['url'] . '/' . basename($filename)
-        ];
-
-        $mediaId = wp_insert_attachment($attachment, $uploadDir['path'] . DIRECTORY_SEPARATOR . $filename);
-        $attach_data = wp_generate_attachment_metadata($mediaId, $uploadDir['path'] . DIRECTORY_SEPARATOR . $filename);
-        wp_update_attachment_metadata($mediaId, $attach_data);
-
-        update_post_meta($mediaId, '_wp_attachment_image_alt', sanitize_text_field($product->get_name()));
-
-        return $mediaId;
     }
 
     /**

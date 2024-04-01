@@ -26,9 +26,7 @@ class StoreLinkrRestApi
             require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
         }
 
-        $this->eCommerceService = new StoreLinkrWooCommerceService(
-            new WP_Filesystem_Direct(null)
-        );
+        $this->eCommerceService = new StoreLinkrWooCommerceService();
 
         register_rest_route('storelinkr/v1', '/categories', [
             'methods' => 'GET',
