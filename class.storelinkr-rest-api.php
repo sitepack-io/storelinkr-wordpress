@@ -28,6 +28,11 @@ class StoreLinkrRestApi
 
         $this->eCommerceService = new StoreLinkrWooCommerceService();
 
+        register_rest_route('storelinkr/v1', '/test-connection', [
+            'methods' => 'GET',
+            'callback' => [$this, 'renderTestConnection'],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route('storelinkr/v1', '/categories', [
             'methods' => 'GET',
             'callback' => [$this, 'renderCategories'],
@@ -89,6 +94,19 @@ class StoreLinkrRestApi
             ],
             'permission_callback' => '__return_true',
         ]);
+    }
+
+    public function renderTestConnection(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+
+            return [
+                'status' => 'success',
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
     }
 
     public function renderCategories(WP_REST_Request $request)

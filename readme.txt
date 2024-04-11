@@ -3,14 +3,50 @@ Contributors: storelinkr, petervw
 Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
 Tested up to: 6.5
-Stable tag: 2.0.11
+Stable tag: 2.0.12
 License: GPLv2 or later
 
 Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
 
 == Description ==
 
-Connect the storelinkr platform to your WordPress website.
+Start selling products without your own stock now. Your own dropshipping online store with real quality products and partners. No drop shipment from China via the storelinkr platform.
+
+## THE #1 DATA LINK FOR YOUR WEBSHOP
+
+Our data connection helps you to quickly and easily connect one or more wholesalers to your WooCommerce online store. We are unique in our kind, because we have created an intermediate step between the wholesaler and your webshop.
+
+This intermediate step allows us to read all catalog data from the wholesaler directly to our platform. On the Storelinkr platform you can exclude, edit and overwrite data.
+
+Once the data is correct, it will only be transferred to your WordPress website. We update your online store at least 4 times a day and stock is even a maximum of 15 minutes old!
+
+### STAY IN CONTROL OF YOUR CATALOGUE
+
+With our unique import filters it is possible to put together your range during import. Select only the product groups you would like to sell.
+
+It is also possible to exclude products from export to your webshop based on:
+* **Minimum quantity in stock**, only display products in your webshop that you can sell directly
+* **Minimum number of images**, only show products if they have an image
+* **Minimum price or maximum price**, determine your own range by activating an active price filter
+* And much more..
+
+### DROPSHIP IN A FEW CLICKS
+
+You can get started within a few minutes. Start your own storelinkr trial now and activate the first workflow to your WooCommerce online store to start dropshipping.
+
+### REQUEST ACCESS FROM A WHOLESALE STORE
+
+We are currently integrating with a number of wholesalers and cash register systems. Including these systems:
+* [CycleSoftware](https://storelinkr.com/nl/links/cyclesoftware-dropshipping)
+* [Wilmar](https://storelinkr.com/nl/links/wilmar-dropshipping)
+
+It is important that you have been given access as a dropshipper with one of our affiliated wholesalers.
+
+### WE PROVIDE ALL THE TECHNOLOGY
+
+The storelinkr plugin and the SaaS platform is a powerful combination. The platform is being developed every day and our people are ready to help you with questions.
+
+This is the official [storelinkr](https://storelinkr.com) plugin, powered by [SitePack B.V.](https://sitepack.nl).
 
 == Installation ==
 
@@ -58,19 +94,17 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
-= 2.0.9 =
+= 2.0.12 =
 
-Release date: 2024-03-19
+Release date: 2024-04-11
 
 #### Enhancements
 
-None
+* Test endoint added for storelinkr connection
 
 #### Bugfixes
 
-* Even more feedback implemented from the WordPress plugin team
-* Improved security (escaping before output)
-* Minor ABSPATH improvements
+None
 
 = 2.0.11 =
 
@@ -95,6 +129,20 @@ None
 #### Bugfixes
 
 * Improved usage of the WP_Filesystem and fallbacks implemented for constants FS_CHMOD_FILE and FS_CHMOD_DIR
+
+= 2.0.9 =
+
+Release date: 2024-03-19
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Even more feedback implemented from the WordPress plugin team
+* Improved security (escaping before output)
+* Minor ABSPATH improvements
 
 = 2.0.8 =
 
