@@ -100,7 +100,7 @@ Release date: 2024-04-11
 
 #### Enhancements
 
-* Test endoint added for storelinkr connection
+* Test endpoint added for storelinkr connection
 
 #### Bugfixes
 
