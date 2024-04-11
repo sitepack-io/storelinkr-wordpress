@@ -37,8 +37,8 @@ You can get started within a few minutes. Start your own storelinkr trial now an
 ### REQUEST ACCESS FROM A WHOLESALE STORE
 
 We are currently integrating with a number of wholesalers and cash register systems. Including these systems:
-* [CycleSoftware](https://storelinkr.com/nl/links/cyclesoftware-dropshipping)
-* [Wilmar](https://storelinkr.com/nl/links/wilmar-dropshipping)
+* [CycleSoftware](https://storelinkr.com/en/integrations/cyclesoftware-dropshipment)
+* [Wilmar](https://storelinkr.com/en/integrations/wilmar-dropshipment)
 
 It is important that you have been given access as a dropshipper with one of our affiliated wholesalers.
 
