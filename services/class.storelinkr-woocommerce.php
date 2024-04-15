@@ -48,10 +48,10 @@ class StoreLinkrWooCommerceService
         }
 
         $product->set_name($data['name']);
-        $product->set_regular_price($this->formatPrice($data['salesPrice']));
+        $product->set_regular_price($this->formatPrice((int)$data['salesPrice']));
 
         if (!empty($data['promoSalesPrice'])) {
-            $product->set_sale_price($this->formatPrice($data['promoSalesPrice']));
+            $product->set_sale_price($this->formatPrice((int)$data['promoSalesPrice']));
         }
 
         $product->set_date_on_sale_from(null);
@@ -307,19 +307,18 @@ class StoreLinkrWooCommerceService
     }
 
     /**
-     * Format the price cents to a correctly formatted decimal.
+     * Format the price cents to a correctly formatted decimal as a float.
      *
      * @param int $priceCents
-     * @return string
+     * @return float
      */
-    private function formatPrice(int $priceCents): string
+    private function formatPrice(int $priceCents): float
     {
-        if (function_exists('wc_price')) {
-            return wc_price($priceCents / 100);
+        if ($priceCents <= 0) {
+            return \floatval(0);
         }
 
-        return \number_format($priceCents / 100, 2, ',', '');
+        return \floatval($priceCents / 100);
     }
-
 
 }
