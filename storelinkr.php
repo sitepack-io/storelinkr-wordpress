@@ -7,7 +7,7 @@
 Plugin Name: storelinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
-Version: 2.0.14
+Version: 2.0.15
 Author: storelinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.0.14');
+define('STORELINKR_VERSION', '2.0.15');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -30,7 +30,7 @@ require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-frontend.php');
 
 add_action('init', ['StoreLinkr', 'init']);
 
-$storelinkrRestApi = new StoreLinkrRestApi();
+$storelinkrRestApi = new StoreLinkrRestApi(STORELINKR_VERSION);
 add_action('rest_api_init', [$storelinkrRestApi, 'init']);
 add_action('wp_ajax_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
 add_action('wp_ajax_nopriv_storelinkr_product_stock', 'storelinkrStockAjaxHandler');

@@ -14,6 +14,12 @@ class StoreLinkrRestApi
 
     /** @var StoreLinkrWooCommerceService */
     private $eCommerceService = null;
+    private string $version;
+
+    public function __construct(string $version)
+    {
+        $this->version = $version;
+    }
 
     public function init()
     {
@@ -103,6 +109,7 @@ class StoreLinkrRestApi
 
             return [
                 'status' => 'success',
+                'version' => esc_attr($this->version),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
