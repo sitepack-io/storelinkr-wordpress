@@ -1,4 +1,4 @@
-=== storelinkr ===
+=== StoreLinkr ===
 Contributors: storelinkr, petervw
 Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
@@ -10,13 +10,13 @@ Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppl
 
 == Description ==
 
-Start selling products without your own stock now. Your own dropshipping online store with real quality products and partners. No drop shipment from China via the storelinkr platform.
+Start selling products without your own stock now. Your own dropshipping online store with real quality products and partners. No drop shipment from China via the StoreLinkr platform.
 
 ## THE #1 DATA LINK FOR YOUR WEBSHOP
 
 Our data connection helps you to quickly and easily connect one or more wholesalers to your WooCommerce online store. We are unique in our kind, because we have created an intermediate step between the wholesaler and your webshop.
 
-This intermediate step allows us to read all catalog data from the wholesaler directly to our platform. On the Storelinkr platform you can exclude, edit and overwrite data.
+This intermediate step allows us to read all catalog data from the wholesaler directly to our platform. On the StoreLinkr platform you can exclude, edit and overwrite data.
 
 Once the data is correct, it will only be transferred to your WordPress website. We update your online store at least 4 times a day and stock is even a maximum of 15 minutes old!
 
@@ -32,7 +32,7 @@ It is also possible to exclude products from export to your webshop based on:
 
 ### DROPSHIP IN A FEW CLICKS
 
-You can get started within a few minutes. Start your own storelinkr trial now and activate the first workflow to your WooCommerce online store to start dropshipping.
+You can get started within a few minutes. Start your own StoreLinkr trial now and activate the first workflow to your WooCommerce online store to start dropshipping.
 
 ### REQUEST ACCESS FROM A WHOLESALE STORE
 
@@ -44,21 +44,21 @@ It is important that you have been given access as a dropshipper with one of our
 
 ### WE PROVIDE ALL THE TECHNOLOGY
 
-The storelinkr plugin and the SaaS platform is a powerful combination. The platform is being developed every day and our people are ready to help you with questions.
+The StoreLinkr plugin and the SaaS platform is a powerful combination. The platform is being developed every day and our people are ready to help you with questions.
 
-This is the official [storelinkr](https://storelinkr.com) plugin, powered by [SitePack B.V.](https://sitepack.nl).
+This is the official [StoreLinkr](https://storelinkr.com) plugin, powered by [SitePack B.V.](https://sitepack.nl).
 
 == Installation ==
 
 Upload the plugin files to the `/wp-content/plugins/` directory.
 Activate the plugin through the 'Plugins' menu in WordPress.
-Configure the plugin settings via the 'storelinkr' menu in WordPress.
+Configure the plugin settings via the 'StoreLinkr' menu in WordPress.
 
 == Configuration ==
 
-Go to the 'storelinkr' menu in WordPress.
+Go to the 'StoreLinkr' menu in WordPress.
 Generate the API key and secret.
-Open the storelinkr portal and create a new workflow using the above API credentials.
+Open the StoreLinkr portal and create a new workflow using the above API credentials.
 Configure the synchronization settings for products and orders.
 The products and categories will be automatically created shortly.
 
@@ -68,21 +68,21 @@ The products and categories will be automatically created shortly.
 
 This plugin works with point of sale systems such as CycleSoftware and Wilmar.
 
-= Do I need a storelinkr account to use this plugin? =
+= Do I need a StoreLinkr account to use this plugin? =
 
-Yes, you need a storelinkr account to use this plugin.
+Yes, you need a StoreLinkr account to use this plugin.
 
-= How can I find my storelinkr API key? =
+= How can I find my StoreLinkr API key? =
 
-You can find the storelinkr API key in the WordPress environment by clicking on the storelinkr menu item on the left side. The API key and secret needed in Connect are listed there.
+You can find the StoreLinkr API key in the WordPress environment by clicking on the StoreLinkr menu item on the left side. The API key and secret needed in Connect are listed there.
 
 = Can I manually synchronize my products? =
 
-No, we update the products multiple times a day from storelinkr. It is often unnecessary to do this manually.
+No, we update the products multiple times a day from StoreLinkr. It is often unnecessary to do this manually.
 
 = How often are products automatically updated? =
 
-Products are regularly updated; the interval depends on the chosen [storelinkr](https://storelinkr.com) subscription.
+Products are regularly updated; the interval depends on the chosen [StoreLinkr](https://storelinkr.com) subscription.
 
 = I have another question not listed here =
 
@@ -112,7 +112,7 @@ Release date: 2024-05-15
 
 #### Enhancements
 
-* Order data improvements with correct fields for storelinkr
+* Order data improvements with correct fields for StoreLinkr
 
 #### Bugfixes
 
@@ -128,7 +128,7 @@ None
 
 #### Bugfixes
 
-* Price formatting issue fixed in the storelinkr API
+* Price formatting issue fixed in the StoreLinkr API
 
 = 2.0.12 =
 
@@ -136,7 +136,7 @@ Release date: 2024-04-11
 
 #### Enhancements
 
-* Test endpoint added for storelinkr connection
+* Test endpoint added for StoreLinkr connection
 
 #### Bugfixes
 
@@ -284,7 +284,7 @@ Release date: 2024-01-27
 
 #### Enhancements
 
-* Initial storelinkr plugin for WordPress release
+* Initial StoreLinkr plugin for WordPress release
 
 #### Bugfixes
 

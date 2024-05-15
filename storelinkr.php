@@ -4,7 +4,7 @@
  */
 
 /*
-Plugin Name: storelinkr
+Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
 Version: 2.0.15
