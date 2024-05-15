@@ -94,6 +94,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
+= 2.0.14 =
+
+Release date: 2024-05-15
+
+#### Enhancements
+
+* Order data improvements with correct fields for storelinkr
+
+#### Bugfixes
+
+* Response code 500 removed and changed to a HTTP 400
+
 = 2.0.13 =
 
 Release date: 2024-04-15

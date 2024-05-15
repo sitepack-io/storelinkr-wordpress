@@ -35,9 +35,86 @@ class StoreLinkrWooCommerceService
         return $wooCategories;
     }
 
-    public function getOrders(): array
+    public function getOrders(int $limit = 20): array
     {
-        // TODO, future implementation
+        $orders = wc_get_orders([
+            'limit' => $limit,
+            'orderby' => 'date',
+            'order' => 'DESC',
+            'return' => 'objects',
+        ]);
+
+        $formatted_orders = array();
+
+        foreach ($orders as $order) {
+            $billingAddress = $order->get_address();
+            $shippingAddress = $order->get_address('shipping');
+
+            $formatted_order = [
+                'order_id' => $order->get_id(),
+                'order_number' => $order->get_order_number(),
+                'customer' => [
+                    'first_name' => $order->get_billing_first_name(),
+                    'last_name' => $order->get_billing_last_name(),
+                    'email' => $order->get_billing_email(),
+                    'billingAddress' => [
+                        'address' => $billingAddress['address_1'],
+                        'addition' => $billingAddress['address_2'],
+                        'city' => $billingAddress['city'],
+                        'state' => $billingAddress['state'],
+                        'postcode' => $billingAddress['postcode'],
+                        'country' => $billingAddress['country'],
+                        'email' => $billingAddress['email'],
+                        'phone' => $billingAddress['phone'],
+                    ],
+                    'shippingAddress' => [
+                        'address' => $shippingAddress['address_1'],
+                        'addition' => $shippingAddress['address_2'],
+                        'city' => $shippingAddress['city'],
+                        'state' => $shippingAddress['state'],
+                        'postcode' => $shippingAddress['postcode'],
+                        'country' => $shippingAddress['country'],
+                        'phone' => $shippingAddress['phone'],
+                    ],
+                ],
+                'order_lines' => [],
+                'currency' => $order->get_currency(),
+                'payment_status' => $order->get_status(),
+            ];
+
+            foreach ($order->get_items() as $item_id => $item) {
+                $product = $item->get_product();
+                $ean = $product->get_attribute('ean');
+
+                if (empty($ean)) {
+                    foreach ($product->get_meta_data() as $metaDataItem) {
+                        assert($metaDataItem instanceof WC_Meta_Data);
+
+                        if ($metaDataItem->get_data()['key'] === 'ean') {
+                            $ean = $metaDataItem->get_data()['value'];
+                        }
+                    }
+                }
+
+                $formatted_order['order_lines'][] = [
+                    'product_id' => $product->get_id(),
+                    'ean' => $ean,
+                    'sku' => $product->get_sku(),
+                    'name' => $product->get_name(),
+                    'quantity' => $item->get_quantity(),
+                    'price' => $order->get_line_total($item, false, false),
+                    'price_incl_vat' => $order->get_line_total($item, false, false),
+                    'subtotal' => $order->get_line_subtotal($item, false, false) * 100,
+                    'subtotal_incl_vat' => $order->get_line_subtotal($item, true, false) * 100,
+                    'item_metadata' => $item->get_meta_data(),
+                    'product_metadata' => $product->get_meta_data(),
+                ];
+            }
+
+            $formatted_orders[] = $formatted_order;
+        }
+
+        return $formatted_orders;
     }
 
     public function mapProductFromData(WP_REST_Request $data): WC_Product
@@ -148,7 +225,13 @@ class StoreLinkrWooCommerceService
 
     public function findProduct($productId): WC_Product
     {
-        return wc_get_product($productId);
+        $product = wc_get_product($productId);
+
+        if ($product === false) {
+            throw new Exception('Product not found!');
+        }
+
+        return $product;
     }
 
     public function saveProductImage(WC_Product $product, WP_REST_Request $request): int

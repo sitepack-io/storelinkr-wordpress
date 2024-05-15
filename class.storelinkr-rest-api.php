@@ -351,7 +351,7 @@ class StoreLinkrRestApi
         }
     }
 
-    private function renderError(string $message)
+    private function renderError(string $message): WP_Error
     {
         if ($message === self::MESSAGE_UNAUTHORIZED) {
             return new WP_Error(
@@ -361,9 +361,12 @@ class StoreLinkrRestApi
         }
 
         return new WP_Error(
-            500,
+            400,
             esc_attr($message),
-            ['status' => 'failed']
+            [
+                'status' => 'failed',
+                'message' => esc_attr($message),
+            ]
         );
     }
 
