@@ -251,44 +251,44 @@ class StoreLinkrWooCommerceService
 
         $upload = wp_upload_bits($filename, null, $decoded);
 
-        if (!$upload['error']) {
-            $file_path = $upload['file'];
-
-            $attachment = [
-                'post_mime_type' => $file_type,
-                'post_title' => sanitize_text_field($product->get_name()),
-                'post_excerpt' => sanitize_text_field($product->get_name()),
-                'post_content' => sanitize_text_field($product->get_name()),
-                'post_status' => 'inherit',
-                'guid' => $upload['url']
-            ];
-
-            $mediaId = wp_insert_attachment($attachment, $file_path, $product->get_id());
-
-            if (!is_wp_error($mediaId)) {
-                $attach_data = wp_generate_attachment_metadata($mediaId, $file_path);
-
-                wp_update_attachment_metadata($mediaId, $attach_data);
-                update_post_meta($mediaId, '_wp_attachment_image_alt', sanitize_text_field($product->get_name()));
-
-                $product_gallery = (array)$product->get_gallery_image_ids();
-                $product_gallery[] = $mediaId;
-
-                if (empty($product_gallery)) {
-                    $product->set_image_id($mediaId);
-                    $product->save();
-                } else {
-                    $product->set_gallery_image_ids($product_gallery);
-                    $product->save();
-                }
-
-                return $mediaId;
-            } else {
-                return 0;
-            }
-        } else {
-            return 0;
+        if ($upload['error']) {
+            throw new Exception('Error while uploading image: ' . esc_attr($upload['error']));
         }
+
+        $file_path = $upload['file'];
+
+        $attachment = [
+            'post_mime_type' => $file_type,
+            'post_title' => sanitize_text_field($product->get_name()),
+            'post_excerpt' => sanitize_text_field($product->get_name()),
+            'post_content' => sanitize_text_field($product->get_name()),
+            'post_status' => 'inherit',
+            'guid' => $upload['url']
+        ];
+
+        $mediaId = wp_insert_attachment($attachment, $file_path, $product->get_id());
+
+        if (is_wp_error($mediaId)) {
+            throw new Exception('Image error: ' . $mediaId->get_error_message());
+        }
+
+        $attach_data = wp_generate_attachment_metadata($mediaId, $file_path);
+
+        wp_update_attachment_metadata($mediaId, $attach_data);
+        update_post_meta($mediaId, '_wp_attachment_image_alt', sanitize_text_field($product->get_name()));
+
+        $product_gallery = (array)$product->get_gallery_image_ids();
+        $product_gallery[] = $mediaId;
+
+        if (empty($product_gallery)) {
+            $product->set_image_id($mediaId);
+            $product->save();
+        } else {
+            $product->set_gallery_image_ids($product_gallery);
+            $product->save();
+        }
+
+        return $mediaId;
     }
 
     /**

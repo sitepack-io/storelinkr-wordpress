@@ -107,9 +107,13 @@ class StoreLinkrRestApi
         try {
             $this->authenticateRequest($request);
 
+            $upload_dir_info = wp_upload_dir();
+
             return [
                 'status' => 'success',
                 'version' => esc_attr($this->version),
+                'domain' => get_site_url(),
+                'writable' => is_writable($upload_dir_info['basedir']),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -231,6 +235,7 @@ class StoreLinkrRestApi
             return [
                 'status' => 'success',
                 'product_id' => $productId,
+                'url' => get_permalink($productId),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -265,6 +270,7 @@ class StoreLinkrRestApi
             return [
                 'status' => 'success',
                 'product_id' => $productId,
+                'url' => get_permalink($productId),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -282,7 +288,6 @@ class StoreLinkrRestApi
             ]);
 
             $product = $this->eCommerceService->findProduct($request['id']);
-
             $mediaId = $this->eCommerceService->saveProductImage(
                 $product,
                 $request
@@ -297,12 +302,19 @@ class StoreLinkrRestApi
             $mainImage = current($images);
 
             foreach ($images as $key => $id) {
-                if ((int)$mainImage === (int)$id || (int)$id === 0 || empty($id)) {
+                if ((int)$id === $mainImage || (int)$id === 0 || empty($id)) {
                     unset($images[$key]);
                 }
             }
 
-            set_post_thumbnail($product->get_id(), $mainImage);
+            $images = array_unique(array_values($images)); // forget duplicate IDs
+
+            delete_post_thumbnail($product->get_id());
+            $resultThumbnail = set_post_thumbnail($product->get_id(), $mainImage);
+            if (!$resultThumbnail) {
+                throw new Exception('Failed to set post thumbnail!');
+            }
+
             $product->set_gallery_image_ids($images);
             $product->set_image_id($mainImage);
 
