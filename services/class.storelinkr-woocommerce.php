@@ -50,13 +50,22 @@ class StoreLinkrWooCommerceService
             $billingAddress = $order->get_address();
             $shippingAddress = $order->get_address('shipping');
 
+            $shippingMethods = [];
+            foreach ($order->get_shipping_methods() as $shippingItem) {
+                $shippingMethods[] = $shippingItem->get_method_title();
+            }
+            $deliveryMethod = !empty($shippingMethods) ? implode(', ', $shippingMethods) : 'default';
+
             $formatted_order = [
                 'order_id' => $order->get_id(),
                 'order_number' => $order->get_order_number(),
+                'order_status' => $order->get_status(),
+                'created' => $order->get_date_created()->format('Y-m-d H:i:s'),
                 'customer' => [
                     'first_name' => $order->get_billing_first_name(),
                     'last_name' => $order->get_billing_last_name(),
                     'email' => $order->get_billing_email(),
+                    'company_name' => $order->get_billing_company(),
                     'billingAddress' => [
                         'address' => $billingAddress['address_1'],
                         'addition' => $billingAddress['address_2'],
@@ -79,10 +88,16 @@ class StoreLinkrWooCommerceService
                 ],
                 'order_lines' => [],
                 'currency' => $order->get_currency(),
-                'payment_status' => $order->get_status(),
+                'total_amount_cents' => intval($order->get_subtotal() * 100),
+                'shipping_costs_cents' => intval($order->get_shipping_total() * 100),
+                'discount_cents' => intval($order->get_total_discount() * 100),
+                'grand_total_cents' => intval($order->get_total() * 100),
+                'ip_address' => $order->get_customer_ip_address(),
+                'payment_status' => $order->is_paid() ? 'paid' : 'unpaid',
+                'deliver_method' => $deliveryMethod,
             ];
 
-            foreach ($order->get_items() as $item_id => $item) {
+            foreach ($order->get_items() as $item) {
                 $product = $item->get_product();
                 $ean = $product->get_attribute('ean');
 
@@ -102,12 +117,13 @@ class StoreLinkrWooCommerceService
                     'sku' => $product->get_sku(),
                     'name' => $product->get_name(),
                     'quantity' => $item->get_quantity(),
-                    'price' => $order->get_line_total($item, false, false),
-                    'price_incl_vat' => $order->get_line_total($item, false, false),
-                    'subtotal' => $order->get_line_subtotal($item, false, false) * 100,
-                    'subtotal_incl_vat' => $order->get_line_subtotal($item, true, false) * 100,
+                    'price' => intval($order->get_line_total($item, false, false) / $item->get_quantity() * 100),
+                    'price_incl_vat' => intval($order->get_line_total($item, true, false) / $item->get_quantity() * 100),
+                    'subtotal' => intval($order->get_line_subtotal($item, false, false) * 100),
+                    'subtotal_incl_vat' => intval($order->get_line_subtotal($item, true, false) * 100),
                     'item_metadata' => $item->get_meta_data(),
                     'product_metadata' => $product->get_meta_data(),
+                    'product_image' => wp_get_attachment_url($product->get_image_id()),
                 ];
             }
 

@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
 Tested up to: 6.5
-Stable tag: 2.0.16
+Stable tag: 2.0.17
 License: GPLv2 or later
 
 Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
@@ -93,6 +93,18 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.0.17 =
+
+Release date: 2024-06-03
+
+#### Enhancements
+
+* Extended order line items information for further processing
+
+#### Bugfixes
+
+None
 
 = 2.0.16 =
 
