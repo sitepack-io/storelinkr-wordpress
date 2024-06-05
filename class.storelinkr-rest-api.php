@@ -230,6 +230,9 @@ class StoreLinkrRestApi
             $product = $this->eCommerceService->mapProductFromData(
                 $request
             );
+
+            $gallery = (array)$request->get_param('images');
+            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct($request, $product);
 
             return [
@@ -265,12 +268,15 @@ class StoreLinkrRestApi
                 $request
             );
 
+            $gallery = (array)$request->get_param('images');
+            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct($request, $product);
 
             return [
                 'status' => 'success',
                 'product_id' => $productId,
                 'url' => get_permalink($productId),
+                'images' => $gallery,
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -293,45 +299,13 @@ class StoreLinkrRestApi
                 $request
             );
 
-            if (is_array($request['imageGallery'])) {
-                $images = array_merge($request['imageGallery'], [$mediaId]);
-            } else {
-                $images = [$mediaId];
+            $gallery = (array)$request->get_param('imageGallery');
+
+            if (!empty($mediaId)) {
+                $gallery = array_merge($gallery, [$mediaId]);
             }
 
-            $mainImage = current($images);
-
-            foreach ($images as $key => $id) {
-                if ((int)$id === $mainImage || (int)$id === 0 || empty($id)) {
-                    unset($images[$key]);
-                }
-            }
-
-            $images = array_unique(array_values($images)); // forget duplicate IDs
-
-            delete_post_thumbnail($product->get_id());
-            $resultThumbnail = set_post_thumbnail($product->get_id(), $mainImage);
-            if (!$resultThumbnail) {
-                throw new Exception('Failed to set post thumbnail!');
-            }
-
-            $product->set_gallery_image_ids($images);
-            $product->set_image_id($mainImage);
-
-            if (count($images) >= 1) {
-                update_post_meta(
-                    $product->get_id(),
-                    '_product_image_gallery',
-                    implode(',', $images)
-                );
-            } else {
-                update_post_meta(
-                    $product->get_id(),
-                    '_product_image_gallery',
-                    null
-                );
-            }
-
+            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $product->save();
 
             return [
@@ -340,7 +314,7 @@ class StoreLinkrRestApi
                     'main' => wp_get_attachment_url($product->get_image_id()),
                     'gallery' => $product->get_gallery_image_ids(),
                     'thumb' => get_post_thumbnail_id($product),
-                    'debug' => $images,
+                    'gallery_debug' => $gallery,
                 ],
                 'image_id' => $mediaId,
                 'image_url' => wp_get_attachment_url($mediaId),

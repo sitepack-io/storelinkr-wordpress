@@ -94,6 +94,20 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
+= 2.0.18 =
+
+Release date: 2024-06-05
+
+#### Enhancements
+
+* Improved product image handling in create, update product flow (set correct image_id and gallery_ids)
+
+#### Bugfixes
+
+* Prevent generation of duplicate product image thumbnails
+* Set correct featured product image
+* Only list image once (don't repeat featured image in thumbnails)
+
 = 2.0.17 =
 
 Release date: 2024-06-03
