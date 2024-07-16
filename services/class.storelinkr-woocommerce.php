@@ -208,6 +208,9 @@ class StoreLinkrWooCommerceService
     public function saveProduct(WP_REST_Request $request, WC_Product $product): int
     {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
+        if ($product->get_status() === 'trash') {
+            $product->set_status('published');
+        }
 
         $productId = $product->save();
         $data = [];

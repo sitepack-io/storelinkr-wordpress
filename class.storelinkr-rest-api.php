@@ -333,8 +333,8 @@ class StoreLinkrRestApi
             ]);
 
             $product = $this->eCommerceService->findProduct($request['id']);
-
-            $product->delete(false);
+            $product->set_status('trash');
+            $product->save();
 
             return [
                 'status' => 'success',
