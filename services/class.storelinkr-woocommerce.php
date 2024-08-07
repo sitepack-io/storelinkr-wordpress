@@ -358,6 +358,49 @@ class StoreLinkrWooCommerceService
         return get_term($id);
     }
 
+    public function linkProductsAsVariant(array $products, array $removeProducts): void
+    {
+        foreach ($products as $wooProductId) {
+            $wooProduct = $this->findProduct($wooProductId);
+
+            if ($wooProduct instanceof WC_Product) {
+                $variantIds = get_post_meta($wooProductId, 'storelinkr_variant_ids', true);
+
+                if (!is_array($variantIds)) {
+                    $variantIds = [];
+                }
+
+                foreach ($products as $id) {
+                    if (!in_array($id, $variantIds)) {
+                        $variantIds[] = $id;
+                    }
+                }
+
+                update_post_meta($wooProductId, 'storelinkr_variant_ids', $variantIds);
+            }
+        }
+
+        if (count($removeProducts) >= 1) {
+            foreach ($products as $wooProductId) {
+                $wooProduct = $this->findProduct($wooProductId);
+
+                if ($wooProduct instanceof WC_Product) {
+                    $variantIds = get_post_meta($wooProductId, 'storelinkr_variant_ids', true);
+
+                    if (is_array($variantIds)) {
+                        foreach ($removeProducts as $removeId) {
+                            if (($key = array_search($removeId, $variantIds)) !== false) {
+                                unset($variantIds[$key]);
+                            }
+                        }
+
+                        update_post_meta($wooProductId, 'storelinkr_variant_ids', array_values($variantIds));
+                    }
+                }
+            }
+        }
+    }
+
     public function linkProductGalleryImages(WC_Product $product, array $images): WC_Product
     {
         if (

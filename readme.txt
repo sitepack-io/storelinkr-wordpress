@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
 Tested up to: 6.6
-Stable tag: 2.1.1
+Stable tag: 2.2.0
 License: GPLv2 or later
 
 Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
@@ -84,6 +84,11 @@ No, we update the products multiple times a day from StoreLinkr. It is often unn
 
 Products are regularly updated; the interval depends on the chosen [StoreLinkr](https://storelinkr.com) subscription.
 
+= How I change the product variant display on a product page? =
+
+You can programmatically change the rendering of the variant options on a product details page. Use the "storelinkr_variant_dropdown_label" filter the change the label, or the "storelinkr_variant_html" filter to change the complete HTML rendering.
+The style and design of the product variant could also changed by using the "storelinkr_variant_css" filter for the CSS code.
+
 = I have another question not listed here =
 
 Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Otherwise, our support team is also available to answer your question.
@@ -93,6 +98,19 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.2.0 =
+
+Release date: 2024-08-07
+
+#### Enhancements
+
+* Display product variants on product details page
+* Return invalid media id's on product update (useful when media has been removed)
+
+#### Bugfixes
+
+None
 
 = 2.1.1 =
 
