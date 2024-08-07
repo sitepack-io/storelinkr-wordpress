@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
-Version: 2.1.1
+Version: 2.2.0
 Author: StoreLinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.1.1');
+define('STORELINKR_VERSION', '2.2.0');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -142,4 +142,58 @@ if (!function_exists('storelinkrStockAjaxHandler')) {
             wp_die();
         }
     }
+}
+
+if (!function_exists('storeLinkrVariantDropdown')) {
+    add_filter('woocommerce_single_product_summary', 'storeLinkrVariantDropdown', 25);
+    add_action('wp_head', 'storeLinkrCustomProductPageCss');
+
+    function storeLinkrVariantDropdown()
+    {
+        global $product;
+
+        $current_product_id = $product->get_id();
+        $variant_ids = get_post_meta($current_product_id, 'storelinkr_variant_ids', true);
+
+        if (is_array($variant_ids) && count($variant_ids) >= 2) {
+            $variants = [];
+            foreach ($variant_ids as $id) {
+                $variant_product = wc_get_product($id);
+                if ($variant_product) {
+                    $variants[$id] = $variant_product->get_name();
+                }
+            }
+
+            asort($variants);
+
+            $label = apply_filters('storelinkr_variant_dropdown_label', __('Select variant', 'storelinkr') . ':');
+
+            $html = '<div class="variant-dropdown" id="storelinkr-variant-dropdown">';
+            $html .= '<label for="product-variant-select">' . esc_attr($label) . '</label>';
+            $html .= '<select id="product-variant-select" name="product-variant-select" onchange="location = this.value;">';
+
+            foreach ($variants as $id => $name) {
+                $selected = ($id == $current_product_id) ? ' selected' : '';
+                $html .= '<option value="' . get_permalink($id) . '"' . $selected . '>' . $name . '</option>';
+            }
+
+            $html .= '</select>';
+            $html .= '</div>';
+
+            echo apply_filters('storelinkr_variant_html', $html);
+        }
+    }
+
+    function storeLinkrCustomProductPageCss() {
+        if (is_product()) {
+            $css = '#storelinkr-variant-dropdown { width: 100%; }';
+            $css .= '#storelinkr-variant-dropdown label { width: 100%; line-height: 26px; font-size: 14px; font-weight: 700; display: block; margin-bottom: 4px; }';
+            $css .= '#storelinkr-variant-dropdown select { width: 100%; height: 40px; font-size: 14px; font-weight: 400; display: block; padding: 0 7px; }';
+
+            $css = apply_filters('storelinkr_variant_css', $css);
+
+            echo '<style>' . esc_html($css) . '</style>';
+        }
+    }
+
 }

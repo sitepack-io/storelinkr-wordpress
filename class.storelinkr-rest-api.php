@@ -100,6 +100,11 @@ class StoreLinkrRestApi
             ],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/products/link-variants', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderLinkVariants'],
+            'permission_callback' => '__return_true',
+        ]);
     }
 
     public function renderTestConnection(WP_REST_Request $request)
@@ -272,11 +277,28 @@ class StoreLinkrRestApi
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct($request, $product);
 
+            $invalidMediaIds = [];
+            foreach ($gallery as $mediaId) {
+                $mediaItem = get_post($mediaId);
+                if ($mediaItem && $mediaItem->post_type === 'attachment') {
+                    $filePath = get_attached_file($mediaId);
+
+                    if (!$filePath || !file_exists($filePath)) {
+                        $invalidMediaIds[] = $mediaId;
+                    }
+
+                    continue;
+                }
+
+                $invalidMediaIds[] = $mediaId;
+            }
+
             return [
                 'status' => 'success',
                 'product_id' => $productId,
                 'url' => get_permalink($productId),
                 'images' => $gallery,
+                'invalid_media' => $invalidMediaIds,
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -339,6 +361,23 @@ class StoreLinkrRestApi
             return [
                 'status' => 'success',
             ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderLinkVariants(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'variant',
+            ]);
+
+            $this->eCommerceService->linkProductsAsVariant(
+                (!empty($request['products'])) ? (array)$request['products'] : [],
+                (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : []
+            );
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
         }
