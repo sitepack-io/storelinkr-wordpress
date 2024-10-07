@@ -99,7 +99,11 @@ class StoreLinkrWooCommerceService
 
             foreach ($order->get_items() as $item) {
                 $product = $item->get_product();
-                $ean = $product->get_attribute('ean');
+                $ean = null;
+
+                if ($product instanceof WC_Product) {
+                    $ean = $product->get_attribute('ean');
+                }
 
                 if (empty($ean)) {
                     foreach ($product->get_meta_data() as $metaDataItem) {
@@ -201,6 +205,20 @@ class StoreLinkrWooCommerceService
         if ($product->get_date_created() === null) {
             $product->set_date_created((new DateTimeImmutable())->format('Y-m-d H:i:s'));
         }
+
+        $attachments = [];
+        if (!empty($data->get_param('attachments'))) {
+            if (is_array($data->get_param('attachments'))) {
+                foreach ($data->get_param('attachments') as $attachment) {
+                    $attachments[] = [
+                        'uuid' => $attachment['uuid'],
+                        'name' => $attachment['name'],
+                        'cdn_url' => $attachment['cdn_url'],
+                    ];
+                }
+            }
+        }
+        $product->add_meta_data('_product_attachments', json_encode($attachments));
 
         return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
     }
@@ -320,6 +338,15 @@ class StoreLinkrWooCommerceService
             'description' => null,
             'parent' => (!empty($parentUuid)) ? $parentUuid : 0,
         ]);
+
+        if ($term instanceof WP_Error) {
+            throw new Exception(
+                sprintf(
+                    'Error while creating term: %s',
+                    $term->get_error_message()
+                )
+            );
+        }
 
         if (!is_array($term)) {
             $existing = get_term_by('name', $name, 'product_cat');

@@ -79,11 +79,11 @@ class StoreLinkr
         }
 
         return new StoreLinkrStock(
-            $data['stock']['inStock'],
-            $data['stock']['quantityAvailable'],
-            $data['stock']['quantitySupplier'],
+            (bool)$data['stock']['inStock'],
+            (int)$data['stock']['quantityAvailable'],
+            (int)$data['stock']['quantitySupplier'],
             0, // TODO in SP API
-            $data['stock']['allowBackorder'],
+            (int)$data['stock']['allowBackorder'],
             $locations,
             ($data['stock']['deliveryDate'] !== null) ? new DateTimeImmutable($data['stock']['deliveryDate']) : null,
             $data['stock']['errorReason'],
