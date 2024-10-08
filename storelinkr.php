@@ -230,6 +230,10 @@ if (!function_exists('storelinkrProductTabs')) {
             if (is_iterable($attachments)) {
                 echo '<ul class="product-attachments-list">';
                 foreach ($attachments as $attachment) {
+                    if (empty($attachment['cdn_url']) || empty($attachment['name'])) {
+                        continue;
+                    }
+
                     echo '<li>';
                     echo '<a href="' . esc_url($attachment['cdn_url']) . '" target="_blank" rel="noopener">';
                     echo esc_attr($attachment['name']);
