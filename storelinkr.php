@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
-Version: 2.2.0
+Version: 2.3.0
 Author: StoreLinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.2.0');
+define('STORELINKR_VERSION', '2.3.0');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -34,6 +34,8 @@ $storelinkrRestApi = new StoreLinkrRestApi(STORELINKR_VERSION);
 add_action('rest_api_init', [$storelinkrRestApi, 'init']);
 add_action('wp_ajax_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
 add_action('wp_ajax_nopriv_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
+
+add_filter('woocommerce_product_tabs', 'storelinkrProductTabs', 10, 2);
 
 if (is_admin() || (defined('WP_CLI') && WP_CLI)) {
     require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-admin.php');
@@ -184,7 +186,8 @@ if (!function_exists('storeLinkrVariantDropdown')) {
         }
     }
 
-    function storeLinkrCustomProductPageCss() {
+    function storeLinkrCustomProductPageCss()
+    {
         if (is_product()) {
             $css = '#storelinkr-variant-dropdown { width: 100%; }';
             $css .= '#storelinkr-variant-dropdown label { width: 100%; line-height: 26px; font-size: 14px; font-weight: 700; display: block; margin-bottom: 4px; }';
@@ -195,5 +198,51 @@ if (!function_exists('storeLinkrVariantDropdown')) {
             echo '<style>' . esc_html($css) . '</style>';
         }
     }
+}
 
+if (!function_exists('storelinkrProductTabs')) {
+    function storelinkrProductTabs($tabs)
+    {
+        global $product;
+        $attachments = $product->get_meta('_product_attachments', true);
+
+        if (!empty($attachments)) {
+            $tabs['attachment_tab'] = array(
+                'title' => __('Attachments', 'storelinkr'),
+                'priority' => 22,
+                'callback' => 'storeLinkrAttachmentTabContent'
+            );
+        }
+
+        return $tabs;
+    }
+
+    function storeLinkrAttachmentTabContent()
+    {
+        global $product;
+        $attachments = $product->get_meta('_product_attachments', true);
+
+        echo '<h2>' . __('Attachments', 'storelinkr') . '</h2>';
+
+        if (!empty($attachments)) {
+            $attachments = json_decode($attachments, true);
+
+            if (is_iterable($attachments)) {
+                echo '<ul class="product-attachments-list">';
+                foreach ($attachments as $attachment) {
+                    if (empty($attachment['cdn_url']) || empty($attachment['name'])) {
+                        continue;
+                    }
+
+                    echo '<li>';
+                    echo '<a href="' . esc_url($attachment['cdn_url']) . '" target="_blank" rel="noopener">';
+                    echo esc_attr($attachment['name']);
+                    echo '</a></li>';
+                }
+                echo '</ul>';
+            }
+        } else {
+            echo '<p>' . __('No attachments available for this product.', 'storelinkr') . '</p>';
+        }
+    }
 }
