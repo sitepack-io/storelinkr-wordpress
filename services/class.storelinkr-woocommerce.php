@@ -44,8 +44,7 @@ class StoreLinkrWooCommerceService
             'return' => 'objects',
         ]);
 
-        $formatted_orders = array();
-
+        $formatted_orders = [];
         foreach ($orders as $order) {
             $billingAddress = $order->get_address();
             $shippingAddress = $order->get_address('shipping');
@@ -97,20 +96,22 @@ class StoreLinkrWooCommerceService
                 'deliver_method' => $deliveryMethod,
             ];
 
+            $validLineItems = 0;
             foreach ($order->get_items() as $item) {
                 $product = $item->get_product();
-                $ean = null;
 
-                if ($product instanceof WC_Product) {
-                    $ean = $product->get_attribute('ean');
+                if (is_bool($product)) {
+                    continue;
                 }
+
+                $ean = $product->get_attribute('ean');
 
                 if (empty($ean)) {
                     foreach ($product->get_meta_data() as $metaDataItem) {
                         assert($metaDataItem instanceof WC_Meta_Data);
 
                         if ($metaDataItem->get_data()['key'] === 'ean') {
-                            $ean = $metaDataItem->get_data()['value'];
+                            $ean = trim($metaDataItem->get_data()['value']);
                         }
                     }
                 }
@@ -131,6 +132,12 @@ class StoreLinkrWooCommerceService
                     'product_metadata' => $product->get_meta_data(),
                     'product_image' => wp_get_attachment_url($product->get_image_id()),
                 ];
+                $validLineItems++;
+            }
+
+            if ($validLineItems === 0) {
+                // skip order, no valid line items
+                continue;
             }
 
             $formatted_orders[] = $formatted_order;

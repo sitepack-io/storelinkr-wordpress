@@ -1,9 +1,9 @@
 === StoreLinkr ===
 Contributors: storelinkr, petervw
-Tags: connect, woocommerce, cyclesoftware, wilmar, storelinkr
+Tags: dropshipping, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
 Tested up to: 6.6
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 License: GPLv2 or later
 
 Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
@@ -98,6 +98,19 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.3.1 =
+
+Release date: 2024-10-09
+
+#### Enhancements
+
+* Remove / merge duplicate product attributes
+
+#### Bugfixes
+
+* Fixed the empty orders, count valid line items
+* Fixed the frontend attachment tab, do not show when the attachment count is zero
 
 = 2.3.0 =
 
