@@ -477,6 +477,75 @@ class StoreLinkrWooCommerceService
         return $product;
     }
 
+    public function mergeDuplicateAttributes(): void
+    {
+        $attributeTaxonomies = wc_get_attribute_taxonomies();
+        $attributeNames = [];
+        $duplicateAttributes = [];
+
+        foreach ($attributeTaxonomies as $taxonomy) {
+            if (in_array($taxonomy->attribute_name, $attributeNames)) {
+                $duplicateAttributes[] = $taxonomy;
+                continue;
+            }
+
+            $attributeNames[] = $taxonomy->attribute_name;
+        }
+
+        if (empty($duplicateAttributes)) {
+            return;
+        }
+
+        foreach ($duplicateAttributes as $duplicate) {
+            $taxonomyName = wc_attribute_taxonomy_name($duplicate->attribute_name);
+            $terms = get_terms([
+                'taxonomy' => $taxonomyName,
+                'hide_empty' => false,
+            ]);
+
+            if (!is_wp_error($terms) && !empty($terms)) {
+                $termNames = [];
+                $duplicateTerms = [];
+
+                foreach ($terms as $term) {
+                    if (in_array($term->name, $termNames)) {
+                        $duplicateTerms[] = $term;
+                        continue;
+                    }
+
+                    $termNames[$term->term_id] = $term->name;
+                }
+
+                foreach ($duplicateTerms as $term) {
+                    $termToKeepId = array_search($term->name, $termNames);
+
+                    $args = [
+                        'post_type' => 'product',
+                        'numberposts' => -1,
+                        'tax_query' => [
+                            [
+                                'taxonomy' => $taxonomyName,
+                                'field' => 'term_id',
+                                'terms' => $term->term_id,
+                            ],
+                        ],
+                    ];
+                    $products = get_posts($args);
+
+                    if (!empty($products)) {
+                        foreach ($products as $product) {
+                            wp_set_object_terms($product->ID, (int)$termToKeepId, $taxonomyName, true);
+                        }
+                    }
+
+                    wp_delete_term($term->term_id, $taxonomyName);
+                }
+            }
+
+            wc_delete_attribute($duplicate->attribute_id);
+        }
+    }
+
     private function getCorrespondingCategoryIds(int $categoryId): array
     {
         $categories = [$categoryId];
