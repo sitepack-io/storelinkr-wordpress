@@ -44,8 +44,7 @@ class StoreLinkrWooCommerceService
             'return' => 'objects',
         ]);
 
-        $formatted_orders = array();
-
+        $formatted_orders = [];
         foreach ($orders as $order) {
             $billingAddress = $order->get_address();
             $shippingAddress = $order->get_address('shipping');
@@ -97,20 +96,22 @@ class StoreLinkrWooCommerceService
                 'deliver_method' => $deliveryMethod,
             ];
 
+            $validLineItems = 0;
             foreach ($order->get_items() as $item) {
                 $product = $item->get_product();
-                $ean = null;
 
-                if ($product instanceof WC_Product) {
-                    $ean = $product->get_attribute('ean');
+                if (is_bool($product)) {
+                    continue;
                 }
+
+                $ean = $product->get_attribute('ean');
 
                 if (empty($ean)) {
                     foreach ($product->get_meta_data() as $metaDataItem) {
                         assert($metaDataItem instanceof WC_Meta_Data);
 
                         if ($metaDataItem->get_data()['key'] === 'ean') {
-                            $ean = $metaDataItem->get_data()['value'];
+                            $ean = trim($metaDataItem->get_data()['value']);
                         }
                     }
                 }
@@ -131,6 +132,12 @@ class StoreLinkrWooCommerceService
                     'product_metadata' => $product->get_meta_data(),
                     'product_image' => wp_get_attachment_url($product->get_image_id()),
                 ];
+                $validLineItems++;
+            }
+
+            if ($validLineItems === 0) {
+                // skip order, no valid line items
+                continue;
             }
 
             $formatted_orders[] = $formatted_order;
@@ -468,6 +475,75 @@ class StoreLinkrWooCommerceService
         }
 
         return $product;
+    }
+
+    public function mergeDuplicateAttributes(): void
+    {
+        $attributeTaxonomies = wc_get_attribute_taxonomies();
+        $attributeNames = [];
+        $duplicateAttributes = [];
+
+        foreach ($attributeTaxonomies as $taxonomy) {
+            if (in_array($taxonomy->attribute_name, $attributeNames)) {
+                $duplicateAttributes[] = $taxonomy;
+                continue;
+            }
+
+            $attributeNames[] = $taxonomy->attribute_name;
+        }
+
+        if (empty($duplicateAttributes)) {
+            return;
+        }
+
+        foreach ($duplicateAttributes as $duplicate) {
+            $taxonomyName = wc_attribute_taxonomy_name($duplicate->attribute_name);
+            $terms = get_terms([
+                'taxonomy' => $taxonomyName,
+                'hide_empty' => false,
+            ]);
+
+            if (!is_wp_error($terms) && !empty($terms)) {
+                $termNames = [];
+                $duplicateTerms = [];
+
+                foreach ($terms as $term) {
+                    if (in_array($term->name, $termNames)) {
+                        $duplicateTerms[] = $term;
+                        continue;
+                    }
+
+                    $termNames[$term->term_id] = $term->name;
+                }
+
+                foreach ($duplicateTerms as $term) {
+                    $termToKeepId = array_search($term->name, $termNames);
+
+                    $args = [
+                        'post_type' => 'product',
+                        'numberposts' => -1,
+                        'tax_query' => [
+                            [
+                                'taxonomy' => $taxonomyName,
+                                'field' => 'term_id',
+                                'terms' => $term->term_id,
+                            ],
+                        ],
+                    ];
+                    $products = get_posts($args);
+
+                    if (!empty($products)) {
+                        foreach ($products as $product) {
+                            wp_set_object_terms($product->ID, (int)$termToKeepId, $taxonomyName, true);
+                        }
+                    }
+
+                    wp_delete_term($term->term_id, $taxonomyName);
+                }
+            }
+
+            wc_delete_attribute($duplicate->attribute_id);
+        }
     }
 
     private function getCorrespondingCategoryIds(int $categoryId): array
