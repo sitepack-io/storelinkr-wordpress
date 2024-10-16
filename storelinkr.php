@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
-Version: 2.3.1
+Version: 2.3.2
 Author: StoreLinkr, powered by SitePack B.V.
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.3.1');
+define('STORELINKR_VERSION', '2.3.2');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -211,7 +211,7 @@ if (!function_exists('storelinkrProductTabs')) {
 
             if (is_iterable($attachments) && count($attachments) >= 1) {
                 $tabs['attachment_tab'] = [
-                    'title' => __('Attachments', 'storelinkr'),
+                    'title' => esc_html(storelinkrAttachmentLabel()),
                     'priority' => 22,
                     'callback' => 'storeLinkrAttachmentTabContent',
                 ];
@@ -226,7 +226,7 @@ if (!function_exists('storelinkrProductTabs')) {
         global $product;
         $attachments = $product->get_meta('_product_attachments', true);
 
-        echo '<h2>' . __('Attachments', 'storelinkr') . '</h2>';
+        echo '<h2>' . esc_html(storelinkrAttachmentLabel()) . '</h2>';
 
         if (!empty($attachments)) {
             $attachments = json_decode($attachments, true);
@@ -249,4 +249,10 @@ if (!function_exists('storelinkrProductTabs')) {
             echo '<p>' . __('No attachments available for this product.', 'storelinkr') . '</p>';
         }
     }
+
+    function storelinkrAttachmentLabel(): string
+    {
+        return apply_filters('storelinkr_attachment_label', __('Attachments', 'storelinkr'));
+    }
+
 }
