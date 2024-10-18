@@ -239,8 +239,17 @@ if (!function_exists('storelinkrProductTabs')) {
                     }
 
                     echo '<li>';
-                    echo '<a href="' . esc_url($attachment['cdn_url']) . '" target="_blank" rel="noopener">';
-                    echo esc_attr($attachment['name']);
+                    if (!empty($attachment['description'])) {
+                        echo '<a href="' . esc_url($attachment['cdn_url']) . '" target="_blank" rel="noopener" 
+                        title="' . esc_attr($attachment['title']) . ': ' . esc_attr($attachment['description']) . '">';
+                    } else {
+                        echo '<a href="' . esc_url($attachment['cdn_url']) . '" target="_blank" rel="noopener">';
+                    }
+                    if (!empty($attachment['title'])) {
+                        echo esc_attr($attachment['title']);
+                    } else {
+                        echo esc_attr($attachment['name']);
+                    }
                     echo '</a></li>';
                 }
                 echo '</ul>';
