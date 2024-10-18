@@ -7,8 +7,8 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
-Version: 2.3.2
-Author: StoreLinkr, powered by SitePack B.V.
+Version: 2.3.3
+Author: StoreLinkr
 Author URI: https://storelinkr.com
 License: GPLv2 or later
 Text Domain: storelinkr
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.3.2');
+define('STORELINKR_VERSION', '2.3.3');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -254,5 +254,21 @@ if (!function_exists('storelinkrProductTabs')) {
     {
         return apply_filters('storelinkr_attachment_label', __('Attachments', 'storelinkr'));
     }
+}
 
+if (!function_exists('storelinkrRestApiResponseHeaders')) {
+    function storelinkrRestApiResponseHeaders($response, $server, $request)
+    {
+        $route = $request->get_route();
+        if (str_contains($route, '/storelinkr/') === true) {
+            $response->header('Cache-Control', 'no-cache, no-store, must-revalidate');
+            $response->header('Pragma', 'no-cache');
+            $response->header('Expires', '0');
+            $response->header('X-StoreLinkr-Cache', 'no-cache');
+        }
+
+        return $response;
+    }
+
+    add_filter('rest_post_dispatch', 'storelinkrRestApiResponseHeaders', 10, 3);
 }

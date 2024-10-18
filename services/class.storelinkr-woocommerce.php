@@ -46,6 +46,10 @@ class StoreLinkrWooCommerceService
 
         $formatted_orders = [];
         foreach ($orders as $order) {
+            if ($order->get_status() === 'checkout-draft') {
+                continue;
+            }
+
             $billingAddress = $order->get_address();
             $shippingAddress = $order->get_address('shipping');
 
