@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, wilmar, storelinkr
 Requires at least: 6.3
 Tested up to: 6.6
-Stable tag: 2.3.2
+Stable tag: 2.3.3
 License: GPLv2 or later
 
 Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
@@ -98,6 +98,19 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.3.3 =
+
+Release date: 2024-10-18
+
+#### Enhancements
+
+* Display attachment title and description when the data is available, the filename will be used as a fallback
+* Set no-cache headers for wp-json/storelinkr endpoints to prevent caching
+
+#### Bugfixes
+
+* Do not return WooCommerce orders with status "checkout-draft"
 
 = 2.3.2 =
 

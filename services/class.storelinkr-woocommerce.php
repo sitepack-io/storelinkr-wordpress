@@ -46,6 +46,10 @@ class StoreLinkrWooCommerceService
 
         $formatted_orders = [];
         foreach ($orders as $order) {
+            if ($order->get_status() === 'checkout-draft') {
+                continue;
+            }
+
             $billingAddress = $order->get_address();
             $shippingAddress = $order->get_address('shipping');
 
@@ -220,12 +224,14 @@ class StoreLinkrWooCommerceService
                     $attachments[] = [
                         'uuid' => $attachment['uuid'],
                         'name' => $attachment['name'],
+                        'title' => (!empty($attachment['title'])) ? $attachment['title'] : null,
+                        'description' => (!empty($attachment['description'])) ? $attachment['description'] : null,
                         'cdn_url' => $attachment['cdn_url'],
                     ];
                 }
             }
         }
-        $product->add_meta_data('_product_attachments', json_encode($attachments));
+        $product->add_meta_data('_product_attachments', json_encode($attachments), true);
 
         return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
     }
