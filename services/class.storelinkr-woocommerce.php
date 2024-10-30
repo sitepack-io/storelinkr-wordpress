@@ -157,6 +157,13 @@ class StoreLinkrWooCommerceService
             $product = $this->findProduct($data->get_param('id'));
         }
 
+        if (!empty($data->get_param('sku'))) {
+            $product->set_sku($data->get_param('sku'));
+        }
+        if (!empty($data->get_param('ean'))) {
+            $product->set_global_unique_id($data->get_param('ean'));
+        }
+
         $product->set_name($data->get_param('name'));
         $product->set_regular_price($this->formatPrice((int)$data->get_param('salesPrice')));
 
