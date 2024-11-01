@@ -64,6 +64,41 @@ class StoreLinkrAdmin
 
     public function renderDashboardPage(): void
     {
+        if (isset($_GET['subpage']) && esc_attr($_GET['subpage']) == 'diagnostic') {
+            $phpVersion = phpversion();
+            $wpVersion = get_bloginfo('version');
+            $pluginData = get_plugin_data(STORELINKR_PLUGIN_FILE);
+            $pluginVersion = $pluginData['Version'];
+            $log_file = ini_get('error_log');
+            $lastLines = [];
+            if (file_exists($log_file)) {
+                $lines = file($log_file);
+                $lastLines = array_slice($lines, -600);
+
+                foreach ($lastLines as $key => $line) {
+                    if (
+                        str_contains($line, 'PHP Warning') === true
+                        || str_contains($line, 'PHP Fatal error') === true
+                    ) {
+                        continue;
+                    }
+
+                    unset($lastLines[$key]);
+                }
+            }
+
+            foreach ($lastLines as $key => $line) {
+                if (str_contains($line, 'plugins/storelinkr') === false) {
+                    unset($lastLines[$key]);
+                }
+            }
+
+            $lastLines = array_reverse($lastLines);
+
+            require_once(STORELINKR_PLUGIN_DIR . 'views/storelinkr_diagnostic.php');
+            return;
+        }
+
         require_once(STORELINKR_PLUGIN_DIR . 'views/storelinkr_dashboard.php');
     }
 

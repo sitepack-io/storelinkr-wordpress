@@ -86,7 +86,7 @@ class StoreLinkr
             (int)$data['stock']['allowBackorder'],
             $locations,
             ($data['stock']['deliveryDate'] !== null) ? new DateTimeImmutable($data['stock']['deliveryDate']) : null,
-            $data['stock']['errorReason'],
+            (isset($data['stock']['errorReason'])) ? $data['stock']['errorReason'] : null,
         );
     }
 
