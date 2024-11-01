@@ -46,6 +46,10 @@ class StoreLinkrWooCommerceService
 
         $formatted_orders = [];
         foreach ($orders as $order) {
+            if ($order instanceof \Automattic\WooCommerce\Admin\Overrides\OrderRefund) {
+                continue;
+            }
+
             if ($order->get_status() === 'checkout-draft') {
                 continue;
             }
