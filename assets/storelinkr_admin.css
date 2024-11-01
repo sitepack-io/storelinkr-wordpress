@@ -9,9 +9,11 @@
 
 .storelinkr-container .storelinkr-heading, .storelinkr-container .storelinkr-menu {
     background: #fff;
-    width: 100%;
+    width: calc(100% - 30px);
     display: inline-block;
     border-bottom: 1px solid #ccc;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .storelinkr-container .storelinkr-heading img.storelinkr-icon {
@@ -217,11 +219,16 @@ p.storelinkr-lead {
     line-height: 30px;
 }
 
-.form-row-group input {
+.form-row-group input, .form-row-group textarea {
     display: block;
 }
 .form-row-group .storelinkr-hide input {
     display: none;
+}
+
+.form-row-group textarea {
+    width: 100%;
+    min-height: 240px;
 }
 
 @media only screen and (max-width: 1800px) {
