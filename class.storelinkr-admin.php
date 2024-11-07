@@ -122,7 +122,6 @@ class StoreLinkrAdmin
 
     public function removeCategoryTrashLink($actions, $term): array
     {
-        var_dump($term);
         if ($term->taxonomy !== 'product_cat') {
             return $actions;
         }
@@ -133,7 +132,10 @@ class StoreLinkrAdmin
         }
 
         if (in_array('STORELINKR', $meta) === true) {
-            $actions = array_merge(['label' => esc_attr('StoreLinkr')], $actions);
+            $actions = array_merge([
+                'id' => esc_attr('ID: ' . $term->term_id),
+                'label' => esc_attr('StoreLinkr'),
+            ], $actions);
 
             unset($actions['delete']);
 
