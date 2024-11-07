@@ -184,7 +184,9 @@ class StoreLinkrWooCommerceService
             $product->set_date_on_sale_to((new DateTimeImmutable($data->get_param('promoEnd')))->format('Y-m-d H:i:s'));
         }
 
-        $product->set_short_description($data->get_param('shortDescription'));
+        if (!empty($data->get_param('shortDescription'))) {
+            $product->set_short_description($data->get_param('shortDescription'));
+        }
         if (!empty($data->get_param('longDescription'))) {
             $product->set_description($data->get_param('longDescription'));
         }
