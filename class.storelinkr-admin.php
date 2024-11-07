@@ -30,6 +30,8 @@ class StoreLinkrAdmin
         }
 
         add_filter('plugin_action_links_storelinkr/storelinkr.php', [$this, 'settingsLink']);
+        add_filter('product_cat_row_actions', [$this, 'removeCategoryTrashLink'], 10, 2);
+        add_filter('post_row_actions', [$this, 'removeProductTrashLink'], 10, 2);
     }
 
     /**
@@ -116,6 +118,55 @@ class StoreLinkrAdmin
         array_push($links, $settings_link);
 
         return $links;
+    }
+
+    public function removeCategoryTrashLink($actions, $term): array
+    {
+        if ($term->taxonomy !== 'product_cat') {
+            return $actions;
+        }
+
+        $meta = get_term_meta($term->term_id, 'import_provider');
+        if ($meta === false) {
+            return $actions;
+        }
+
+        if (in_array('STORELINKR', $meta) === true) {
+            $actions = array_merge([
+                'id' => esc_attr('ID: ' . $term->term_id),
+                'label' => esc_attr('StoreLinkr'),
+            ], $actions);
+
+            unset($actions['delete']);
+
+            $actions['storelinkr'] = '<a href="https://portal.storelinkr.com" target="_blank">' .
+                esc_attr(__('Open in StoreLinkr', 'storelinkr')) . '</a>';
+        }
+
+        return $actions;
+    }
+
+    public function removeProductTrashLink($actions, $post): array
+    {
+        if ($post->post_type !== 'product') {
+            return $actions;
+        }
+
+        $meta = get_post_meta($post->ID, 'import_provider');
+        if ($meta === false) {
+            return $actions;
+        }
+
+        if (in_array('STORELINKR', $meta) === true) {
+            $actions = array_merge(['label' => esc_attr('StoreLinkr')], $actions);
+
+            unset($actions['trash']);
+
+            $actions['storelinkr'] = '<a href="https://portal.storelinkr.com" target="_blank">' .
+                esc_attr(__('Open in StoreLinkr', 'storelinkr')) . '</a>';
+        }
+
+        return $actions;
     }
 
     private function getSvgIcon(bool $baseEncode = true): string
