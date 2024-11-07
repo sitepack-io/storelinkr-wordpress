@@ -101,7 +101,7 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 = 2.4.1 =
 
-Release date: 2024-11-05
+Release date: 2024-11-07
 
 #### Enhancements
 
