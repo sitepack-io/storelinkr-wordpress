@@ -4,7 +4,7 @@ Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
 Stable tag: 2.5.0
-Requires PHP: 8.4
+Requires PHP: 8.2
 License: GPLv2 or later
 
 Easily manage your online store and scale your sales with StoreLinkr. Automate product integrations and advertising campaigns, all from one platform.
@@ -123,6 +123,32 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.5.1 =
+
+Release date: 2024-11-20
+
+#### Enhancements
+
+* PHP Support requires 8.2+
+
+#### Bugfixes
+
+None
+
+= 2.5.0 =
+
+Release date: 2024-11-20
+
+#### Enhancements
+
+* Support for grouped products (for product variants)
+* Made product variants clickable from grouped product
+* Improved readme file
+
+#### Bugfixes
+
+None
 
 = 2.4.1 =
 
