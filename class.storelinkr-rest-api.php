@@ -374,10 +374,21 @@ class StoreLinkrRestApi
                 'variant',
             ]);
 
-            $this->eCommerceService->linkProductsAsVariant(
-                (!empty($request['products'])) ? (array)$request['products'] : [],
-                (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : []
+            $groupedVariant = isset($request['groupedVariant']) ? (bool)$request['groupedVariant'] : false;
+            $variantId = $this->eCommerceService->linkProductsAsVariant(
+                products: (!empty($request['products'])) ? (array)$request['products'] : [],
+                removeProducts: (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
+                groupedVariant: $groupedVariant,
+                variantInfo: (isset($request['variant'])) ? (array)$request['variant'] : [],
+                variantId: (isset($request['variant']['id'])) ? (int)$request['variant']['id'] : null
             );
+
+            return [
+                'status' => 'success',
+                'variant_id' => ($groupedVariant === true) ? $variantId : null,
+                'variant_url' => ($groupedVariant === true && !empty($variantId))
+                    ? get_permalink($variantId) : null,
+            ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
         }
