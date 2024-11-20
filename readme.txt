@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.5.0
+Stable tag: 2.5.2
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -124,7 +124,7 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
-= 2.5.1 =
+= 2.5.2 =
 
 Release date: 2024-11-20
 
