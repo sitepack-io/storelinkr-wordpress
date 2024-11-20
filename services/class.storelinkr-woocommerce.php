@@ -291,7 +291,7 @@ class StoreLinkrWooCommerceService
         return $productId;
     }
 
-    public function findProduct($productId): WC_Product
+    public function findProduct($productId): WC_Product|WC_Product_Grouped
     {
         $product = wc_get_product($productId);
 
@@ -409,8 +409,13 @@ class StoreLinkrWooCommerceService
         return get_term($id);
     }
 
-    public function linkProductsAsVariant(array $products, array $removeProducts): void
-    {
+    public function linkProductsAsVariant(
+        array $products,
+        array $removeProducts,
+        bool $groupedVariant,
+        array $variantInfo = [],
+        ?int $variantId = null
+    ): null|int {
         foreach ($products as $wooProductId) {
             $wooProduct = $this->findProduct($wooProductId);
 
@@ -428,6 +433,48 @@ class StoreLinkrWooCommerceService
                 }
 
                 update_post_meta($wooProductId, 'storelinkr_variant_ids', $variantIds);
+
+                if ($groupedVariant === true) {
+                    $wooProduct->set_catalog_visibility('search');
+                    $wooProduct->save();
+                } else {
+                    if ($wooProduct->get_catalog_visibility() !== 'visible') {
+                        $wooProduct->set_catalog_visibility('visible');
+                        $wooProduct->save();
+                    }
+                }
+            }
+        }
+
+        if ($groupedVariant === true) {
+            $variantProduct = new WC_Product_Grouped();
+            if (!empty($variantId)) {
+                $variantProduct = $this->findProduct($variantId);
+            }
+
+            $variantProduct->set_children($products);
+            $variantProduct->set_category_ids(
+                (!empty($variantInfo['categories'])) ? (array)$variantInfo['categories'] : []
+            );
+            $variantProduct->set_name(!empty($variantInfo['name']) ? trim($variantInfo['name']) : '');
+            $variantProduct->set_short_description(
+                !empty($variantInfo['shortDescription']) ? trim($variantInfo['shortDescription']) : ''
+            );
+            $variantProduct->set_description(
+                !empty($variantInfo['description'])
+                    ? trim($variantInfo['description']) : ''
+            );
+            $variantProduct->set_status('publish');
+            $variantProduct->set_catalog_visibility('visible');
+
+            $variantId = $variantProduct->save();
+        } elseif ($groupedVariant === false && !empty($variantId)) {
+            $groupedProduct = $this->findProduct($variantId);
+
+            if ($groupedProduct instanceof WC_Product_Grouped) {
+                $groupedProduct->set_children([]);
+                $groupedProduct->set_status('trash');
+                $groupedProduct->save();
             }
         }
 
@@ -446,10 +493,17 @@ class StoreLinkrWooCommerceService
                         }
 
                         update_post_meta($wooProductId, 'storelinkr_variant_ids', array_values($variantIds));
+
+                        if ($wooProduct->get_catalog_visibility() !== 'visible') {
+                            $wooProduct->set_catalog_visibility('visible');
+                            $wooProduct->save();
+                        }
                     }
                 }
             }
         }
+
+        return $variantId;
     }
 
     public function linkProductGalleryImages(WC_Product $product, array $images): WC_Product

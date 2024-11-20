@@ -1,16 +1,45 @@
-=== StoreLinkr ===
+=== StoreLinkr: all-in-one platform for webshops ===
 Contributors: storelinkr, petervw
-Tags: dropshipping, woocommerce, cyclesoftware, wilmar, storelinkr
+Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.4.1
+Stable tag: 2.5.0
+Requires PHP: 8.4
 License: GPLv2 or later
 
-Streamline dropshipping effortlessly! Sync with wholesalers, POS systems & suppliers for seamless product updates and order management. Start now!
+Easily manage your online store and scale your sales with StoreLinkr. Automate product integrations and advertising campaigns, all from one platform.
 
 == Description ==
 
-Start selling products without your own stock now. Your own dropshipping online store with real quality products and partners. No drop shipment from China via the StoreLinkr platform.
+Are you currently managing a webshop with a few sales per day and do you want to grow to hundreds or even thousands of orders? Manually managing your processes can quickly become too much. StoreLinkr helps you to easily automate your sales activities, so that you can focus on what really matters: your growth.
+
+With StoreLinkr you can manage everything from one central and clear platform. Whether you want to keep your inventory up to date or optimize your product advertisements, we have the solutions to make your webshop more efficient.
+
+## StoreLinkr Solutions
+
+Select one or more solutions for your online store:
+
+* [**Full webshop integration**](https://storelinkr.com/en/solutions/ecommerce-dropshipping) – Products from your wholesalers are automatically loaded into your webshop and the inventory is continuously updated.
+* [**Product feed management**](https://storelinkr.com/en/solutions/generate-product-feeds) – Promote your products with CPC ads by selecting them directly in StoreLinkr or automate your campaigns with filters such as price, category or availability.
+
+## Extensive solutions
+
+### eCommerce Integration
+With our eCommerce integration, managing your webshop becomes much easier. Products from your wholesalers are automatically loaded and your inventory is always kept up to date, without having to perform manual updates.
+
+#### Most popular integrations
+* [VidaXL](https://storelinkr.com/en/integrations/vidaxl-dropshipment)
+* [Skwirrel](https://storelinkr.com/en/integrations/skwirrel-online-store)
+* [CycleSoftware](https://storelinkr.com/en/integrations/cyclesoftware-dropshipment)
+* [Wilmar](https://storelinkr.com/en/integrations/wilmar-dropshipment)
+
+### Product feeds for advertising
+StoreLinkr offers a powerful product feed management system that allows you to easily manage CPC advertising. Manually select the products you want to promote or set up automated campaigns based on filters such as price, category or inventory status. With this solution, you are always visible on the largest advertising platforms such as Google Shopping and Facebook Ads.
+
+#### Popular product feeds
+* Google Merchant Center (formerly Google Shopping)
+* Meta product feeds (Facebook and Instagram)
+* Bing Ads
 
 ## THE #1 DATA LINK FOR YOUR WEBSHOP
 
@@ -18,7 +47,7 @@ Our data connection helps you to quickly and easily connect one or more wholesal
 
 This intermediate step allows us to read all catalog data from the wholesaler directly to our platform. On the StoreLinkr platform you can exclude, edit and overwrite data.
 
-Once the data is correct, it will only be transferred to your WordPress website. We update your online store at least 4 times a day and stock is even a maximum of 15 minutes old!
+Once the data is correct, it will only be transferred to your WordPress website. We update your online store at least 4 times a day and stock data on the StoreLinkr platform is maximum 15 minutes old!
 
 ### STAY IN CONTROL OF YOUR CATALOGUE
 
@@ -34,13 +63,9 @@ It is also possible to exclude products from export to your webshop based on:
 
 You can get started within a few minutes. Start your own StoreLinkr trial now and activate the first workflow to your WooCommerce online store to start dropshipping.
 
-### REQUEST ACCESS FROM A WHOLESALE STORE
+### GAIN MORE ECOMMERCE KNOWLEGDE
 
-We are currently integrating with a number of wholesalers and cash register systems. Including these systems:
-* [CycleSoftware](https://storelinkr.com/en/integrations/cyclesoftware-dropshipment)
-* [Wilmar](https://storelinkr.com/en/integrations/wilmar-dropshipment)
-
-It is important that you have been given access as a dropshipper with one of our affiliated wholesalers.
+Our comprehensive [eCommerce blog](https://storelinkr.com/en/blog) provides weekly insights into the industry, and we also have extensive [help articles and live chat](https://storelinkr.com/en/support) available to answer your questions.
 
 ### WE PROVIDE ALL THE TECHNOLOGY
 
