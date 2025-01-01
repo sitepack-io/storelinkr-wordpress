@@ -244,7 +244,8 @@ class StoreLinkrWooCommerceService
                 }
             }
         }
-        $product->add_meta_data('_product_attachments', json_encode($attachments), true);
+
+        $product->update_meta_data('_product_attachments', json_encode($attachments));
 
         return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
     }
