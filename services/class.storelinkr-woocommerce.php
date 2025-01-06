@@ -157,6 +157,15 @@ class StoreLinkrWooCommerceService
     public function mapProductFromData(WP_REST_Request $data): WC_Product
     {
         $product = new WC_Product_Simple();
+
+        if (!empty($data->get_param('sku'))) {
+            $productSku = $this->findProductBySku($data->get_param('sku'));
+
+            if ($productSku !== false) {
+                $product = $productSku;
+            }
+        }
+
         if (!empty($data->get_param('id'))) {
             $product = $this->findProduct($data->get_param('id'));
         }
@@ -301,6 +310,30 @@ class StoreLinkrWooCommerceService
         }
 
         return $product;
+    }
+
+    private function findProductBySku(mixed $get_param): WC_Product|WC_Product_Grouped|bool
+    {
+        $args = [
+            'post_type' => 'product',
+            'meta_key' => '_sku',
+            'meta_value' => sanitize_text_field($get_param),
+            'post_status' => 'any',
+            'posts_per_page' => 1,
+        ];
+
+        $query = new WP_Query($args);
+
+        if ($query->have_posts()) {
+            $product_id = $query->posts[0]->ID;
+            $product = wc_get_product($product_id);
+
+            if ($product) {
+                return $product;
+            }
+        }
+
+        return false;
     }
 
     public function saveProductImage(WC_Product $product, WP_REST_Request $request): int
