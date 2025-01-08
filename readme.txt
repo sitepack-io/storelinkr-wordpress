@@ -124,7 +124,7 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
-= 2.5.4 =
+= 2.5.5 =
 
 Release date: 2025-01-08
 
