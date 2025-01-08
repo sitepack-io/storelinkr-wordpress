@@ -291,8 +291,6 @@ class StoreLinkrRestApi
                 $invalidMediaIds[] = $mediaId;
             }
 
-            $this->eCommerceService->mergeDuplicateAttributes();
-
             return [
                 'status' => 'success',
                 'product_id' => $productId,

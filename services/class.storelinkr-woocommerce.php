@@ -272,22 +272,30 @@ class StoreLinkrWooCommerceService
                 continue;
             }
 
-            wc_create_attribute([
-                'name' => $facet['name'],
-                'type' => 'select'
-            ]);
-            if (taxonomy_exists('pa_' . self::formatName($facet['name'])) === false) {
-                register_taxonomy('pa_' . self::formatName($facet['name']), ['product'], []);
+            $attribute_name = self::formatName($facet['name']);
+            $attribute_taxonomy = 'pa_' . $attribute_name;
+
+            if (!taxonomy_exists($attribute_taxonomy)) {
+                wc_create_attribute([
+                    'name' => $facet['name'],
+                    'type' => 'select'
+                ]);
+                register_taxonomy($attribute_taxonomy, ['product'], []);
             }
-            wp_insert_term($facet['value'], 'pa_' . self::formatName($facet['name']));
+
+            $term = term_exists($facet['value'], $attribute_taxonomy);
+            if (!$term) {
+                $term = wp_insert_term($facet['value'], $attribute_taxonomy);
+            }
+
             wp_set_object_terms(
                 $productId,
-                $facet['value'],
-                'pa_' . self::formatName($facet['name']),
+                intval($term['term_id'] ?? $term),
+                $attribute_taxonomy,
                 true
             );
 
-            $data[self::formatName($facet['name'])] = [
+            $data[$attribute_name] = [
                 'name' => $facet['name'],
                 'value' => $facet['value'],
                 'is_visible' => 1,
