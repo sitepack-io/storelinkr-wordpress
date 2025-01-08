@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.5.4
+Stable tag: 2.5.5
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -11,7 +11,7 @@ Easily manage your online store and scale your sales with StoreLinkr. Automate p
 
 == Description ==
 
-Are you currently managing a webshop with a few sales per day and do you want to grow to hundreds or even thousands of orders? Manually managing your processes can quickly become too much. StoreLinkr helps you to easily automate your sales activities, so that you can focus on what really matters: your growth.
+Are you currently managing a WooCommerce webshop with a few sales per day and do you want to grow to hundreds or even thousands of orders? Manually managing your processes can quickly become too much. StoreLinkr helps you to easily automate your sales activities, so that you can focus on what really matters: your growth.
 
 With StoreLinkr you can manage everything from one central and clear platform. Whether you want to keep your inventory up to date or optimize your product advertisements, we have the solutions to make your webshop more efficient.
 
@@ -123,6 +123,18 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.5.5 =
+
+Release date: 2025-01-08
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Optimized attributes on products create and update
 
 = 2.5.4 =
 

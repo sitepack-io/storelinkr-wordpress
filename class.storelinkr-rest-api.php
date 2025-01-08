@@ -238,8 +238,6 @@ class StoreLinkrRestApi
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct($request, $product);
 
-            $this->eCommerceService->mergeDuplicateAttributes();
-
             return [
                 'status' => 'success',
                 'product_id' => $productId,
@@ -290,8 +288,6 @@ class StoreLinkrRestApi
 
                 $invalidMediaIds[] = $mediaId;
             }
-
-            $this->eCommerceService->mergeDuplicateAttributes();
 
             return [
                 'status' => 'success',

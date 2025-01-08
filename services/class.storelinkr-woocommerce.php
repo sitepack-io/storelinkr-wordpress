@@ -272,22 +272,39 @@ class StoreLinkrWooCommerceService
                 continue;
             }
 
-            wc_create_attribute([
-                'name' => $facet['name'],
-                'type' => 'select'
-            ]);
-            if (taxonomy_exists('pa_' . self::formatName($facet['name'])) === false) {
-                register_taxonomy('pa_' . self::formatName($facet['name']), ['product'], []);
+            $attribute_name = self::formatName($facet['name']);
+            $attribute_taxonomy = 'pa_' . $attribute_name;
+
+            $attributes = wc_get_attribute_taxonomies();
+            $attribute_exists = false;
+
+            foreach ($attributes as $attribute) {
+                if ($attribute->attribute_name === $attribute_name) {
+                    $attribute_exists = true;
+                    break;
+                }
             }
-            wp_insert_term($facet['value'], 'pa_' . self::formatName($facet['name']));
+
+            if (!$attribute_exists) {
+                wc_create_attribute([
+                    'name' => $facet['name'],
+                    'type' => 'select'
+                ]);
+
+                if (taxonomy_exists($attribute_taxonomy) === false) {
+                    register_taxonomy($attribute_taxonomy, ['product'], []);
+                }
+            }
+
+            wp_insert_term($facet['value'], $attribute_taxonomy);
             wp_set_object_terms(
                 $productId,
                 $facet['value'],
-                'pa_' . self::formatName($facet['name']),
+                $attribute_taxonomy,
                 true
             );
 
-            $data[self::formatName($facet['name'])] = [
+            $data[$attribute_name] = [
                 'name' => $facet['name'],
                 'value' => $facet['value'],
                 'is_visible' => 1,
