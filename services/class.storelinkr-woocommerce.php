@@ -275,22 +275,31 @@ class StoreLinkrWooCommerceService
             $attribute_name = self::formatName($facet['name']);
             $attribute_taxonomy = 'pa_' . $attribute_name;
 
-            if (!taxonomy_exists($attribute_taxonomy)) {
+            $attributes = wc_get_attribute_taxonomies();
+            $attribute_exists = false;
+
+            foreach ($attributes as $attribute) {
+                if ($attribute->attribute_name === $attribute_name) {
+                    $attribute_exists = true;
+                    break;
+                }
+            }
+
+            if (!$attribute_exists) {
                 wc_create_attribute([
                     'name' => $facet['name'],
                     'type' => 'select'
                 ]);
-                register_taxonomy($attribute_taxonomy, ['product'], []);
+
+                if (taxonomy_exists($attribute_taxonomy) === false) {
+                    register_taxonomy($attribute_taxonomy, ['product'], []);
+                }
             }
 
-            $term = term_exists($facet['value'], $attribute_taxonomy);
-            if (!$term) {
-                $term = wp_insert_term($facet['value'], $attribute_taxonomy);
-            }
-
+            wp_insert_term($facet['value'], $attribute_taxonomy);
             wp_set_object_terms(
                 $productId,
-                intval($term['term_id'] ?? $term),
+                $facet['value'],
                 $attribute_taxonomy,
                 true
             );
