@@ -403,15 +403,21 @@ class StoreLinkrWooCommerceService
      * @param string $source
      * @param string $name
      * @param string $slug
-     * @param string $parentUuid
+     * @param string $parentId
      * @return WP_Term
      * @throws Exception
      */
-    public function createCategory(string $source, string $name, string $slug, string $parentUuid): WP_Term
+    public function createCategory(string $source, string $name, string $slug, string $parentId): WP_Term
     {
+        $termExists = term_exists($name, 'product_cat', $parentId);
+
+        if ($termExists) {
+            return get_term($termExists['term_id'], 'product_cat');
+        }
+
         $term = wp_insert_term($name, 'product_cat', [
             'description' => null,
-            'parent' => (!empty($parentUuid)) ? $parentUuid : 0,
+            'parent' => (!empty($parentId)) ? $parentId : 0,
         ]);
 
         if ($term instanceof WP_Error) {
@@ -426,7 +432,7 @@ class StoreLinkrWooCommerceService
         if (!is_array($term)) {
             $existing = get_term_by('name', $name, 'product_cat');
 
-            if ((int)$existing->parent === (int)$parentUuid) {
+            if ((int)$existing->parent === (int)$parentId) {
                 return $existing;
             }
 
