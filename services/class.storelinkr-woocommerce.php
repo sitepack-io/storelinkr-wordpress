@@ -671,16 +671,11 @@ class StoreLinkrWooCommerceService
     private function getCorrespondingCategoryIds(int $categoryId): array
     {
         $categories = [$categoryId];
+        $currentCategory = $this->findCategory($categoryId);
 
-        $term = $this->findCategory($categoryId);
-        if (!empty($term->parent)) {
-            $categories[] = $term->parent;
-
-            $parent = $this->findCategory($term->parent);
-
-            if (!empty($parent->parent)) {
-                $categories[] = $parent->parent;
-            }
+        while (!empty($currentCategory) && !empty($currentCategory->parent)) {
+            $categories[] = $currentCategory->parent;
+            $currentCategory = $this->findCategory($currentCategory->parent);
         }
 
         return $categories;
