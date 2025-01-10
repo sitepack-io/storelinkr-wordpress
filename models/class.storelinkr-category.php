@@ -12,6 +12,8 @@ class StoreLinkrCategory implements \JsonSerializable
     private $categoryMain;
     private $categorySub;
     private $categorySubSub;
+    private $categorySubSubSub;
+    private $categorySubSubSubSub;
     private $url;
     private ?int $parentId;
 
@@ -21,6 +23,8 @@ class StoreLinkrCategory implements \JsonSerializable
         string $categoryMain,
         string $categorySub,
         string $categorySubSub,
+        string $categorySubSubSub,
+        string $categorySubSubSubSub,
         string $url,
         ?int $parentId = null
     ) {
@@ -29,6 +33,8 @@ class StoreLinkrCategory implements \JsonSerializable
         $this->categoryMain = $categoryMain;
         $this->categorySub = $categorySub;
         $this->categorySubSub = $categorySubSub;
+        $this->categorySubSubSub = $categorySubSubSub;
+        $this->categorySubSubSubSub = $categorySubSubSubSub;
         $this->url = $url;
         $this->parentId = $parentId;
     }
@@ -36,20 +42,30 @@ class StoreLinkrCategory implements \JsonSerializable
     public static function fromWooCommerce(array $categories, WP_Term $data)
     {
         $parent = null;
-        $parentsParent = null;
+        $grandParent = null;
+        $greatGrandParent = null;
+        $greatGreatGrandParent = null;
 
         if (!empty($data->parent)) {
             $parent = $categories[$data->parent];
         }
         if (!empty($parent->parent)) {
-            $parentsParent = $categories[$parent->parent];
+            $grandParent = $categories[$parent->parent];
+        }
+        if (!empty($grandParent->parent)) {
+            $greatGrandParent = $categories[$grandParent->parent];
+        }
+        if (!empty($greatGrandParent->parent)) {
+            $greatGreatGrandParent = $categories[$greatGrandParent->parent];
         }
 
-        if (!empty($parentsParent) && !empty($parent)) {
+        if (!empty($greatGreatGrandParent) && !empty($greatGrandParent) && !empty($grandParent) && !empty($parent)) {
             return new StoreLinkrCategory(
                 'WOOCOMMERCE',
                 $data->term_id,
-                $parentsParent->name,
+                $greatGreatGrandParent->name,
+                $greatGrandParent->name,
+                $grandParent->name,
                 $parent->name,
                 $data->name,
                 get_term_link($data),
@@ -57,12 +73,42 @@ class StoreLinkrCategory implements \JsonSerializable
             );
         }
 
-        if (empty($parentsParent) && !empty($parent)) {
+        if (empty($greatGreatGrandParent) && !empty($greatGrandParent) && !empty($grandParent) && !empty($parent)) {
+            return new StoreLinkrCategory(
+                'WOOCOMMERCE',
+                $data->term_id,
+                $greatGrandParent->name,
+                $grandParent->name,
+                $parent->name,
+                $data->name,
+                '',
+                get_term_link($data),
+                $data->parent
+            );
+        }
+
+        if (empty($greatGrandParent) && !empty($grandParent) && !empty($parent)) {
+            return new StoreLinkrCategory(
+                'WOOCOMMERCE',
+                $data->term_id,
+                $grandParent->name,
+                $parent->name,
+                $data->name,
+                '',
+                '',
+                get_term_link($data),
+                $data->parent
+            );
+        }
+
+        if (empty($grandParent) && !empty($parent)) {
             return new StoreLinkrCategory(
                 'WOOCOMMERCE',
                 $data->term_id,
                 $parent->name,
                 $data->name,
+                '',
+                '',
                 '',
                 get_term_link($data),
                 $data->parent
@@ -75,10 +121,13 @@ class StoreLinkrCategory implements \JsonSerializable
             $data->name,
             '',
             '',
+            '',
+            '',
             get_term_link($data),
             $data->parent
         );
     }
+
 
     /**
      * @return string
@@ -102,6 +151,16 @@ class StoreLinkrCategory implements \JsonSerializable
     public function getCategorySubSub(): string
     {
         return $this->categorySubSub;
+    }
+
+    public function getCategorySubSubSub(): string
+    {
+        return $this->categorySubSubSub;
+    }
+
+    public function getCategorySubSubSubSub(): string
+    {
+        return $this->categorySubSubSubSub;
     }
 
     public function jsonSerialize(): array
