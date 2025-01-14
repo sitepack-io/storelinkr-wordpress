@@ -1,5 +1,7 @@
 <?php
 
+use Automattic\WooCommerce\Internal\ProductAttributesLookup\LookupDataStore;
+
 if (!defined('ABSPATH')) {
     // Exit if accessed directly
     exit;
@@ -315,6 +317,8 @@ class StoreLinkrWooCommerceService
 
         update_post_meta($productId, '_product_attributes', $data);
 
+        $this->rebuildLookupTableForProduct($productId);
+
         return $productId;
     }
 
@@ -603,6 +607,12 @@ class StoreLinkrWooCommerceService
         }
 
         return $product;
+    }
+
+    public function rebuildLookupTableForProduct($product_id): void
+    {
+        $lookupDataStore = new LookupDataStore();
+        $lookupDataStore->create_data_for_product($product_id);
     }
 
     public function mergeDuplicateAttributes(): void

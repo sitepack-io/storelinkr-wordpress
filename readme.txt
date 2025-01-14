@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.5.9
+Stable tag: 2.5.10
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -123,6 +123,18 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.5.10 =
+
+Release date: 2025-01-15
+
+#### Enhancements
+
+* Rebuild WooCommerce lookup table after changing the product attributes
+
+#### Bugfixes
+
+None
 
 = 2.5.9 =
 
