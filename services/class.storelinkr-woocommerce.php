@@ -475,7 +475,8 @@ class StoreLinkrWooCommerceService
         array $removeProducts,
         bool $groupedVariant,
         array $variantInfo = [],
-        ?int $variantId = null
+        ?int $variantId = null,
+        array $images = [],
     ): null|int {
         foreach ($products as $wooProductId) {
             $wooProduct = $this->findProduct($wooProductId);
@@ -529,6 +530,11 @@ class StoreLinkrWooCommerceService
             $variantProduct->set_catalog_visibility('visible');
 
             $variantId = $variantProduct->save();
+
+            $this->linkProductGalleryImages(
+                $variantProduct,
+                $images
+            );
         } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 
@@ -567,7 +573,7 @@ class StoreLinkrWooCommerceService
         return $variantId;
     }
 
-    public function linkProductGalleryImages(WC_Product $product, array $images): WC_Product
+    public function linkProductGalleryImages(WC_Product|WC_Product_Grouped $product, array $images): WC_Product|WC_Product_Grouped
     {
         if (
             empty($images)

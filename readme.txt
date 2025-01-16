@@ -124,6 +124,19 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
+= 2.6.0 =
+
+Release date: 2025-01-16
+
+#### Enhancements
+
+* List products in API for product feeds and marketplaces
+* Create product image for grouped product
+
+#### Bugfixes
+
+None
+
 = 2.5.10 =
 
 Release date: 2025-01-15
