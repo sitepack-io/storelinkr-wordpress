@@ -313,14 +313,14 @@ class StoreLinkrWooCommerceService
                     );
                 }
 
-                $attribute_obj = new WC_Product_Attribute();
-                $attribute_obj->set_id($attribute_id);
-                $attribute_obj->set_name($attribute_taxonomy);
-                $attribute_obj->set_options([$facet['value']]);
-                $attribute_obj->set_visible(true);
-                $attribute_obj->set_variation(false);
+                $attribute_object = new WC_Product_Attribute();
+                $attribute_object->set_id($attribute_id);
+                $attribute_object->set_name($attribute_taxonomy);
+                $attribute_object->set_options([$facet['value']]);
+                $attribute_object->set_visible(true);
+                $attribute_object->set_variation(false);
 
-                $product_attributes[$attribute_taxonomy] = $attribute_obj;
+                $product_attributes[$attribute_taxonomy] = $attribute_object;
             }
 
             $product->set_attributes($product_attributes);

@@ -225,7 +225,7 @@ class StoreLinkrRestApi
             $this->authenticateRequest($request);
 
             $page = $request->get_param('page') ? intval($request->get_param('page')) : 1;
-            $posts_per_page = 10;
+            $posts_per_page = 250;
 
             $args = [
                 'post_type' => 'product',
