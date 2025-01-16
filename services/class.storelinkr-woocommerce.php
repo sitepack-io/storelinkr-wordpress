@@ -261,61 +261,71 @@ class StoreLinkrWooCommerceService
         return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
     }
 
-    public function saveProduct(WP_REST_Request $request, WC_Product $product): int
+    public function saveProduct(WP_REST_Request $request, WC_Product|WC_Product_Grouped $product): int
     {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
         $product->set_status('publish');
 
         $productId = $product->save();
-        $data = [];
 
-        foreach ($request['facets'] as $facet) {
-            if (empty($facet['name']) || empty($facet['value'])) {
-                continue;
-            }
+        if (!empty($request['facets'])) {
+            $product = wc_get_product($productId);
+            $product_attributes = $product->get_attributes();
 
-            $attribute_name = self::formatName($facet['name']);
-            $attribute_taxonomy = 'pa_' . $attribute_name;
-
-            $attributes = wc_get_attribute_taxonomies();
-            $attribute_exists = false;
-
-            foreach ($attributes as $attribute) {
-                if ($attribute->attribute_name === $attribute_name) {
-                    $attribute_exists = true;
-                    break;
+            foreach ($request['facets'] as $facet) {
+                if (empty($facet['name']) || empty($facet['value'])) {
+                    continue;
                 }
-            }
 
-            if (!$attribute_exists) {
-                wc_create_attribute([
-                    'name' => $facet['name'],
-                    'type' => 'select'
-                ]);
+                $attribute_name = self::formatName($facet['name']);
+                $attribute_taxonomy = 'pa_' . $attribute_name;
 
-                if (taxonomy_exists($attribute_taxonomy) === false) {
-                    register_taxonomy($attribute_taxonomy, ['product'], []);
+                $attributes = wc_get_attribute_taxonomies();
+                $attribute_exists = false;
+                $attribute_id = 0;
+
+                foreach ($attributes as $attribute) {
+                    if ($attribute->attribute_name === $attribute_name) {
+                        $attribute_exists = true;
+                        $attribute_id = $attribute->attribute_id;
+                        break;
+                    }
                 }
+
+                if (!$attribute_exists) {
+                    $attribute_id = wc_create_attribute([
+                        'name' => $facet['name'],
+                        'type' => 'select'
+                    ]);
+
+                    if (taxonomy_exists($attribute_taxonomy) === false) {
+                        register_taxonomy($attribute_taxonomy, ['product'], []);
+                    }
+                }
+
+                $term = wp_insert_term($facet['value'], $attribute_taxonomy);
+                if (!is_wp_error($term)) {
+                    wp_set_object_terms(
+                        $productId,
+                        $term['term_id'],
+                        $attribute_taxonomy,
+                        true
+                    );
+                }
+
+                $attribute_object = new WC_Product_Attribute();
+                $attribute_object->set_id($attribute_id);
+                $attribute_object->set_name($attribute_taxonomy);
+                $attribute_object->set_options([$facet['value']]);
+                $attribute_object->set_visible(true);
+                $attribute_object->set_variation(false);
+
+                $product_attributes[$attribute_taxonomy] = $attribute_object;
             }
 
-            wp_insert_term($facet['value'], $attribute_taxonomy);
-            wp_set_object_terms(
-                $productId,
-                $facet['value'],
-                $attribute_taxonomy,
-                true
-            );
-
-            $data[$attribute_name] = [
-                'name' => $facet['name'],
-                'value' => $facet['value'],
-                'is_visible' => 1,
-                'is_variation' => 0,
-                'is_taxonomy' => 0,
-            ];
+            $product->set_attributes($product_attributes);
+            $product->save();
         }
-
-        update_post_meta($productId, '_product_attributes', $data);
 
         $this->rebuildLookupTableForProduct($productId);
 
@@ -471,11 +481,13 @@ class StoreLinkrWooCommerceService
     }
 
     public function linkProductsAsVariant(
+        WP_REST_Request $request,
         array $products,
         array $removeProducts,
         bool $groupedVariant,
         array $variantInfo = [],
-        ?int $variantId = null
+        ?int $variantId = null,
+        array $images = [],
     ): null|int {
         foreach ($products as $wooProductId) {
             $wooProduct = $this->findProduct($wooProductId);
@@ -528,7 +540,12 @@ class StoreLinkrWooCommerceService
             $variantProduct->set_status('publish');
             $variantProduct->set_catalog_visibility('visible');
 
-            $variantId = $variantProduct->save();
+            $this->linkProductGalleryImages(
+                $variantProduct,
+                $images
+            );
+
+            $variantId = $this->saveProduct($request, $variantProduct);
         } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 
@@ -567,8 +584,10 @@ class StoreLinkrWooCommerceService
         return $variantId;
     }
 
-    public function linkProductGalleryImages(WC_Product $product, array $images): WC_Product
-    {
+    public function linkProductGalleryImages(
+        WC_Product|WC_Product_Grouped $product,
+        array $images
+    ): WC_Product|WC_Product_Grouped {
         if (
             empty($images)
             && ($product->get_gallery_image_ids() !== [] || !empty($product->get_image_id()))
@@ -612,7 +631,7 @@ class StoreLinkrWooCommerceService
     public function rebuildLookupTableForProduct($product_id): void
     {
         $lookupDataStore = new LookupDataStore();
-        $lookupDataStore->create_data_for_product($product_id);
+        $lookupDataStore->create_data_for_product($product_id, false);
     }
 
     public function mergeDuplicateAttributes(): void

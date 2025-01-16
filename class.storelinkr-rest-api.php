@@ -59,6 +59,11 @@ class StoreLinkrRestApi
             'callback' => [$this, 'renderOrders'],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/products', [
+            'methods' => 'GET',
+            'callback' => [$this, 'renderListProducts'],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route('storelinkr/v1', '/products/create', [
             'methods' => 'POST',
             'callback' => [$this, 'renderCreateProduct'],
@@ -209,6 +214,128 @@ class StoreLinkrRestApi
                 'status' => 'success',
                 'orders' => $this->eCommerceService->getOrders(),
             ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderListProducts(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+
+            $page = $request->get_param('page') ? intval($request->get_param('page')) : 1;
+            $posts_per_page = 250;
+
+            $args = [
+                'post_type' => 'product',
+                'post_status' => 'publish',
+                'posts_per_page' => $posts_per_page,
+                'paged' => $page,
+            ];
+
+            $query = new WP_Query($args);
+            $products = $query->posts;
+            $total_records = $query->found_posts;
+            $total_pages = $query->max_num_pages;
+
+            $data = [
+                'status' => 'success',
+                'total_records' => $total_records,
+                'total_pages' => $total_pages,
+                'current_page' => $page,
+                'products' => [],
+            ];
+
+            foreach ($products as $product_post) {
+                $product = wc_get_product($product_post->ID);
+                $price_cents = round(floatval($product->get_price()) * 100);
+                $promo_price_cents = round(floatval($product->get_sale_price()) * 100);
+
+                $categories = get_the_terms($product->get_id(), 'product_cat');
+                $category_hierarchy = array();
+                if ($categories && !is_wp_error($categories)) {
+                    $category_hierarchy = array_pad(
+                        wp_list_pluck($categories, 'name'),
+                        5,
+                        null
+                    );
+                }
+
+                $images = [];
+                $image_ids = array_unique(array_merge([$product->get_image_id()], $product->get_gallery_image_ids()));
+                foreach ($image_ids as $image_id) {
+                    if (empty($image_id)) {
+                        continue;
+                    }
+
+                    $images[] = [
+                        'url' => wp_get_attachment_url($image_id),
+                        'id' => $image_id,
+                        'alt' => get_post_meta($image_id, '_wp_attachment_image_alt', true),
+                    ];
+                }
+
+                $facets = [];
+                foreach ($product->get_attributes() as $facet) {
+                    assert($facet instanceof WC_Product_Attribute);
+
+                    $facets[] = [
+                        'name' => $facet->get_name(),
+                        'values' => $facet->get_options(),
+                        'visible' => $facet->get_visible(),
+                        'variation' => $facet->get_variation(),
+                    ];
+                }
+
+                $data['products'][] = [
+                    'id' => $product->get_id(),
+                    'url' => get_permalink($product->get_id()),
+                    'product_type' => $product::class,
+                    'catalog_visibility' => $product->get_catalog_visibility(),
+                    'virtual' => $product->is_virtual(),
+                    'downloadable' => $product->is_downloadable(),
+                    'featured' => $product->is_featured(),
+                    'ean' => $product->get_global_unique_id(),
+                    'sku' => $product->get_sku(),
+                    'brand' => $product->get_attribute('pa_brand'),
+                    'title' => get_the_title($product->get_id()),
+                    'name' => $product->get_name(),
+                    'short_description' => $product->get_short_description(),
+                    'description' => $product->get_description(),
+                    'price_cents' => $price_cents,
+                    'promo_price_cents' => $promo_price_cents,
+                    'stock' => [
+                        'stock_management' => $product->managing_stock(),
+                        'has_stock' => $product->is_in_stock(),
+                        'quantity' => $product->get_stock_quantity(),
+                        'allow_backorder' => $product->backorders_allowed(),
+                    ],
+                    'dimensions' => [
+                        'length' => $product->get_length(),
+                        'width' => $product->get_width(),
+                        'height' => $product->get_height(),
+                        'unit' => get_option('woocommerce_dimension_unit'),
+                    ],
+                    'weight' => [
+                        'weight' => $product->get_weight(),
+                        'unit' => get_option('woocommerce_weight_unit'),
+                    ],
+                    'category_main' => $category_hierarchy[0] ?? null,
+                    'category_sub' => $category_hierarchy[1] ?? null,
+                    'category_sub_sub' => $category_hierarchy[2] ?? null,
+                    'category_sub_sub_sub' => $category_hierarchy[3] ?? null,
+                    'category_sub_sub_sub_sub' => $category_hierarchy[4] ?? null,
+                    'images' => $images,
+                    'facets' => $facets,
+                    'rating' => [
+                        'total' => $product->get_rating_count(),
+                        'average' => $product->get_average_rating(),
+                    ],
+                ];
+            }
+
+            return new WP_REST_Response($data, 200);
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
         }
@@ -372,11 +499,13 @@ class StoreLinkrRestApi
 
             $groupedVariant = isset($request['groupedVariant']) ? (bool)$request['groupedVariant'] : false;
             $variantId = $this->eCommerceService->linkProductsAsVariant(
-                products: (!empty($request['products'])) ? (array)$request['products'] : [],
-                removeProducts: (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
-                groupedVariant: $groupedVariant,
-                variantInfo: (isset($request['variant'])) ? (array)$request['variant'] : [],
-                variantId: (isset($request['variant']['id'])) ? (int)$request['variant']['id'] : null
+                $request,
+                (!empty($request['products'])) ? (array)$request['products'] : [],
+                (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
+                $groupedVariant,
+                (isset($request['variant'])) ? (array)$request['variant'] : [],
+                (isset($request['variant']['id'])) ? (int)$request['variant']['id'] : null,
+                (!empty($request['images'])) ? $request['images'] : [],
             );
 
             return [
