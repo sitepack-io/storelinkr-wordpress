@@ -292,6 +292,7 @@ class StoreLinkrRestApi
                     'id' => $product->get_id(),
                     'url' => get_permalink($product->get_id()),
                     'product_type' => $product::class,
+                    'catalog_visibility' => $product->get_catalog_visibility(),
                     'virtual' => $product->is_virtual(),
                     'downloadable' => $product->is_downloadable(),
                     'featured' => $product->is_featured(),
@@ -327,6 +328,10 @@ class StoreLinkrRestApi
                     'category_sub_sub_sub_sub' => $category_hierarchy[4] ?? null,
                     'images' => $images,
                     'facets' => $facets,
+                    'rating' => [
+                        'total' => $product->get_rating_count(),
+                        'average' => $product->get_average_rating(),
+                    ],
                 ];
             }
 
@@ -494,12 +499,13 @@ class StoreLinkrRestApi
 
             $groupedVariant = isset($request['groupedVariant']) ? (bool)$request['groupedVariant'] : false;
             $variantId = $this->eCommerceService->linkProductsAsVariant(
-                products: (!empty($request['products'])) ? (array)$request['products'] : [],
-                removeProducts: (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
-                groupedVariant: $groupedVariant,
-                variantInfo: (isset($request['variant'])) ? (array)$request['variant'] : [],
-                variantId: (isset($request['variant']['id'])) ? (int)$request['variant']['id'] : null,
-                images: (!emptY($request['images'])) ? $request['images'] : [],
+                $request,
+                (!empty($request['products'])) ? (array)$request['products'] : [],
+                (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
+                $groupedVariant,
+                (isset($request['variant'])) ? (array)$request['variant'] : [],
+                (isset($request['variant']['id'])) ? (int)$request['variant']['id'] : null,
+                (!empty($request['images'])) ? $request['images'] : [],
             );
 
             return [
