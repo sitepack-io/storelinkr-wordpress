@@ -203,23 +203,30 @@ class StoreLinkrWooCommerceService
         }
 
         $product->set_category_ids($this->getCorrespondingCategoryIds((int )$data->get_param('categoryId')));
-        $product->set_manage_stock(true);
-        $product->set_stock_quantity(0);
-        $product->set_stock_status('outofstock');
-        if (
-            (bool)$data->get_param('hasStock') === true
-            || (int)$data->get_param('inStock') >= 1
-            || (int)$data->get_param('stockSupplier') >= 1
-        ) {
-            $product->set_stock_status('instock');
-            $product->set_stock_quantity((int)$data->get_param('inStock') + (int)$data->get_param('stockSupplier'));
 
-            if ($product->get_stock_quantity() < 1) {
-                $product->set_stock_quantity(1);
+        $updateStockInfo = true;
+        if ($data->get_param('updateStock') !== null) {
+            $updateStockInfo = (bool)$data->get_param('updateStock');
+        }
+
+        if ($updateStockInfo === true) {
+            $product->set_manage_stock(true);
+            $product->set_stock_quantity(0);
+            $product->set_stock_status('outofstock');
+            if (
+                (bool)$data->get_param('hasStock') === true
+                || (int)$data->get_param('inStock') >= 1
+                || (int)$data->get_param('stockSupplier') >= 1
+            ) {
+                $product->set_stock_status('instock');
+                $product->set_stock_quantity((int)$data->get_param('inStock') + (int)$data->get_param('stockSupplier'));
+
+                if ($product->get_stock_quantity() < 1) {
+                    $product->set_stock_quantity(1);
+                }
             }
         }
 
-        $metaData = [];
         if (!empty($data->get_param('metadata'))) {
             $json = \json_decode($data->get_param('metadata'), true);
 
