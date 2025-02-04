@@ -271,6 +271,7 @@ class StoreLinkrWooCommerceService
         if (!empty($request['facets'])) {
             $product = wc_get_product($productId);
             $product_attributes = $product->get_attributes();
+            $existing_facets = [];
 
             foreach ($request['facets'] as $facet) {
                 if (empty($facet['name']) || empty($facet['value'])) {
@@ -279,6 +280,7 @@ class StoreLinkrWooCommerceService
 
                 $attribute_name = self::formatName($facet['name']);
                 $attribute_taxonomy = 'pa_' . $attribute_name;
+                $existing_facets[] = $attribute_taxonomy;
 
                 $attributes = wc_get_attribute_taxonomies();
                 $attribute_exists = false;
@@ -321,6 +323,12 @@ class StoreLinkrWooCommerceService
                 $attribute_object->set_variation(false);
 
                 $product_attributes[$attribute_taxonomy] = $attribute_object;
+            }
+
+            foreach ($product_attributes as $key => $attribute) {
+                if (!in_array($key, $existing_facets)) {
+                    unset($product_attributes[$key]);
+                }
             }
 
             $product->set_attributes($product_attributes);
