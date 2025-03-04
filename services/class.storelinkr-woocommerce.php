@@ -160,6 +160,18 @@ class StoreLinkrWooCommerceService
     {
         $product = new WC_Product_Simple();
 
+        $updateStockInfo = true;
+        if ($data->get_param('updateStock') !== null) {
+            $updateStockInfo = (bool)$data->get_param('updateStock');
+        }
+
+        $updatePriceInfo = true;
+        if ($data->get_param('updatePrice') !== null) {
+            $updatePriceInfo = (bool)$data->get_param('updatePrice');
+        }
+
+        // Mapping:
+
         if (!empty($data->get_param('sku'))) {
             $productSku = $this->findProductBySku($data->get_param('sku'));
 
@@ -171,7 +183,6 @@ class StoreLinkrWooCommerceService
         if (!empty($data->get_param('id'))) {
             $product = $this->findProduct($data->get_param('id'));
         }
-
         if (!empty($data->get_param('sku'))) {
             $product->set_sku($data->get_param('sku'));
         }
@@ -180,19 +191,24 @@ class StoreLinkrWooCommerceService
         }
 
         $product->set_name($data->get_param('name'));
-        $product->set_regular_price($this->formatPrice((int)$data->get_param('salesPrice')));
 
-        if (!empty($data['promoSalesPrice'])) {
-            $product->set_sale_price($this->formatPrice((int)$data->get_param('promoSalesPrice')));
-        }
+        if ($updatePriceInfo === true) {
+            $product->set_regular_price($this->formatPrice((int)$data->get_param('salesPrice')));
 
-        $product->set_date_on_sale_from(null);
-        $product->set_date_on_sale_to(null);
-        if (!empty($data->get_param('promoStart')) && !empty($data->get_param('promoEnd'))) {
-            $product->set_date_on_sale_from(
-                (new DateTimeImmutable($data->get_param('promoStart')))->format('Y-m-d H:i:s')
-            );
-            $product->set_date_on_sale_to((new DateTimeImmutable($data->get_param('promoEnd')))->format('Y-m-d H:i:s'));
+            if (!empty($data['promoSalesPrice'])) {
+                $product->set_sale_price($this->formatPrice((int)$data->get_param('promoSalesPrice')));
+            }
+
+            $product->set_date_on_sale_from(null);
+            $product->set_date_on_sale_to(null);
+            if (!empty($data->get_param('promoStart')) && !empty($data->get_param('promoEnd'))) {
+                $product->set_date_on_sale_from(
+                    (new DateTimeImmutable($data->get_param('promoStart')))->format('Y-m-d H:i:s')
+                );
+                $product->set_date_on_sale_to(
+                    (new DateTimeImmutable($data->get_param('promoEnd')))->format('Y-m-d H:i:s')
+                );
+            }
         }
 
         if (!empty($data->get_param('shortDescription'))) {
@@ -202,12 +218,7 @@ class StoreLinkrWooCommerceService
             $product->set_description($data->get_param('longDescription'));
         }
 
-        $product->set_category_ids($this->getCorrespondingCategoryIds((int )$data->get_param('categoryId')));
-
-        $updateStockInfo = true;
-        if ($data->get_param('updateStock') !== null) {
-            $updateStockInfo = (bool)$data->get_param('updateStock');
-        }
+        $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data->get_param('categoryId')));
 
         if ($updateStockInfo === true) {
             $product->set_manage_stock(true);
