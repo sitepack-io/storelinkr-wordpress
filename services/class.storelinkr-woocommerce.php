@@ -286,98 +286,46 @@ class StoreLinkrWooCommerceService
 
         $productId = $product->save();
 
-        if (!empty($request['facets'])) {
+        // TODO: add as argument in the method
+        $facets = $request['facets'];
+
+        if (!empty($facets)) {
             $product = wc_get_product($productId);
             $product_attributes = $product->get_attributes();
             $existing_facets = [];
 
-            if (is_string($request['facets'])) {
-                $request['facets'] = json_decode($request['facets'], true);
+            if (is_string($facets)) {
+                $facets = json_decode($facets, true);
             }
 
-            if (is_iterable($request['facets'])) {
-                foreach ($request['facets'] as $facet) {
+            if (is_iterable($facets)) {
+                foreach ($facets as $facet) {
                     if (empty($facet['name']) || empty($facet['value'])) {
                         continue;
                     }
 
-                    $attribute_name = self::formatName($facet['name']);
-                    $slug = $this->buildAttributeSlug(self::formatName($facet['name']));
-                    $attribute_taxonomy = 'pa_' . $slug;
-                    $existing_facets[] = $attribute_taxonomy;
+                    $attribute_taxonomy_key = wc_attribute_taxonomy_name(
+                        $this->buildAttributeSlug(self::formatName($facet['name']))
+                    );
+                    $attribute_id = $this->upsertAttributeAndTerm(
+                        $productId,
+                        $attribute_taxonomy_key,
+                        $facet['name'],
+                        $facet['value']
+                    );
 
-                    $attributes = wc_get_attribute_taxonomies();
-                    $attribute_exists = false;
-                    $attribute_id = 0;
-
-                    foreach ($attributes as $attribute) {
-                        if (
-                            $attribute->attribute_name === $attribute_name
-                            || $attribute->attribute_name === $slug
-                            || $attribute->attribute_name === $attribute_taxonomy
-                        ) {
-                            $attribute_exists = true;
-                            $attribute_id = $attribute->attribute_id;
-                            break;
-                        }
-                    }
-
-                    if ($attribute_exists === false) {
-                        $attribute_id = wc_create_attribute([
-                            'name' => $facet['name'],
-                            'slug' => $slug,
-                            'type' => 'select'
-                        ]);
-
-                        if (is_wp_error($attribute_id)) {
-                            var_dump('Attribute');
-                            var_dump($attributes);
-                            var_dump($attribute_id);
-                            exit;
-                        }
-
-                        if (taxonomy_exists($attribute_taxonomy) === false) {
-                            register_taxonomy($attribute_taxonomy, ['product'], []);
-                        }
-                    }
-
-                    if (taxonomy_exists($attribute_taxonomy)) {
-                        $term = term_exists(
-                            $facet['value'],
-                            $attribute_taxonomy
-                        );
-                        if (!$term) {
-                            $term = wp_insert_term($facet['value'], $attribute_taxonomy, [
-                                'slug' => $this->buildAttributeSlug(self::formatName($facet['value']))
-                            ]);
-                        }
-
-                        if (is_wp_error($term)) {
-                            var_dump('Term');
-                            var_dump($term);
-                            exit;
-                        }
-
-                        if (!is_wp_error($term)) {
-                            wp_set_object_terms(
-                                $productId,
-                                $term['term_id'],
-                                $attribute_taxonomy,
-                                true
-                            );
-                        }
-                    }
-
-                    if (!is_wp_error($attribute_id)) {
+                    if (!is_int($attribute_id)) {
                         $attribute_object = new WC_Product_Attribute();
                         $attribute_object->set_id($attribute_id);
-                        $attribute_object->set_name($attribute_taxonomy);
+                        $attribute_object->set_name($attribute_taxonomy_key);
                         $attribute_object->set_options([$facet['value']]);
                         $attribute_object->set_visible(true);
                         $attribute_object->set_variation(false);
 
-                        $product_attributes[$attribute_taxonomy] = $attribute_object;
+                        $product_attributes[$attribute_taxonomy_key] = $attribute_object;
                     }
+
+                    $existing_facets[] = $attribute_taxonomy_key;
                 }
             }
 
@@ -832,7 +780,158 @@ class StoreLinkrWooCommerceService
 
         $hash = md5($input);
 
-        return substr($input, 0, 18) . '-' . substr($hash, 5, 8);
+        return substr($input, 0, 17) . '-' . substr($hash, 5, 7);
+    }
+
+    private function createAttribute(string $name, string $slug): int
+    {
+        $attribute_id = wc_create_attribute([
+            'name' => $name,
+            'slug' => $slug,
+            'type' => 'select'
+        ]);
+
+        if (is_wp_error($attribute_id)) {
+            print_r('Attribute error');
+            print_r($name);
+            print_r($slug);
+            exit;
+        }
+
+        return $attribute_id;
+    }
+
+    /**
+     * @param string $attribute_name
+     * @param string $slug
+     * @param string $attribute_taxonomy_key
+     * @param string $name
+     *
+     * @return array<string, bool|int>
+     */
+    private function findExistingAttribute(
+        string $attribute_name,
+        string $slug,
+        string $attribute_taxonomy_key,
+        string $name
+    ): array {
+        $attributes = wc_get_attribute_taxonomies();
+
+        foreach ($attributes as $attribute) {
+            if (
+                $attribute->attribute_name === $attribute_name
+                || $attribute->attribute_name === $slug
+                || 'pa_' . $attribute->attribute_name === wc_attribute_taxonomy_name($slug)
+                || $attribute->attribute_name === $attribute_taxonomy_key
+                || $attribute->attribute_name === $name
+            ) {
+                return [
+                    'exists' => true,
+                    'attribute_id' => $attribute->attribute_id,
+                    'attribute_name' => $attribute->attribute_name,
+                    'attribute_label' => $attribute->attribute_label,
+                ];
+            }
+        }
+
+        return [
+            'exists' => false,
+            'attribute_id' => 0,
+            'attribute_name' => $attribute_taxonomy_key,
+        ];
+    }
+
+    private function upsertAttributeAndTerm(int $productId, string $attribute_taxonomy_key, string $name, mixed $value)
+    {
+        $attribute_name = self::formatName($name);
+        $slug = $this->buildAttributeSlug(self::formatName($name));
+        $attribute_exists = false;
+        $attribute_id = 0;
+
+        $existingAttribute = $this->findExistingAttribute(
+            $attribute_name,
+            $slug,
+            $attribute_taxonomy_key,
+            $name
+        );
+        if (isset($existingAttribute['exists']) && isset($existingAttribute['attribute_id'])) {
+            $attribute_exists = $existingAttribute['exists'];
+            $attribute_id = $existingAttribute['attribute_id'];
+        }
+
+        if ($attribute_exists === false) {
+            $attribute_id = $this->createAttribute($name, $slug);
+
+            if (taxonomy_exists($attribute_taxonomy_key) === false) {
+                $registerResult = register_taxonomy($attribute_taxonomy_key, ['product'], []);
+
+                if (is_wp_error($registerResult)) {
+                    print_r('register failed');
+                    print_r($registerResult);
+                    exit;
+                }
+            }
+        }
+
+        if (taxonomy_exists($attribute_taxonomy_key) === false) {
+            $attribute_taxonomy_key = $existingAttribute['attribute_name'];
+        }
+
+        if (taxonomy_exists($attribute_taxonomy_key)) {
+            $term = term_exists(
+                $this->buildAttributeSlug(self::formatName($value)),
+                $attribute_taxonomy_key
+            );
+            if (!$term) {
+                $term = wp_insert_term($value, $attribute_taxonomy_key, [
+                    'slug' => $this->buildAttributeSlug(self::formatName($value))
+                ]);
+            }
+
+            if (is_wp_error($term)) {
+                print_r('Term');
+                print_r($term);
+                exit;
+            }
+
+            if (!is_array($term)) {
+                print_r($name);
+                print_r($term);
+                print_r($attribute_taxonomy_key);
+                exit;
+            }
+
+            if (!is_wp_error($term)) {
+                wp_set_object_terms(
+                    $productId,
+                    $term['term_id'],
+                    $attribute_taxonomy_key,
+                    true
+                );
+
+                return $attribute_id;
+            }
+        }
+
+        if (taxonomy_exists($attribute_taxonomy_key) === false) {
+            print_r('attr not exists');
+            echo "\n";
+            print_r($attribute_exists);
+            echo "\n";
+            print_r(taxonomy_exists($attribute_taxonomy_key));
+            echo "\n";
+            print_r($name);
+            echo "\n";
+            print_r($attribute_id);
+            echo "\n";
+            print_r($attribute_taxonomy_key);
+            echo "\n";
+            print_r($slug);
+            echo "\n";
+            exit;
+        }
+
+        return $attribute_id;
     }
 
 }
