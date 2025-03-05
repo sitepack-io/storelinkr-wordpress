@@ -363,12 +363,13 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
-            $productId = $this->eCommerceService->saveProduct($request, $product);
+            $productId = $this->eCommerceService->saveProduct($request, $product, $request['facets']);
 
             return [
                 'status' => 'success',
                 'product_id' => $productId,
                 'url' => get_permalink($productId),
+                'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -398,7 +399,7 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
-            $productId = $this->eCommerceService->saveProduct($request, $product);
+            $productId = $this->eCommerceService->saveProduct($request, $product, $request['facets']);
 
             $invalidMediaIds = [];
             foreach ($gallery as $mediaId) {
@@ -422,6 +423,7 @@ class StoreLinkrRestApi
                 'url' => get_permalink($productId),
                 'images' => $gallery,
                 'invalid_media' => $invalidMediaIds,
+                'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -434,9 +436,16 @@ class StoreLinkrRestApi
             $this->authenticateRequest($request);
             $this->validateRequiredFields($request, [
                 'id',
-                'imageContent',
                 'alt',
             ]);
+
+            if (!empty($request['cdn_url'])) {
+                $request['imageContent'] = base64_encode(file_get_contents($request['cdn_url']));
+            }
+
+            if (empty($request['imageContent'])) {
+                throw new Exception('Pleas set the image content or could not fetch CDN url!');
+            }
 
             $product = $this->eCommerceService->findProduct($request['id']);
             $mediaId = $this->eCommerceService->saveProductImage(
@@ -463,6 +472,7 @@ class StoreLinkrRestApi
                 ],
                 'image_id' => $mediaId,
                 'image_url' => wp_get_attachment_url($mediaId),
+                'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());

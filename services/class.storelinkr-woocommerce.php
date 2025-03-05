@@ -12,6 +12,8 @@ require_once(STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-category.php');
 class StoreLinkrWooCommerceService
 {
 
+    private array $warnings = [];
+
     public function getCategories(): array
     {
         $product_categories = get_terms([
@@ -279,68 +281,55 @@ class StoreLinkrWooCommerceService
         return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
     }
 
-    public function saveProduct(WP_REST_Request $request, WC_Product|WC_Product_Grouped $product): int
+    public function saveProduct(WP_REST_Request $request, WC_Product|WC_Product_Grouped $product, array $facets): int
     {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
         $product->set_status('publish');
 
         $productId = $product->save();
 
-        if (!empty($request['facets'])) {
+        if (!empty($facets)) {
             $product = wc_get_product($productId);
             $product_attributes = $product->get_attributes();
             $existing_facets = [];
 
-            foreach ($request['facets'] as $facet) {
-                if (empty($facet['name']) || empty($facet['value'])) {
-                    continue;
-                }
+            if (is_string($facets)) {
+                $facets = json_decode($facets, true);
+            }
 
-                $attribute_name = self::formatName($facet['name']);
-                $attribute_taxonomy = 'pa_' . $attribute_name;
-                $existing_facets[] = $attribute_taxonomy;
-
-                $attributes = wc_get_attribute_taxonomies();
-                $attribute_exists = false;
-                $attribute_id = 0;
-
-                foreach ($attributes as $attribute) {
-                    if ($attribute->attribute_name === $attribute_name) {
-                        $attribute_exists = true;
-                        $attribute_id = $attribute->attribute_id;
-                        break;
+            if (is_iterable($facets)) {
+                foreach ($facets as $facet) {
+                    if (empty($facet['name']) || empty($facet['value'])) {
+                        continue;
                     }
-                }
 
-                if (!$attribute_exists) {
-                    $attribute_id = wc_create_attribute([
-                        'name' => $facet['name'],
-                        'type' => 'select'
-                    ]);
-
-                    if (taxonomy_exists($attribute_taxonomy) === false) {
-                        register_taxonomy($attribute_taxonomy, ['product'], []);
-                    }
-                }
-
-                $term = wp_insert_term($facet['value'], $attribute_taxonomy);
-                if (!is_wp_error($term)) {
-                    wp_set_object_terms(
-                        $productId,
-                        $term['term_id'],
-                        $attribute_taxonomy,
-                        true
+                    $attribute_taxonomy_key = wc_attribute_taxonomy_name(
+                        $this->buildAttributeSlug(self::formatName($facet['name']))
                     );
+                    $attribute_id = $this->upsertAttributeAndTerm(
+                        $productId,
+                        $attribute_taxonomy_key,
+                        $facet['name'],
+                        $facet['value']
+                    );
+
+                    if (!is_int($attribute_id)) {
+                        $attribute_object = new WC_Product_Attribute();
+                        $attribute_object->set_id($attribute_id);
+                        $attribute_object->set_name($attribute_taxonomy_key);
+                        $attribute_object->set_options([$facet['value']]);
+                        $attribute_object->set_visible(true);
+                        $attribute_object->set_variation(false);
+
+                        if (isset($facet['position'])) {
+                            $attribute_object->set_position($facet['position']);
+                        }
+
+                        $product_attributes[$attribute_taxonomy_key] = $attribute_object;
+                    }
+
+                    $existing_facets[] = $attribute_taxonomy_key;
                 }
-
-                $attribute_object = new WC_Product_Attribute();
-                $attribute_object->set_id($attribute_id);
-                $attribute_object->set_name($attribute_taxonomy);
-                $attribute_object->set_options([$facet['value']]);
-                $attribute_object->set_visible(true);
-                $attribute_object->set_variation(false);
-
-                $product_attributes[$attribute_taxonomy] = $attribute_object;
             }
 
             foreach ($product_attributes as $key => $attribute) {
@@ -571,7 +560,7 @@ class StoreLinkrWooCommerceService
                 $images
             );
 
-            $variantId = $this->saveProduct($request, $variantProduct);
+            $variantId = $this->saveProduct($request, $variantProduct, $request['facets']);
         } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 
@@ -729,6 +718,11 @@ class StoreLinkrWooCommerceService
         }
     }
 
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
+
     private function getCorrespondingCategoryIds(int $categoryId): array
     {
         $categories = [$categoryId];
@@ -783,6 +777,133 @@ class StoreLinkrWooCommerceService
         }
 
         return \floatval($priceCents / 100);
+    }
+
+    private function buildAttributeSlug(string $input): string
+    {
+        $input = trim($input);
+        if (strlen($input) <= 25) {
+            return $input;
+        }
+
+        $hash = md5($input);
+
+        return substr($input, 0, 17) . '-' . substr($hash, 5, 7);
+    }
+
+    private function createAttribute(string $name, string $slug): int
+    {
+        $attribute_id = wc_create_attribute([
+            'name' => $name,
+            'slug' => $slug,
+            'type' => 'select'
+        ]);
+
+        if (is_wp_error($attribute_id)) {
+            $this->logWarning('StoreLinkr error: Attribute create failed: ' . $attribute_id->get_error_message());
+        }
+
+        return $attribute_id;
+    }
+
+    /**
+     * @param string $slug
+     * @param string $attribute_taxonomy_key
+     * @return array<string, bool|int>
+     */
+    private function findExistingAttribute(
+        string $slug,
+        string $attribute_taxonomy_key
+    ): array {
+        $attributes = wc_get_attribute_taxonomies();
+
+        foreach ($attributes as $attribute) {
+            if (
+                $attribute->attribute_name === $slug
+                || 'pa_' . $attribute->attribute_name === wc_attribute_taxonomy_name($slug)
+                || $attribute->attribute_name === $attribute_taxonomy_key
+            ) {
+                return [
+                    'exists' => true,
+                    'attribute_id' => $attribute->attribute_id,
+                    'attribute_name' => $attribute->attribute_name,
+                    'attribute_label' => $attribute->attribute_label,
+                ];
+            }
+        }
+
+        return [
+            'exists' => false,
+            'attribute_id' => 0,
+            'attribute_name' => $attribute_taxonomy_key,
+        ];
+    }
+
+    private function upsertAttributeAndTerm(int $productId, string $attribute_taxonomy_key, string $name, mixed $value)
+    {
+        $slug = $this->buildAttributeSlug(self::formatName($name));
+        $attribute_exists = false;
+        $attribute_id = 0;
+
+        $existingAttribute = $this->findExistingAttribute(
+            $slug,
+            $attribute_taxonomy_key,
+        );
+        if (isset($existingAttribute['exists']) && isset($existingAttribute['attribute_id'])) {
+            $attribute_exists = $existingAttribute['exists'];
+            $attribute_id = $existingAttribute['attribute_id'];
+        }
+
+        if ($attribute_exists === false || taxonomy_exists($attribute_taxonomy_key) === false) {
+            $attribute_id = $this->createAttribute($name, $slug);
+
+            if (taxonomy_exists($attribute_taxonomy_key) === false) {
+                $registerResult = register_taxonomy($attribute_taxonomy_key, ['product'], []);
+
+                if (is_wp_error($registerResult)) {
+                    $this->logWarning(
+                        'StoreLinkr error: Register attribute failed: ' . $registerResult->get_error_message()
+                    );
+                }
+            }
+        }
+
+        if (taxonomy_exists($attribute_taxonomy_key)) {
+            $term = term_exists(
+                $this->buildAttributeSlug(self::formatName($value)),
+                $attribute_taxonomy_key
+            );
+            if (!$term) {
+                $term = wp_insert_term($value, $attribute_taxonomy_key, [
+                    'slug' => $this->buildAttributeSlug(self::formatName($value))
+                ]);
+            }
+
+            if (is_wp_error($term)) {
+                $this->logWarning(
+                    'StoreLinkr error: Term attribute: ' . $term->get_error_message()
+                );
+            }
+
+            if (!is_wp_error($term)) {
+                wp_set_object_terms(
+                    $productId,
+                    $value,
+                    $attribute_taxonomy_key,
+                    false
+                );
+
+                return $attribute_id;
+            }
+        }
+
+        return $attribute_id;
+    }
+
+    private function logWarning(string $string): void
+    {
+        $this->warnings[] = trim($string);
+        error_log($string);
     }
 
 }
