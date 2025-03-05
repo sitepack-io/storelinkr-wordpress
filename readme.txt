@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.6.3
+Stable tag: 2.6.4
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -123,6 +123,18 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.6.4 =
+
+Release date: 2025-03-05
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Fallback for facet data, validate if string was already json decoded and validate if array is iterable
 
 = 2.6.3 =
 
