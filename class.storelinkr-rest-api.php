@@ -363,12 +363,13 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
-            $productId = $this->eCommerceService->saveProduct($request, $product);
+            $productId = $this->eCommerceService->saveProduct($request, $product, $request['facets']);
 
             return [
                 'status' => 'success',
                 'product_id' => $productId,
                 'url' => get_permalink($productId),
+                'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -398,7 +399,7 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
-            $productId = $this->eCommerceService->saveProduct($request, $product);
+            $productId = $this->eCommerceService->saveProduct($request, $product, $request['facets']);
 
             $invalidMediaIds = [];
             foreach ($gallery as $mediaId) {
@@ -422,6 +423,7 @@ class StoreLinkrRestApi
                 'url' => get_permalink($productId),
                 'images' => $gallery,
                 'invalid_media' => $invalidMediaIds,
+                'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
@@ -463,6 +465,7 @@ class StoreLinkrRestApi
                 ],
                 'image_id' => $mediaId,
                 'image_url' => wp_get_attachment_url($mediaId),
+                'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());

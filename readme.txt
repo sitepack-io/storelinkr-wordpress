@@ -130,7 +130,8 @@ Release date: 2025-03-05
 
 #### Enhancements
 
-None
+* Support for longer attribute names (max length was 28 characters due to data model in WooCommerce)
+* Improved code for creating and storing product attributes
 
 #### Bugfixes
 

@@ -12,6 +12,8 @@ require_once(STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-category.php');
 class StoreLinkrWooCommerceService
 {
 
+    private array $warnings = [];
+
     public function getCategories(): array
     {
         $product_categories = get_terms([
@@ -279,15 +281,12 @@ class StoreLinkrWooCommerceService
         return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
     }
 
-    public function saveProduct(WP_REST_Request $request, WC_Product|WC_Product_Grouped $product): int
+    public function saveProduct(WP_REST_Request $request, WC_Product|WC_Product_Grouped $product, array $facets): int
     {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
         $product->set_status('publish');
 
         $productId = $product->save();
-
-        // TODO: add as argument in the method
-        $facets = $request['facets'];
 
         if (!empty($facets)) {
             $product = wc_get_product($productId);
@@ -321,6 +320,10 @@ class StoreLinkrWooCommerceService
                         $attribute_object->set_options([$facet['value']]);
                         $attribute_object->set_visible(true);
                         $attribute_object->set_variation(false);
+
+                        if (isset($facet['position'])) {
+                            $attribute_object->set_position($facet['position']);
+                        }
 
                         $product_attributes[$attribute_taxonomy_key] = $attribute_object;
                     }
@@ -557,7 +560,7 @@ class StoreLinkrWooCommerceService
                 $images
             );
 
-            $variantId = $this->saveProduct($request, $variantProduct);
+            $variantId = $this->saveProduct($request, $variantProduct, $request['facets']);
         } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 
@@ -715,6 +718,11 @@ class StoreLinkrWooCommerceService
         }
     }
 
+    public function getWarnings(): array
+    {
+        return $this->warnings;
+    }
+
     private function getCorrespondingCategoryIds(int $categoryId): array
     {
         $categories = [$categoryId];
@@ -792,38 +800,28 @@ class StoreLinkrWooCommerceService
         ]);
 
         if (is_wp_error($attribute_id)) {
-            print_r('Attribute error');
-            print_r($name);
-            print_r($slug);
-            exit;
+            $this->logWarning('StoreLinkr error: Attribute create failed: ' . $attribute_id->get_error_message());
         }
 
         return $attribute_id;
     }
 
     /**
-     * @param string $attribute_name
      * @param string $slug
      * @param string $attribute_taxonomy_key
-     * @param string $name
-     *
      * @return array<string, bool|int>
      */
     private function findExistingAttribute(
-        string $attribute_name,
         string $slug,
-        string $attribute_taxonomy_key,
-        string $name
+        string $attribute_taxonomy_key
     ): array {
         $attributes = wc_get_attribute_taxonomies();
 
         foreach ($attributes as $attribute) {
             if (
-                $attribute->attribute_name === $attribute_name
-                || $attribute->attribute_name === $slug
+                $attribute->attribute_name === $slug
                 || 'pa_' . $attribute->attribute_name === wc_attribute_taxonomy_name($slug)
                 || $attribute->attribute_name === $attribute_taxonomy_key
-                || $attribute->attribute_name === $name
             ) {
                 return [
                     'exists' => true,
@@ -843,38 +841,31 @@ class StoreLinkrWooCommerceService
 
     private function upsertAttributeAndTerm(int $productId, string $attribute_taxonomy_key, string $name, mixed $value)
     {
-        $attribute_name = self::formatName($name);
         $slug = $this->buildAttributeSlug(self::formatName($name));
         $attribute_exists = false;
         $attribute_id = 0;
 
         $existingAttribute = $this->findExistingAttribute(
-            $attribute_name,
             $slug,
             $attribute_taxonomy_key,
-            $name
         );
         if (isset($existingAttribute['exists']) && isset($existingAttribute['attribute_id'])) {
             $attribute_exists = $existingAttribute['exists'];
             $attribute_id = $existingAttribute['attribute_id'];
         }
 
-        if ($attribute_exists === false) {
+        if ($attribute_exists === false || taxonomy_exists($attribute_taxonomy_key) === false) {
             $attribute_id = $this->createAttribute($name, $slug);
 
             if (taxonomy_exists($attribute_taxonomy_key) === false) {
                 $registerResult = register_taxonomy($attribute_taxonomy_key, ['product'], []);
 
                 if (is_wp_error($registerResult)) {
-                    print_r('register failed');
-                    print_r($registerResult);
-                    exit;
+                    $this->logWarning(
+                        'StoreLinkr error: Register attribute failed: ' . $registerResult->get_error_message()
+                    );
                 }
             }
-        }
-
-        if (taxonomy_exists($attribute_taxonomy_key) === false) {
-            $attribute_taxonomy_key = $existingAttribute['attribute_name'];
         }
 
         if (taxonomy_exists($attribute_taxonomy_key)) {
@@ -889,49 +880,30 @@ class StoreLinkrWooCommerceService
             }
 
             if (is_wp_error($term)) {
-                print_r('Term');
-                print_r($term);
-                exit;
-            }
-
-            if (!is_array($term)) {
-                print_r($name);
-                print_r($term);
-                print_r($attribute_taxonomy_key);
-                exit;
+                $this->logWarning(
+                    'StoreLinkr error: Term attribute: ' . $term->get_error_message()
+                );
             }
 
             if (!is_wp_error($term)) {
                 wp_set_object_terms(
                     $productId,
-                    $term['term_id'],
+                    $value,
                     $attribute_taxonomy_key,
-                    true
+                    false
                 );
 
                 return $attribute_id;
             }
         }
 
-        if (taxonomy_exists($attribute_taxonomy_key) === false) {
-            print_r('attr not exists');
-            echo "\n";
-            print_r($attribute_exists);
-            echo "\n";
-            print_r(taxonomy_exists($attribute_taxonomy_key));
-            echo "\n";
-            print_r($name);
-            echo "\n";
-            print_r($attribute_id);
-            echo "\n";
-            print_r($attribute_taxonomy_key);
-            echo "\n";
-            print_r($slug);
-            echo "\n";
-            exit;
-        }
-
         return $attribute_id;
+    }
+
+    private function logWarning(string $string): void
+    {
+        $this->warnings[] = trim($string);
+        error_log($string);
     }
 
 }
