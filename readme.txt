@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.6.4
+Stable tag: 2.7.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -124,14 +124,15 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
-= 2.6.4 =
+= 2.7.0 =
 
 Release date: 2025-03-05
 
 #### Enhancements
 
+* Download images directly from the StoreLinkr CDN instead of receiving the image content in the API call
 * Support for longer attribute names (max length was 28 characters due to data model in WooCommerce)
-* Improved code for creating and storing product attributes
+* Improved code for creating and linking product attributes
 
 #### Bugfixes
 
