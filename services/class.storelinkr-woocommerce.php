@@ -582,7 +582,12 @@ class StoreLinkrWooCommerceService
                 $images
             );
 
-            $variantId = $this->saveProduct($request, $variantProduct, $request['facets']);
+            $facets = [];
+            if (!empty($request['facets'])) {
+                $facets = (array)$request['facets'];
+            }
+
+            $variantId = $this->saveProduct($request, $variantProduct, $facets);
         } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 

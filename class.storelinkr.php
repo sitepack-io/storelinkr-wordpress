@@ -69,7 +69,6 @@ class StoreLinkr
         }
 
         $data = json_decode($response['body'], true);
-
         $locations = [];
         if (isset($data['stock']['locations']) && is_array($data['stock']['locations'])) {
             foreach ($data['stock']['locations'] as $dataLocation) {
