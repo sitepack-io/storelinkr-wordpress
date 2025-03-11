@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.7.0
+Stable tag: 2.7.1
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -123,6 +123,19 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.7.1 =
+
+Release date: 2025-03-12
+
+#### Enhancements
+
+* Support for Brand taxonomies in WooCommerce
+
+#### Bugfixes
+
+* Download images from the StoreLinkr CDN with wp safe method, fixes Entity too large warning
+* Stock call undefined notice fixed
 
 = 2.7.0 =
 

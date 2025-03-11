@@ -439,14 +439,6 @@ class StoreLinkrRestApi
                 'alt',
             ]);
 
-            if (!empty($request['cdn_url'])) {
-                $request['imageContent'] = base64_encode(file_get_contents($request['cdn_url']));
-            }
-
-            if (empty($request['imageContent'])) {
-                throw new Exception('Pleas set the image content or could not fetch CDN url!');
-            }
-
             $product = $this->eCommerceService->findProduct($request['id']);
             $mediaId = $this->eCommerceService->saveProductImage(
                 $product,
