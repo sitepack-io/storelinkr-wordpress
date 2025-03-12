@@ -388,7 +388,29 @@ class StoreLinkrWooCommerceService
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/media.php';
 
-        $decoded = base64_decode(str_replace(['data:image/jpeg;base64,', ' '], ['', '+'], $request['imageContent']));
+        $imageContent = null;
+        if (!empty($request['cdn_url'])) {
+            $response = wp_remote_get($request['cdn_url'], [
+                'headers' => [
+                    'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
+                ],
+            ]);
+
+            if (is_wp_error($response)) {
+                throw new Exception('Image download failed:' . $response->get_error_message());
+            }
+
+            $imageContent = wp_remote_retrieve_body($response);
+        }
+
+        if (empty($request['cdn_url']) && empty($request['imageContent'])) {
+            throw new Exception('Pleas set the image content or could not fetch CDN url!');
+        }
+
+        if (empty($imageContent)) {
+            throw new Exception('Empty image content!');
+        }
+
         $filename = sprintf(
             '%d_%s_%d.jpg',
             $product->get_id(),
@@ -397,7 +419,7 @@ class StoreLinkrWooCommerceService
         );
         $file_type = 'image/jpeg';
 
-        $upload = wp_upload_bits($filename, null, $decoded);
+        $upload = wp_upload_bits($filename, null, $imageContent);
 
         if ($upload['error']) {
             throw new Exception('Error while uploading image: ' . esc_attr($upload['error']));
@@ -560,7 +582,12 @@ class StoreLinkrWooCommerceService
                 $images
             );
 
-            $variantId = $this->saveProduct($request, $variantProduct, $request['facets']);
+            $facets = [];
+            if (!empty($request['facets'])) {
+                $facets = (array)$request['facets'];
+            }
+
+            $variantId = $this->saveProduct($request, $variantProduct, $facets);
         } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 

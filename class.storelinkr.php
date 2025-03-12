@@ -55,7 +55,6 @@ class StoreLinkr
             );
         }
 
-
         if (empty($response['body'])) {
             return new StoreLinkrStock(
                 false,
@@ -70,9 +69,8 @@ class StoreLinkr
         }
 
         $data = json_decode($response['body'], true);
-
         $locations = [];
-        if (is_array($data['stock']['locations'])) {
+        if (isset($data['stock']['locations']) && is_array($data['stock']['locations'])) {
             foreach ($data['stock']['locations'] as $dataLocation) {
                 $locations[] = StoreLinkrStockLocation::fromStoreLinkrData($dataLocation);
             }
