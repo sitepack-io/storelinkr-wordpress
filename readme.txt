@@ -130,7 +130,7 @@ Release date: 2025-03-12
 
 #### Enhancements
 
-* Support for Brand taxonomies in WooCommerce
+None
 
 #### Bugfixes
 
