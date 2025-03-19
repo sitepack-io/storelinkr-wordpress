@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
 Tested up to: 6.7
-Stable tag: 2.7.1
+Stable tag: 2.7.2
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -123,6 +123,20 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.7.2 =
+
+Release date: 2025-03-19
+
+#### Enhancements
+
+* Create brands in WooCommerce when a product is updated by using the new product_brand taxonomy
+* Stock info per stock location added, if multiple locations are available
+* Use filter "storelinkr_single_visibility" to change the single product visibility
+
+#### Bugfixes
+
+None
 
 = 2.7.1 =
 

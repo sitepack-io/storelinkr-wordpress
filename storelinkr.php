@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Stop manual work: the all-in-one platform for complete online store automation. Integrate with marketplaces, product feeds, and suppliers.
-Version: 2.7.1
+Version: 2.7.2
 Author: StoreLinkr
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.7.1');
+define('STORELINKR_VERSION', '2.7.2');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
@@ -148,7 +148,9 @@ if (!function_exists('storelinkrStockAjaxHandler')) {
 
 if (!function_exists('storeLinkrVariantDropdown')) {
     add_filter('woocommerce_single_product_summary', 'storeLinkrVariantDropdown', 25);
+    add_filter('woocommerce_single_product_summary', 'storeLinkrStockLocations', 32);
     add_action('wp_head', 'storeLinkrCustomProductPageCss');
+    add_action('wp_head', 'storeLinkrCustomProductPageStockCss');
 
     function storeLinkrVariantDropdown()
     {
@@ -194,6 +196,62 @@ if (!function_exists('storeLinkrVariantDropdown')) {
             $css .= '#storelinkr-variant-dropdown select { width: 100%; height: 40px; font-size: 14px; font-weight: 400; display: block; padding: 0 7px; }';
 
             $css = apply_filters('storelinkr_variant_css', $css);
+
+            echo '<style>' . esc_html($css) . '</style>';
+        }
+    }
+
+    function storeLinkrStockLocations()
+    {
+        global $product;
+
+        if (!empty($product->get_meta('stock_locations', null))) {
+            $data = $product->get_meta('stock_locations', null);
+            if(!is_array($data)){
+                return;
+            }
+            $locations = current($data);
+
+            if(!$locations instanceof WC_Meta_Data || !isset($locations->get_data()['value'])){
+                return;
+            }
+
+            $html = '<table id="sl-product-stock-locations">';
+            foreach ($locations->get_data()['value'] as $location) {
+                if (empty($location['name'])) {
+                    continue;
+                }
+
+                $html .= '<tr>';
+                $html .= '<td>' . esc_html($location['name']) . '</td>';
+                $html .= '<td class="sl-text-right">';
+                if((int)$location['quantity'] === 0){
+                    $html .= '<span class="sl-sold-out">' . __('Out of stock', 'storelinkr') . '</span>';
+                }
+                else{
+                    $html .= '<span class="sl-in-stock">' . __('In stock', 'storelinkr') . '</span>';
+                    $html .= ' <span class="sl-muted">' . esc_attr($location['quantity']);
+                    $html .= ' ' . __('piece(s)', 'storelinkr') .  '</span>';
+                }
+                $html .= '</td>';
+                $html .= '</tr>';
+            }
+            $html .= '</table>';
+
+            echo apply_filters('storelinkr_stock_html', $html, $product);
+        }
+    }
+
+    function storeLinkrCustomProductPageStockCss()
+    {
+        if (is_product()) {
+            $css = '#sl-product-stock-locations { width: 100%; }';
+            $css .= '#sl-product-stock-locations tr td.sl-text-right { text-align: right; }';
+            $css .= '#sl-product-stock-locations tr td span.sl-sold-out { color: #a94442 }';
+            $css .= '#sl-product-stock-locations tr td span.sl-in-stock { color: #3c763d }';
+            $css .= '#sl-product-stock-locations tr td span.sl-muted { color: #777 }';
+
+            $css = apply_filters('storelinkr_stock_css', $css);
 
             echo '<style>' . esc_html($css) . '</style>';
         }
