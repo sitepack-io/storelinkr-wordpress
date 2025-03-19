@@ -363,7 +363,12 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
-            $productId = $this->eCommerceService->saveProduct($request, $product, $request['facets']);
+            $productId = $this->eCommerceService->saveProduct(
+                $request,
+                $product,
+                $request['facets'],
+                (isset($request['brand'])) ? $request['brand'] : null
+            );
 
             return [
                 'status' => 'success',
@@ -399,7 +404,12 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
-            $productId = $this->eCommerceService->saveProduct($request, $product, $request['facets']);
+            $productId = $this->eCommerceService->saveProduct(
+                $request,
+                $product,
+                $request['facets'],
+                (isset($request['brand'])) ? $request['brand'] : null
+            );
 
             $invalidMediaIds = [];
             foreach ($gallery as $mediaId) {
@@ -508,6 +518,7 @@ class StoreLinkrRestApi
                 (isset($request['variant'])) ? (array)$request['variant'] : [],
                 (isset($request['variant']['id'])) ? (int)$request['variant']['id'] : null,
                 (!empty($request['images'])) ? $request['images'] : [],
+                (!empty($request['facets'])) ? $request['facets'] : [],
             );
 
             return [
@@ -515,6 +526,7 @@ class StoreLinkrRestApi
                 'variant_id' => ($groupedVariant === true) ? $variantId : null,
                 'variant_url' => ($groupedVariant === true && !empty($variantId))
                     ? get_permalink($variantId) : null,
+                'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());

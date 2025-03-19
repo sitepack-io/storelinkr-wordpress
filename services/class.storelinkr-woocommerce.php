@@ -281,12 +281,21 @@ class StoreLinkrWooCommerceService
         return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
     }
 
-    public function saveProduct(WP_REST_Request $request, WC_Product|WC_Product_Grouped $product, array $facets): int
-    {
+    public function saveProduct(
+        WP_REST_Request $request,
+        WC_Product|WC_Product_Grouped $product,
+        array $facets,
+        ?string $brandName = null
+    ): int {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
         $product->set_status('publish');
 
         $productId = $product->save();
+
+        if (!empty($brandName)) {
+            $brandTermId = $this->upsertBrandName($brandName);
+            wp_set_object_terms($productId, [$brandTermId], 'product_brand');
+        }
 
         if (!empty($facets)) {
             $product = wc_get_product($productId);
@@ -297,7 +306,7 @@ class StoreLinkrWooCommerceService
                 $facets = json_decode($facets, true);
             }
 
-            if (is_iterable($facets)) {
+            if (is_array($facets)) {
                 foreach ($facets as $facet) {
                     if (empty($facet['name']) || empty($facet['value'])) {
                         continue;
@@ -525,6 +534,7 @@ class StoreLinkrWooCommerceService
         array $variantInfo = [],
         ?int $variantId = null,
         array $images = [],
+        array $facets = [],
     ): null|int {
         foreach ($products as $wooProductId) {
             $wooProduct = $this->findProduct($wooProductId);
@@ -545,7 +555,9 @@ class StoreLinkrWooCommerceService
                 update_post_meta($wooProductId, 'storelinkr_variant_ids', $variantIds);
 
                 if ($groupedVariant === true) {
-                    $wooProduct->set_catalog_visibility('search');
+                    $wooProduct->set_catalog_visibility(
+                        apply_filters('storelinkr_single_visibility', 'search', $wooProductId)
+                    );
                     $wooProduct->save();
                 } else {
                     if ($wooProduct->get_catalog_visibility() !== 'visible') {
@@ -560,6 +572,12 @@ class StoreLinkrWooCommerceService
             $variantProduct = new WC_Product_Grouped();
             if (!empty($variantId)) {
                 $variantProduct = $this->findProduct($variantId);
+
+                if (!$variantProduct instanceof WC_Product_Grouped) {
+                    $this->logWarning('Invalid product class: ' . $variantProduct::class);
+
+                    throw new Exception('Invalid product class: ' . $variantProduct::class);
+                }
             }
 
             $variantProduct->set_children($products);
@@ -582,12 +600,12 @@ class StoreLinkrWooCommerceService
                 $images
             );
 
-            $facets = [];
-            if (!empty($request['facets'])) {
-                $facets = (array)$request['facets'];
-            }
-
-            $variantId = $this->saveProduct($request, $variantProduct, $facets);
+            $variantId = $this->saveProduct(
+                $request,
+                $variantProduct,
+                $facets,
+                (isset($variantInfo['brand'])) ? $variantInfo['brand'] : null
+            );
         } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 
@@ -925,6 +943,23 @@ class StoreLinkrWooCommerceService
         }
 
         return $attribute_id;
+    }
+
+    private function upsertBrandName(string $brandName): ?int
+    {
+        if (!term_exists($brandName, 'product_brand')) {
+            wp_insert_term(
+                $brandName,
+                'product_brand',
+                [
+                    'slug' => $this->buildAttributeSlug($brandName),
+                ]
+            );
+        }
+
+        $brand = get_term_by('name', $brandName, 'product_brand');
+
+        return $brand ? $brand->term_id : null;
     }
 
     private function logWarning(string $string): void
