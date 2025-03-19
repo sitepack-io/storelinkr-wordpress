@@ -249,7 +249,7 @@ if (!function_exists('storeLinkrVariantDropdown')) {
             $css .= '#sl-product-stock-locations tr td.sl-text-right { text-align: right; }';
             $css .= '#sl-product-stock-locations tr td span.sl-sold-out { color: #a94442 }';
             $css .= '#sl-product-stock-locations tr td span.sl-in-stock { color: #3c763d }';
-            $css .= '#sl-product-stock-locations tr td span.sl-text-muted { color: #777 }';
+            $css .= '#sl-product-stock-locations tr td span.sl-muted { color: #777 }';
 
             $css = apply_filters('storelinkr_stock_css', $css);
 
