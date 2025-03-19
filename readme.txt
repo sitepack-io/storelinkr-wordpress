@@ -130,13 +130,13 @@ Release date: 2025-03-19
 
 #### Enhancements
 
-* Suport for stock info on grouped variant page added
+* Create brands in WooCommerce when a product is updated by using the new product_brand taxonomy
 * Stock info per stock location added, if multiple locations are available
 * Use filter "storelinkr_single_visibility" to change the single product visibility
 
 #### Bugfixes
 
-* Create new grouped product if the variant was earlier created as a single product
+None
 
 = 2.7.1 =
 

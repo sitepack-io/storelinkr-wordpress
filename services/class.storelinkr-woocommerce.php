@@ -257,6 +257,17 @@ class StoreLinkrWooCommerceService
         $product->add_meta_data('site', $data->get_param('site'), true);
         $product->add_meta_data('ean', $data->get_param('ean'), true);
 
+        if (!empty($data->get_param('stockLocations'))) {
+            $stockInfo = $data->get_param('stockLocations');
+            $stockMeta = [];
+
+            if (is_array($stockInfo) && isset($stockInfo['locations'])) {
+                $stockMeta = $stockInfo['locations'];
+            }
+
+            $product->add_meta_data('stock_locations', $stockMeta, true);
+        }
+        
         if ($product->get_date_created() === null) {
             $product->set_date_created((new DateTimeImmutable())->format('Y-m-d H:i:s'));
         }
