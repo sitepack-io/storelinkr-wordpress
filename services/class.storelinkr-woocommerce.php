@@ -158,142 +158,7 @@ class StoreLinkrWooCommerceService
         return $formatted_orders;
     }
 
-    public function mapProductFromData(WP_REST_Request $data): WC_Product
-    {
-        $product = new WC_Product_Simple();
-
-        $updateStockInfo = true;
-        if ($data->get_param('updateStock') !== null) {
-            $updateStockInfo = (bool)$data->get_param('updateStock');
-        }
-
-        $updatePriceInfo = true;
-        if ($data->get_param('updatePrice') !== null) {
-            $updatePriceInfo = (bool)$data->get_param('updatePrice');
-        }
-
-        // Mapping:
-
-        if (!empty($data->get_param('sku'))) {
-            $productSku = $this->findProductBySku($data->get_param('sku'));
-
-            if ($productSku !== false) {
-                $product = $productSku;
-            }
-        }
-
-        if (!empty($data->get_param('id'))) {
-            $product = $this->findProduct($data->get_param('id'));
-        }
-        if (!empty($data->get_param('sku'))) {
-            $product->set_sku($data->get_param('sku'));
-        }
-        if (!empty($data->get_param('ean'))) {
-            $product->set_global_unique_id($data->get_param('ean'));
-        }
-
-        $product->set_name($data->get_param('name'));
-
-        if ($updatePriceInfo === true) {
-            $product->set_regular_price($this->formatPrice((int)$data->get_param('salesPrice')));
-
-            if (!empty($data['promoSalesPrice'])) {
-                $product->set_sale_price($this->formatPrice((int)$data->get_param('promoSalesPrice')));
-            }
-
-            $product->set_date_on_sale_from(null);
-            $product->set_date_on_sale_to(null);
-            if (!empty($data->get_param('promoStart')) && !empty($data->get_param('promoEnd'))) {
-                $product->set_date_on_sale_from(
-                    (new DateTimeImmutable($data->get_param('promoStart')))->format('Y-m-d H:i:s')
-                );
-                $product->set_date_on_sale_to(
-                    (new DateTimeImmutable($data->get_param('promoEnd')))->format('Y-m-d H:i:s')
-                );
-            }
-        }
-
-        if (!empty($data->get_param('shortDescription'))) {
-            $product->set_short_description($data->get_param('shortDescription'));
-        }
-        if (!empty($data->get_param('longDescription'))) {
-            $product->set_description($data->get_param('longDescription'));
-        }
-
-        $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data->get_param('categoryId')));
-
-        if ($updateStockInfo === true) {
-            $product->set_manage_stock(true);
-            $product->set_stock_quantity(0);
-            $product->set_stock_status('outofstock');
-            if (
-                (bool)$data->get_param('hasStock') === true
-                || (int)$data->get_param('inStock') >= 1
-                || (int)$data->get_param('stockSupplier') >= 1
-            ) {
-                $product->set_stock_status('instock');
-                $product->set_stock_quantity((int)$data->get_param('inStock') + (int)$data->get_param('stockSupplier'));
-
-                if ($product->get_stock_quantity() < 1) {
-                    $product->set_stock_quantity(1);
-                }
-            }
-        }
-
-        if (!empty($data->get_param('metadata'))) {
-            $json = \json_decode($data->get_param('metadata'), true);
-
-            if (is_array($json)) {
-                $metaData = $json;
-
-                foreach ($metaData as $key => $value) {
-                    $product->add_meta_data($key, $value);
-                }
-            }
-        }
-
-        $product->add_meta_data('import_provider', 'STORELINKR', true);
-        $product->add_meta_data('import_source', $data->get_param('importSource'), true);
-        $product->add_meta_data('site', $data->get_param('site'), true);
-        $product->add_meta_data('ean', $data->get_param('ean'), true);
-
-        if (!empty($data->get_param('stockLocations'))) {
-            $stockInfo = $data->get_param('stockLocations');
-            $stockMeta = [];
-
-            if (is_array($stockInfo) && isset($stockInfo['locations'])) {
-                $stockMeta = $stockInfo['locations'];
-            }
-
-            $product->add_meta_data('stock_locations', $stockMeta, true);
-        }
-        
-        if ($product->get_date_created() === null) {
-            $product->set_date_created((new DateTimeImmutable())->format('Y-m-d H:i:s'));
-        }
-
-        $attachments = [];
-        if (!empty($data->get_param('attachments'))) {
-            if (is_array($data->get_param('attachments'))) {
-                foreach ($data->get_param('attachments') as $attachment) {
-                    $attachments[] = [
-                        'uuid' => $attachment['uuid'],
-                        'name' => $attachment['name'],
-                        'title' => (!empty($attachment['title'])) ? $attachment['title'] : null,
-                        'description' => (!empty($attachment['description'])) ? $attachment['description'] : null,
-                        'cdn_url' => $attachment['cdn_url'],
-                    ];
-                }
-            }
-        }
-
-        $product->update_meta_data('_product_attachments', json_encode($attachments));
-
-        return $this->linkProductGalleryImages($product, (array)$data->get_param('images'));
-    }
-
     public function saveProduct(
-        WP_REST_Request $request,
         WC_Product|WC_Product_Grouped $product,
         array $facets,
         ?string $brandName = null
@@ -538,7 +403,6 @@ class StoreLinkrWooCommerceService
     }
 
     public function linkProductsAsVariant(
-        WP_REST_Request $request,
         array $products,
         array $removeProducts,
         bool $groupedVariant,
@@ -612,7 +476,6 @@ class StoreLinkrWooCommerceService
             );
 
             $variantId = $this->saveProduct(
-                $request,
                 $variantProduct,
                 $facets,
                 (isset($variantInfo['brand'])) ? $variantInfo['brand'] : null
@@ -978,5 +841,135 @@ class StoreLinkrWooCommerceService
         $this->warnings[] = trim($string);
         error_log($string);
     }
+
+    public function mapProductFromDataArray(array $data): WC_Product
+    {
+        $product = new WC_Product_Simple();
+
+        $updateStockInfo = !(isset($data['updateStock'])) || (bool)$data['updateStock'];
+        $updatePriceInfo = !(isset($data['updatePrice'])) || (bool)$data['updatePrice'];
+
+        if (!empty($data['sku'])) {
+            $productSku = $this->findProductBySku($data['sku']);
+
+            if ($productSku !== false) {
+                $product = $productSku;
+            }
+        }
+
+        if (!empty($data['id'])) {
+            $product = $this->findProduct($data['id']);
+        }
+
+        if (!empty($data['sku'])) {
+            $product->set_sku($data['sku']);
+        }
+
+        if (!empty($data['ean'])) {
+            $product->set_global_unique_id($data['ean']);
+        }
+
+        $product->set_name((isset($data['name'])) ? $data['name'] : null);
+
+        if ($updatePriceInfo === true) {
+            $product->set_regular_price($this->formatPrice((int)$data['salesPrice']));
+
+            if (!empty($data['promoSalesPrice'])) {
+                $product->set_sale_price($this->formatPrice((int)$data['promoSalesPrice']));
+            }
+
+            $product->set_date_on_sale_from(null);
+            $product->set_date_on_sale_to(null);
+            if (!empty($data['promoStart']) && !empty($data['promoEnd'])) {
+                $product->set_date_on_sale_from(
+                    (new DateTimeImmutable($data['promoStart']))->format('Y-m-d H:i:s')
+                );
+                $product->set_date_on_sale_to(
+                    (new DateTimeImmutable($data['promoEnd']))->format('Y-m-d H:i:s')
+                );
+            }
+        }
+
+        if (!empty($data['shortDescription'])) {
+            $product->set_short_description($data['shortDescription']);
+        }
+
+        if (!empty($data['longDescription'])) {
+            $product->set_description($data['longDescription']);
+        }
+
+        $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
+
+        if ($updateStockInfo === true) {
+            $product->set_manage_stock(true);
+            $product->set_stock_quantity(0);
+            $product->set_stock_status('outofstock');
+
+            if (
+                (isset($data['hasStock']) && (bool)$data['hasStock'] === true) ||
+                (isset($data['inStock']) && (int)$data['inStock'] >= 1) ||
+                (isset($data['stockSupplier']) && (int)$data['stockSupplier'] >= 1)
+            ) {
+                $product->set_stock_status('instock');
+                $product->set_stock_quantity(
+                    (int)$data['inStock'] + (int)$data['stockSupplier']
+                );
+
+                if ($product->get_stock_quantity() < 1) {
+                    $product->set_stock_quantity(1);
+                }
+            }
+        }
+
+        if (!empty($data['metadata'])) {
+            $json = \json_decode($data['metadata'], true);
+
+            if (is_array($json)) {
+                foreach ($json as $key => $value) {
+                    $product->add_meta_data($key, $value);
+                }
+            }
+        }
+
+        $product->add_meta_data('import_provider', 'STORELINKR', true);
+        $product->add_meta_data('import_source', (isset($data['importSource'])) ? $data['importSource'] : null, true);
+        $product->add_meta_data('site', (isset($data['site'])) ? $data['site'] : null, true);
+        $product->add_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null, true);
+
+        if (!empty($data['stockLocations'])) {
+            $stockInfo = $data['stockLocations'];
+            $stockMeta = [];
+
+            if (is_array($stockInfo) && isset($stockInfo['locations'])) {
+                $stockMeta = $stockInfo['locations'];
+            }
+
+            $product->add_meta_data('stock_locations', $stockMeta, true);
+        }
+
+        if ($product->get_date_created() === null) {
+            $product->set_date_created((new DateTimeImmutable())->format('Y-m-d H:i:s'));
+        }
+
+        $attachments = [];
+        if (!empty($data['attachments'])) {
+            if (is_array($data['attachments'])) {
+                foreach ($data['attachments'] as $attachment) {
+                    $attachments[] = [
+                        'uuid' => $attachment['uuid'],
+                        'name' => $attachment['name'],
+                        'title' => (!empty($attachment['title'])) ? $attachment['title'] : null,
+                        'description' => (!empty($attachment['description'])) ? $attachment['description'] : null,
+                        'cdn_url' => $attachment['cdn_url'],
+                    ];
+                }
+            }
+        }
+
+        $product->update_meta_data('_product_attachments', json_encode($attachments));
+
+        return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
+    }
+
 
 }

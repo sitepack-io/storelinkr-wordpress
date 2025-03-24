@@ -110,6 +110,11 @@ class StoreLinkrRestApi
             'callback' => [$this, 'renderLinkVariants'],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/products/upsert-bulk', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderUpsertBulkProducts'],
+            'permission_callback' => '__return_true',
+        ]);
     }
 
     public function renderTestConnection(WP_REST_Request $request)
@@ -357,14 +362,13 @@ class StoreLinkrRestApi
                 'hasStock',
             ]);
 
-            $product = $this->eCommerceService->mapProductFromData(
-                $request
+            $product = $this->eCommerceService->mapProductFromDataArray(
+                $this->convertRequestToArray($request)
             );
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct(
-                $request,
                 $product,
                 $request['facets'],
                 (isset($request['brand'])) ? $request['brand'] : null
@@ -398,14 +402,13 @@ class StoreLinkrRestApi
                 'hasStock',
             ]);
 
-            $product = $this->eCommerceService->mapProductFromData(
-                $request
+            $product = $this->eCommerceService->mapProductFromDataArray(
+                $this->convertRequestToArray($request)
             );
 
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct(
-                $request,
                 $product,
                 $request['facets'],
                 (isset($request['brand'])) ? $request['brand'] : null
@@ -509,9 +512,8 @@ class StoreLinkrRestApi
                 'variant',
             ]);
 
-            $groupedVariant = isset($request['groupedVariant']) ? (bool)$request['groupedVariant'] : false;
+            $groupedVariant = isset($request['groupedVariant']) && (bool)$request['groupedVariant'];
             $variantId = $this->eCommerceService->linkProductsAsVariant(
-                $request,
                 (!empty($request['products'])) ? (array)$request['products'] : [],
                 (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
                 $groupedVariant,
@@ -526,6 +528,46 @@ class StoreLinkrRestApi
                 'variant_id' => ($groupedVariant === true) ? $variantId : null,
                 'variant_url' => ($groupedVariant === true && !empty($variantId))
                     ? get_permalink($variantId) : null,
+                'warnings' => $this->eCommerceService->getWarnings(),
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderUpsertBulkProducts(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'products',
+            ]);
+
+            if (!is_array($request->get_param('products'))) {
+                throw new Exception('Products is not an array!');
+            }
+
+            $result = [];
+            foreach ($request->get_param('products') as $uuid => $product) {
+                $product = $this->eCommerceService->mapProductFromDataArray($product);
+
+                $gallery = (array)$request->get_param('images');
+                $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+                $productId = $this->eCommerceService->saveProduct(
+                    $product,
+                    $request['facets'],
+                    (isset($request['brand'])) ? $request['brand'] : null
+                );
+
+                $result[$uuid] = [
+                    'product_id' => $productId,
+                    'url' => get_permalink($productId),
+                ];
+            }
+
+            return [
+                'status' => 'success',
+                'products' => $result,
                 'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
@@ -575,6 +617,34 @@ class StoreLinkrRestApi
                 throw new Exception('Missing data field: ' . esc_attr($field));
             }
         }
+    }
+
+    private function convertRequestToArray(WP_REST_Request $request): array
+    {
+        return [
+            'updateStock' => $request->get_param('updateStock'),
+            'updatePrice' => $request->get_param('updatePrice'),
+            'sku' => $request->get_param('sku'),
+            'id' => $request->get_param('id'),
+            'ean' => $request->get_param('ean'),
+            'name' => $request->get_param('name'),
+            'salesPrice' => $request->get_param('salesPrice'),
+            'promoSalesPrice' => $request->get_param('promoSalesPrice'),
+            'promoStart' => $request->get_param('promoStart'),
+            'promoEnd' => $request->get_param('promoEnd'),
+            'shortDescription' => $request->get_param('shortDescription'),
+            'longDescription' => $request->get_param('longDescription'),
+            'categoryId' => $request->get_param('categoryId'),
+            'hasStock' => $request->get_param('hasStock'),
+            'inStock' => $request->get_param('inStock'),
+            'stockSupplier' => $request->get_param('stockSupplier'),
+            'metadata' => $request->get_param('metadata'),
+            'importSource' => $request->get_param('importSource'),
+            'site' => $request->get_param('site'),
+            'stockLocations' => $request->get_param('stockLocations'),
+            'attachments' => $request->get_param('attachments'),
+            'images' => $request->get_param('images'),
+        ];
     }
 
 }
