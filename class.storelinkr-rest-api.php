@@ -548,21 +548,29 @@ class StoreLinkrRestApi
             }
 
             $result = [];
-            foreach ($request->get_param('products') as $uuid => $product) {
-                $product = $this->eCommerceService->mapProductFromDataArray($product);
+            foreach ($request->get_param('products') as $uuid => $rawProduct) {
+                try {
+                    $product = $this->eCommerceService->mapProductFromDataArray($rawProduct);
+                    $gallery = [];
+                    if (isset($rawProduct['images'])) {
+                        $gallery = (array)$rawProduct['images'];
+                    }
+                    $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+                    $productId = $this->eCommerceService->saveProduct(
+                        $product,
+                        $rawProduct['facets'],
+                        (isset($rawProduct['brand'])) ? $rawProduct['brand'] : null
+                    );
 
-                $gallery = (array)$request->get_param('images');
-                $this->eCommerceService->linkProductGalleryImages($product, $gallery);
-                $productId = $this->eCommerceService->saveProduct(
-                    $product,
-                    $request['facets'],
-                    (isset($request['brand'])) ? $request['brand'] : null
-                );
-
-                $result[$uuid] = [
-                    'product_id' => $productId,
-                    'url' => get_permalink($productId),
-                ];
+                    $result[$uuid] = [
+                        'product_id' => $productId,
+                        'url' => get_permalink($productId),
+                    ];
+                } catch (\Exception $exception) {
+                    $result[$uuid] = [
+                        'error' => $exception->getMessage(),
+                    ];
+                }
             }
 
             return [

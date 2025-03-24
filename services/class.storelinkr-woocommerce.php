@@ -237,7 +237,12 @@ class StoreLinkrWooCommerceService
         $product = wc_get_product($productId);
 
         if ($product === false) {
-            throw new Exception('Product not found!');
+            throw new Exception(
+                sprintf(
+                    'Product not found with id %s!',
+                    $productId
+                )
+            );
         }
 
         return $product;
@@ -955,6 +960,21 @@ class StoreLinkrWooCommerceService
         if (!empty($data['attachments'])) {
             if (is_array($data['attachments'])) {
                 foreach ($data['attachments'] as $attachment) {
+                    if (empty($attachment['uuid'])) {
+                        continue;
+                    }
+
+                    if (empty($attachment['cdn_url'])) {
+                        $this->logWarning(
+                            sprintf(
+                                'Empty CDN url, product %s attachment %s',
+                                $product->get_id(),
+                                $attachment['uuid']
+                            )
+                        );
+                        continue;
+                    }
+
                     $attachments[] = [
                         'uuid' => $attachment['uuid'],
                         'name' => $attachment['name'],
