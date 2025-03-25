@@ -126,7 +126,7 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 = 2.7.3 =
 
-Release date: 2025-03-24
+Release date: 2025-03-25
 
 #### Enhancements
 

@@ -569,6 +569,7 @@ class StoreLinkrRestApi
                 } catch (\Exception $exception) {
                     $result[$uuid] = [
                         'error' => $exception->getMessage(),
+                        'product_uuid' => $uuid,
                     ];
                 }
             }

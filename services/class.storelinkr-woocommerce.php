@@ -957,32 +957,31 @@ class StoreLinkrWooCommerceService
         }
 
         $attachments = [];
-        if (!empty($data['attachments'])) {
-            if (is_array($data['attachments'])) {
-                foreach ($data['attachments'] as $attachment) {
-                    if (empty($attachment['uuid'])) {
-                        continue;
-                    }
-
-                    if (empty($attachment['cdn_url'])) {
-                        $this->logWarning(
-                            sprintf(
-                                'Empty CDN url, product %s attachment %s',
-                                $product->get_id(),
-                                $attachment['uuid']
-                            )
-                        );
-                        continue;
-                    }
-
-                    $attachments[] = [
-                        'uuid' => $attachment['uuid'],
-                        'name' => $attachment['name'],
-                        'title' => (!empty($attachment['title'])) ? $attachment['title'] : null,
-                        'description' => (!empty($attachment['description'])) ? $attachment['description'] : null,
-                        'cdn_url' => $attachment['cdn_url'],
-                    ];
+        if (!empty($data['attachments']) && is_array($data['attachments'])) {
+            foreach ($data['attachments'] as $attachment) {
+                if (empty($attachment['uuid'])) {
+                    continue;
                 }
+
+                if (empty($attachment['cdn_url'])) {
+                    $this->logWarning(
+                        sprintf(
+                            'Empty CDN url, product %s attachment %s (data: %s)',
+                            $product->get_id(),
+                            $attachment['uuid'],
+                            json_encode($attachment)
+                        )
+                    );
+                    continue;
+                }
+
+                $attachments[] = [
+                    'uuid' => $attachment['uuid'],
+                    'name' => $attachment['name'],
+                    'title' => (!empty($attachment['title'])) ? $attachment['title'] : null,
+                    'description' => (!empty($attachment['description'])) ? $attachment['description'] : null,
+                    'cdn_url' => $attachment['cdn_url'],
+                ];
             }
         }
 
