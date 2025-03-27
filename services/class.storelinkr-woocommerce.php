@@ -876,7 +876,7 @@ class StoreLinkrWooCommerceService
 
         $product->set_name((isset($data['name'])) ? $data['name'] : null);
 
-        if ($updatePriceInfo === true) {
+        if ($updatePriceInfo === true && isset($data['salesPrice'])) {
             $product->set_regular_price($this->formatPrice((int)$data['salesPrice']));
 
             if (!empty($data['promoSalesPrice'])) {
@@ -903,7 +903,9 @@ class StoreLinkrWooCommerceService
             $product->set_description($data['longDescription']);
         }
 
-        $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
+        if(!empty($data['categoryId'])) {
+            $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
+        }
 
         if ($updateStockInfo === true) {
             $product->set_manage_stock(true);

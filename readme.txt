@@ -124,6 +124,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 == Changelog ==
 
+= 2.7.4 =
+
+Release date: 2025-03-27
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Minor checks for data consistency
+
 = 2.7.3 =
 
 Release date: 2025-03-25

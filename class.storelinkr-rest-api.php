@@ -550,6 +550,7 @@ class StoreLinkrRestApi
             $result = [];
             foreach ($request->get_param('products') as $uuid => $rawProduct) {
                 try {
+                    $rawProduct = (array)$rawProduct;
                     $product = $this->eCommerceService->mapProductFromDataArray($rawProduct);
                     $gallery = [];
                     if (isset($rawProduct['images'])) {
@@ -558,7 +559,7 @@ class StoreLinkrRestApi
                     $this->eCommerceService->linkProductGalleryImages($product, $gallery);
                     $productId = $this->eCommerceService->saveProduct(
                         $product,
-                        $rawProduct['facets'],
+                        (!empty($rawProduct['facets']) && is_array($rawProduct['facets'])) ? $rawProduct['facets'] : [],
                         (isset($rawProduct['brand'])) ? $rawProduct['brand'] : null
                     );
 
@@ -653,6 +654,7 @@ class StoreLinkrRestApi
             'stockLocations' => $request->get_param('stockLocations'),
             'attachments' => $request->get_param('attachments'),
             'images' => $request->get_param('images'),
+            'facets' => $request->get_param('facets'),
         ];
     }
 
