@@ -130,6 +130,12 @@ Release date: 2025-04-22
 
 #### Enhancements
 
+* Added used state
+
+#### Bugfixes
+
+None
+
 = 2.7.4 =
 
 Release date: 2025-03-27

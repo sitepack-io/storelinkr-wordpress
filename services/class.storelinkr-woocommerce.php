@@ -943,6 +943,7 @@ class StoreLinkrWooCommerceService
         $product->add_meta_data('site', (isset($data['site'])) ? $data['site'] : null, true);
         $product->add_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null, true);
         $product->add_meta_data('name', (isset($data['name'])) ? $data['name'] : null, true);
+        $product->add_meta_data('used', (isset($data['isUsed'])) ? $data['isUsed'] : null, true);
 
         if (!empty($data['stockLocations'])) {
             $stockInfo = $data['stockLocations'];
