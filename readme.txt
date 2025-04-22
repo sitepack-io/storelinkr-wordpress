@@ -134,7 +134,7 @@ Release date: 2025-04-22
 
 #### Bugfixes
 
-None
+* Validate if stock delivery date is set
 
 = 2.7.4 =
 
