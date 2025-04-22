@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Stop manual work: the all-in-one platform for complete online store automation. Integrate with marketplaces, product feeds, and suppliers.
-Version: 2.7.4
+Version: 2.7.5
 Author: StoreLinkr
 Author URI: https://storelinkr.com
 License: GPLv2 or later
