@@ -83,7 +83,7 @@ class StoreLinkr
             0, // TODO in SP API
             (int)$data['stock']['allowBackorder'],
             $locations,
-            ($data['stock']['deliveryDate'] !== null) ? new DateTimeImmutable($data['stock']['deliveryDate']) : null,
+            (isset($data['stock']['deliveryDate'])) ? new \DateTimeImmutable($data['stock']['deliveryDate']) : null,
             (isset($data['stock']['errorReason'])) ? $data['stock']['errorReason'] : null,
         );
     }
