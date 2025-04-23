@@ -76,12 +76,25 @@ class StoreLinkr
             }
         }
 
+        if (!is_array($data['stock'])) {
+            return new StoreLinkrStock(
+                false,
+                0,
+                0,
+                0,
+                false,
+                [],
+                null,
+                'stock is not an array'
+            );
+        }
+
         return new StoreLinkrStock(
             (bool)$data['stock']['inStock'],
             (int)$data['stock']['quantityAvailable'],
             (int)$data['stock']['quantitySupplier'],
             0, // TODO in SP API
-            (int)$data['stock']['allowBackorder'],
+            (bool)$data['stock']['allowBackorder'],
             $locations,
             (isset($data['stock']['deliveryDate'])) ? new \DateTimeImmutable($data['stock']['deliveryDate']) : null,
             (isset($data['stock']['errorReason'])) ? $data['stock']['errorReason'] : null,

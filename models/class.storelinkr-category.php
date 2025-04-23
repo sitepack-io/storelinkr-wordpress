@@ -46,16 +46,16 @@ class StoreLinkrCategory implements \JsonSerializable
         $greatGrandParent = null;
         $greatGreatGrandParent = null;
 
-        if (!empty($data->parent)) {
+        if (!empty($data->parent) && isset($categories[$data->parent])) {
             $parent = $categories[$data->parent];
         }
-        if (!empty($parent->parent)) {
+        if (!empty($parent->parent) && isset($categories[$parent->parent])) {
             $grandParent = $categories[$parent->parent];
         }
-        if (!empty($grandParent->parent)) {
+        if (!empty($grandParent->parent) && isset($categories[$grandParent->parent])) {
             $greatGrandParent = $categories[$grandParent->parent];
         }
-        if (!empty($greatGrandParent->parent)) {
+        if (!empty($greatGrandParent->parent) && isset($categories[$greatGrandParent->parent])) {
             $greatGreatGrandParent = $categories[$greatGrandParent->parent];
         }
 
