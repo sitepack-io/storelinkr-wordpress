@@ -69,6 +69,20 @@ class StoreLinkr
         }
 
         $data = json_decode($response['body'], true);
+
+        if (!is_array($data['stock']) || $data === false) {
+            return new StoreLinkrStock(
+                false,
+                0,
+                0,
+                0,
+                false,
+                [],
+                null,
+                'Stock response is not an array'
+            );
+        }
+
         $locations = [];
         if (isset($data['stock']['locations']) && is_array($data['stock']['locations'])) {
             foreach ($data['stock']['locations'] as $dataLocation) {
@@ -81,7 +95,7 @@ class StoreLinkr
             (int)$data['stock']['quantityAvailable'],
             (int)$data['stock']['quantitySupplier'],
             0, // TODO in SP API
-            (int)$data['stock']['allowBackorder'],
+            (bool)$data['stock']['allowBackorder'],
             $locations,
             (isset($data['stock']['deliveryDate'])) ? new \DateTimeImmutable($data['stock']['deliveryDate']) : null,
             (isset($data['stock']['errorReason'])) ? $data['stock']['errorReason'] : null,

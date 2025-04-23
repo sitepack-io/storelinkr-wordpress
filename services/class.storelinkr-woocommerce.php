@@ -11,7 +11,6 @@ require_once(STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-category.php');
 
 class StoreLinkrWooCommerceService
 {
-
     private array $warnings = [];
 
     public function getCategories(): array
@@ -715,7 +714,7 @@ class StoreLinkrWooCommerceService
         return substr($input, 0, 17) . '-' . substr($hash, 5, 7);
     }
 
-    private function createAttribute(string $name, string $slug): int
+    private function createAttribute(string $name, string $slug): ?int
     {
         $attribute_id = wc_create_attribute([
             'name' => $name,
@@ -725,6 +724,7 @@ class StoreLinkrWooCommerceService
 
         if (is_wp_error($attribute_id)) {
             $this->logWarning('StoreLinkr error: Attribute create failed: ' . $attribute_id->get_error_message());
+            return null;
         }
 
         return $attribute_id;
@@ -992,6 +992,4 @@ class StoreLinkrWooCommerceService
 
         return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
     }
-
-
 }
