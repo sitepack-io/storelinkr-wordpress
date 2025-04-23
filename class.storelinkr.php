@@ -69,14 +69,8 @@ class StoreLinkr
         }
 
         $data = json_decode($response['body'], true);
-        $locations = [];
-        if (isset($data['stock']['locations']) && is_array($data['stock']['locations'])) {
-            foreach ($data['stock']['locations'] as $dataLocation) {
-                $locations[] = StoreLinkrStockLocation::fromStoreLinkrData($dataLocation);
-            }
-        }
 
-        if (!is_array($data['stock'])) {
+        if (!is_array($data['stock']) || $data === false) {
             return new StoreLinkrStock(
                 false,
                 0,
@@ -85,8 +79,15 @@ class StoreLinkr
                 false,
                 [],
                 null,
-                'stock is not an array'
+                'Stock response is not an array'
             );
+        }
+
+        $locations = [];
+        if (isset($data['stock']['locations']) && is_array($data['stock']['locations'])) {
+            foreach ($data['stock']['locations'] as $dataLocation) {
+                $locations[] = StoreLinkrStockLocation::fromStoreLinkrData($dataLocation);
+            }
         }
 
         return new StoreLinkrStock(

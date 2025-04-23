@@ -39,7 +39,7 @@ class StoreLinkrCategory implements \JsonSerializable
         $this->parentId = $parentId;
     }
 
-    public static function fromWooCommerce(array $categories, WP_Term $data)
+    public static function fromWooCommerce(array $categories, WP_Term $data): StoreLinkrCategory
     {
         $parent = null;
         $grandParent = null;
