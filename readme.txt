@@ -2,8 +2,8 @@
 Contributors: storelinkr, petervw
 Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
 Requires at least: 6.4
-Tested up to: 6.7
-Stable tag: 2.7.6
+Tested up to: 6.8
+Stable tag: 2.7.7
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -21,6 +21,7 @@ Select one or more solutions for your online store:
 
 * [**Full webshop integration**](https://storelinkr.com/en/solutions/ecommerce-dropshipping) – Products from your wholesalers are automatically loaded into your webshop and the inventory is continuously updated.
 * [**Product feed management**](https://storelinkr.com/en/solutions/generate-product-feeds) – Promote your products with CPC ads by selecting them directly in StoreLinkr or automate your campaigns with filters such as price, category or availability.
+* [**Accounting for webshops**](https://storelinkr.com/en/solutions/accounting-integration) – Automatically create sales invoices and customers and link your webshop to bookkeeping software.
 
 ## Extensive solutions
 
@@ -123,6 +124,18 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.7.7 =
+
+Release date: 2025-04-24
+
+#### Enhancements
+
+* Version bump, supporting WordPress >6.8
+
+#### Bugfixes
+
+None
 
 = 2.7.6 =
 
