@@ -655,6 +655,7 @@ class StoreLinkrRestApi
             'attachments' => $request->get_param('attachments'),
             'images' => $request->get_param('images'),
             'facets' => $request->get_param('facets'),
+            'isUsed' => $request->get_param('isUsed'),
         ];
     }
 
