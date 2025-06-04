@@ -70,7 +70,7 @@ class StoreLinkr
 
         $data = json_decode($response['body'], true);
 
-        if (!is_array($data['stock']) || $data === false) {
+        if (!isset($data['stock']) || (!is_array($data['stock']) || $data === false)) {
             return new StoreLinkrStock(
                 false,
                 0,

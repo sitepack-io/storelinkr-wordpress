@@ -17,6 +17,10 @@ class StoreLinkrAdmin
         add_action('admin_init', [$this, 'adminInit']);
         add_action('admin_menu', [$this, 'adminPages']);
         add_action('admin_enqueue_scripts', [$this, 'addAdminStyles']);
+
+        add_filter('woocommerce_product_data_tabs', [$this, 'storeLinkrProductCustomTab'], 99, 1);
+        add_action('woocommerce_product_data_panels', [$this, 'productAttachmentTabContent']);
+        add_action('edit_form_after_title', [$this, 'storeLinkrProductMessage']);
 //        add_action('admin_init', [$this, 'registerSettings']);
     }
 
@@ -146,6 +150,32 @@ class StoreLinkrAdmin
         return $actions;
     }
 
+    public function storeLinkrProductMessage($post)
+    {
+        // Alleen tonen bij WooCommerce producten
+        if ($post->post_type !== 'product') {
+            return;
+        }
+
+        $meta = get_post_meta($post->ID, 'import_provider');
+        if ($meta === false) {
+            return;
+        }
+
+        if (in_array('STORELINKR', $meta) === true) {
+            echo '<div class="notice notice-info inline notice-storelinkr" style="margin: 15px 0;">';
+            echo '<img src="' . esc_attr(
+                    STORELINKR_PLUGIN_URL . 'images/icon_storelinkr_64.png'
+                ) . '" alt="StoreLinkr">';
+            echo '<p><strong>' . __('Please note', 'storelinkr') . ':</strong> ';
+            echo __(
+                    'This product is automatically updated by StoreLinkr. Basic fields of this product can be edited in the StoreLinkr portal.',
+                    'storelinkr'
+                ) . '</p>';
+            echo '</div>';
+        }
+    }
+
     public function removeProductTrashLink($actions, $post): array
     {
         if ($post->post_type !== 'product') {
@@ -167,6 +197,67 @@ class StoreLinkrAdmin
         }
 
         return $actions;
+    }
+
+    public function storeLinkrProductCustomTab($tabs): array
+    {
+        $tabs['storelinkr_attachments'] = [
+            'label' => __('Attachments', 'storelinkr'),
+            'target' => 'storelinkr_attachments',
+            'class' => ['show_if_simple', 'show_if_variable', 'show_if_grouped'],
+            'priority' => 60,
+        ];
+
+        return $tabs;
+    }
+
+    public function productAttachmentTabContent()
+    {
+        global $post;
+        echo '<div id="storelinkr_attachments" class="panel woocommerce_options_panel storelinkr-product-page-content">';
+
+
+        echo '<div class="options_group">';
+        if ($post && $post->post_type === 'product') {
+            $product = wc_get_product($post->ID);
+            if ($product) {
+                $attachments = $product->get_meta('_product_attachments', true);
+
+                if (!empty($attachments)) {
+                    $attachments = json_decode($attachments, true);
+
+                    echo '<table class="wp-list-table widefat striped">';
+
+                    if (is_iterable($attachments) && count($attachments) >= 1) {
+                        foreach ($attachments as $attachment) {
+                            echo '<tr>';
+                            echo '<td>' . esc_attr($attachment['title']) . '</td>';
+                            echo '<td>' . esc_attr($attachment['name']) . '</td>';
+                            echo '<td><a href="' . esc_attr($attachment['cdn_url']) . '" target="_blank">';
+                            echo __('View attachment', 'storelinkr');
+                            echo '</a></td>';
+                            echo '</tr>';
+                        }
+                    }
+
+                    echo '</table>';
+                } else {
+                    echo '<table class="wp-list-table widefat striped">';
+                    echo '<tr>';
+                    echo '<td><i>' . __('No attachments found for this product.', 'storelinkr') . '</i><br /><br />';
+                    echo '<a href="https://portal.storelinkr.com" target="_blank">';
+                    echo __('Manage attachments', 'storelinkr');
+                    echo '<span class="dashicons dashicons-external"></span>';
+                    echo '</a>';
+                    echo '</td>';
+                    echo '</tr>';
+                    echo '</table>';
+                }
+            }
+        }
+
+        echo '</div>';
+        echo '</div>';
     }
 
     private function getSvgIcon(bool $baseEncode = true): string

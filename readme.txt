@@ -1,9 +1,9 @@
 === StoreLinkr: all-in-one platform for webshops ===
 Contributors: storelinkr, petervw
-Tags: dropshipping, woocommerce, cyclesoftware, productfeeds, ecommerce
+Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.7.8
+Stable tag: 2.7.9
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -22,6 +22,7 @@ Select one or more solutions for your online store:
 * [**Full webshop integration**](https://storelinkr.com/en/solutions/ecommerce-dropshipping) – Products from your wholesalers are automatically loaded into your webshop and the inventory is continuously updated.
 * [**Product feed management**](https://storelinkr.com/en/solutions/generate-product-feeds) – Promote your products with CPC ads by selecting them directly in StoreLinkr or automate your campaigns with filters such as price, category or availability.
 * [**Accounting for webshops**](https://storelinkr.com/en/solutions/accounting-integration) – Automatically create sales invoices and customers and link your webshop to bookkeeping software.
+* [**Returns management**](https://storelinkr.com/en/solutions/returns-handling-for-web-stores) – From scattered emails to one clear returns portal: customer-friendly, efficient, and fully in your branding with less manual work and more control.
 
 ## Extensive solutions
 
@@ -90,6 +91,10 @@ The products and categories will be automatically created shortly.
 
 == Frequently Asked Questions ==
 
+= How can I create a whitelabel return portal? =
+
+Start by creating a free StoreLinkr account and activate the "Returns" solution. This solutions offers you a whitelabel returns portal to request all data from your customers.
+
 = Which point of sale systems are supported by this plugin? =
 
 This plugin works with point of sale systems such as CycleSoftware and Wilmar.
@@ -124,6 +129,18 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.7.9 =
+
+Release date: 2025-06-04
+
+#### Enhancements
+
+* Render attachments in product edit page (wp-admin)
+
+#### Bugfixes
+
+* Minor PHP warnings fixed
 
 = 2.7.8 =
 

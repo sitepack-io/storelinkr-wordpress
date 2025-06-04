@@ -980,7 +980,7 @@ class StoreLinkrWooCommerceService
 
                 $attachments[] = [
                     'uuid' => $attachment['uuid'],
-                    'name' => $attachment['name'],
+                    'name' => (!empty($attachment['name'])) ? $attachment['name'] : null,
                     'title' => (!empty($attachment['title'])) ? $attachment['title'] : null,
                     'description' => (!empty($attachment['description'])) ? $attachment['description'] : null,
                     'cdn_url' => $attachment['cdn_url'],
