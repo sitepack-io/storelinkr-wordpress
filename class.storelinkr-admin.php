@@ -13,7 +13,6 @@ class StoreLinkrAdmin
 
     public function init(): void
     {
-//        add_action('admin_menu', [$this, 'registerSettingsPage']);
         add_action('admin_init', [$this, 'adminInit']);
         add_action('admin_menu', [$this, 'adminPages']);
         add_action('admin_enqueue_scripts', [$this, 'addAdminStyles']);
@@ -21,6 +20,12 @@ class StoreLinkrAdmin
         add_filter('woocommerce_product_data_tabs', [$this, 'storeLinkrProductCustomTab'], 99, 1);
         add_action('woocommerce_product_data_panels', [$this, 'productAttachmentTabContent']);
         add_action('edit_form_after_title', [$this, 'storeLinkrProductMessage']);
+        add_action('admin_head', function () {
+            $screen = get_current_screen();
+            if ($screen && $screen->post_type === 'product_stock_location') {
+                echo '<style>.page-title-action { display: none; }</style>';
+            }
+        });
 //        add_action('admin_init', [$this, 'registerSettings']);
     }
 
@@ -54,6 +59,14 @@ class StoreLinkrAdmin
             [$this, 'renderDashboardPage'],
             self::getSvgIcon(),
             56.9843751
+        );
+
+        add_submenu_page(
+            'edit.php?post_type=product',
+            __('Stock locations', 'storelinkr'),
+            __('Stock locations', 'storelinkr'),
+            'manage_woocommerce',
+            'edit.php?post_type=sl_stock_location'
         );
     }
 

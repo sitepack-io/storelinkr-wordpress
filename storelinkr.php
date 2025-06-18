@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Stop manual work: the all-in-one platform for complete online store automation. Integrate with marketplaces, product feeds, and suppliers.
-Version: 2.7.9
+Version: 2.8.0
 Author: StoreLinkr
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -21,7 +21,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.7.9');
+define('STORELINKR_VERSION', '2.8.0');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STORELINKR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -37,6 +37,7 @@ add_action('wp_ajax_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
 add_action('wp_ajax_nopriv_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
 
 add_filter('woocommerce_product_tabs', 'storelinkrProductTabs', 10, 2);
+add_filter('rest_authentication_errors', 'storelinkrWooCommerceRestApi');
 
 if (is_admin() || (defined('WP_CLI') && WP_CLI)) {
     require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-admin.php');
@@ -57,6 +58,52 @@ if (!function_exists('storelinkrWooIsActive')) {
         }
 
         return false;
+    }
+}
+
+if (!function_exists('storelinkrWooCommerceRestApi')) {
+    function storelinkrWooCommerceRestApi($result)
+    {
+        if (!empty($result)) {
+            return $result;
+        }
+
+        if (is_user_logged_in()) {
+            return $result;
+        }
+
+        $headers = apache_request_headers();
+        $auth = isset($headers['Authorization']) ? $headers['Authorization'] : ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+
+        if (str_starts_with($auth, 'Basic ') || str_starts_with($auth, 'Baerer')) {
+            $validToken = base64_encode(
+                get_option(StoreLinkrAdmin::STORELINKR_API_KEY) . ':' .
+                get_option(StoreLinkrAdmin::STORELINKR_API_SECRET)
+            );
+
+            $inputToken = str_replace(['Basic ', 'Baerer '], '', $auth);
+            if ($inputToken === $validToken) {
+                $admin_users = get_users([
+                    'role' => 'administrator',
+                    'number' => 1,
+                    'orderby' => 'ID',
+                    'order' => 'ASC',
+                    'fields' => ['ID'],
+                ]);
+
+                if (!empty($admin_users)) {
+                    $admin_id = $admin_users[0]->ID;
+
+                    wp_set_current_user($admin_id);
+
+                    return new WP_User($admin_id);
+                } else {
+                    return new WP_Error('rest_forbidden', __('No admin user found', 'storelinkr'), ['status' => 403]);
+                }
+            }
+        }
+
+        return $result;
     }
 }
 
@@ -208,12 +255,12 @@ if (!function_exists('storeLinkrVariantDropdown')) {
 
         if (!empty($product->get_meta('stock_locations', null))) {
             $data = $product->get_meta('stock_locations', null);
-            if(!is_array($data)){
+            if (!is_array($data)) {
                 return;
             }
             $locations = current($data);
 
-            if(!$locations instanceof WC_Meta_Data || !isset($locations->get_data()['value'])){
+            if (!$locations instanceof WC_Meta_Data || !isset($locations->get_data()['value'])) {
                 return;
             }
 
@@ -226,13 +273,12 @@ if (!function_exists('storeLinkrVariantDropdown')) {
                 $html .= '<tr>';
                 $html .= '<td>' . esc_html($location['name']) . '</td>';
                 $html .= '<td class="sl-text-right">';
-                if((int)$location['quantity'] === 0){
+                if ((int)$location['quantity'] === 0) {
                     $html .= '<span class="sl-sold-out">' . __('Out of stock', 'storelinkr') . '</span>';
-                }
-                else{
+                } else {
                     $html .= '<span class="sl-in-stock">' . __('In stock', 'storelinkr') . '</span>';
                     $html .= ' <span class="sl-muted">' . esc_attr($location['quantity']);
-                    $html .= ' ' . __('piece(s)', 'storelinkr') .  '</span>';
+                    $html .= ' ' . __('piece(s)', 'storelinkr') . '</span>';
                 }
                 $html .= '</td>';
                 $html .= '</tr>';
