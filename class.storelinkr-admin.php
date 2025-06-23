@@ -337,7 +337,7 @@ class StoreLinkrAdmin
                                 echo esc_attr(get_post_meta($locationPost->ID, '_city', true));
                             }
                             echo '</td>';
-                            echo '<td>' . esc_attr($stockLocation['quantity']) . ' ' . __('pieces', 'storelinkr') . '</td>';
+                            echo '<td>' . esc_attr($stockLocation['quantity']) . ' ' . __('piece(s)', 'storelinkr') . '</td>';
                             echo '</tr>';
                         }
                     }
