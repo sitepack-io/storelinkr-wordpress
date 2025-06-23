@@ -132,12 +132,14 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 = 2.8.0 =
 
-Release date: 2025-06-19
+Release date: 2025-06-25
 
 #### Enhancements
 
 * Allow integration with WooCommerce REST API
 * Added custom post type for storing stock locations
+* Link product stock information with stock locations
+* Added custom tab on product edit post page to view stock per activated stock location
 
 #### Bugfixes
 

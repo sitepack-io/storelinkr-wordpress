@@ -115,6 +115,23 @@ class StoreLinkrRestApi
             'callback' => [$this, 'renderUpsertBulkProducts'],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/stock-locations/create', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderCreateStockLocation'],
+            'permission_callback' => '__return_true',
+        ]);
+        register_rest_route('storelinkr/v1', '/stock-locations/(?P<id>\d+)/update', [
+            'methods' => 'PUT',
+            'callback' => [$this, 'renderUpdateStockLocation'],
+            'args' => [
+                'id' => [
+                    'validate_callback' => function ($param) {
+                        return is_numeric($param);
+                    }
+                ],
+            ],
+            'permission_callback' => '__return_true',
+        ]);
     }
 
     public function renderTestConnection(WP_REST_Request $request)
@@ -585,6 +602,65 @@ class StoreLinkrRestApi
         }
     }
 
+    public function renderCreateStockLocation(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'name',
+            ]);
+
+            $post_id = wp_insert_post([
+                'post_type' => 'sl_stock_location',
+                'post_title' => $request->get_param('name'),
+                'post_status' => 'publish',
+            ]);
+
+            if ($post_id instanceof WP_Error || $post_id === 0) {
+                throw new Exception('Stock location could not be saved!');
+            }
+
+            $this->updateStockLocationMetaFields($post_id, $request);
+
+            return [
+                'status' => 'success',
+                'location' => [
+                    'id' => $post_id,
+                ],
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderUpdateStockLocation(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'id',
+                'name',
+            ]);
+
+            wp_insert_post([
+                'ID' => $request->get_param('id'),
+                'post_type' => 'sl_stock_location',
+                'post_title' => $request->get_param('name'),
+                'post_status' => 'publish',
+            ]);
+            $this->updateStockLocationMetaFields($request->get_param('id'), $request);
+
+            return [
+                'status' => 'success',
+                'location' => [
+                    'id' => $request->get_param('id'),
+                ],
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
     private function renderError(string $message): WP_Error
     {
         if ($message === self::MESSAGE_UNAUTHORIZED) {
@@ -657,6 +733,25 @@ class StoreLinkrRestApi
             'facets' => $request->get_param('facets'),
             'isUsed' => $request->get_param('isUsed'),
         ];
+    }
+
+    private function updateStockLocationMetaFields(WP_Error|int $post_id, WP_REST_Request $request): void
+    {
+        if (!empty($request->get_param('address'))) {
+            update_post_meta($post_id, '_address', $request->get_param('address'));
+        }
+        if (!empty($request->get_param('city'))) {
+            update_post_meta($post_id, '_city', $request->get_param('city'));
+        }
+        if (!empty($request->get_param('postal_code'))) {
+            update_post_meta($post_id, '_postal_code', $request->get_param('postal_code'));
+        }
+        if (!empty($request->get_param('country_code'))) {
+            update_post_meta($post_id, '_country_code', $request->get_param('country_code'));
+        }
+        if (!empty($request->get_param('phone_number'))) {
+            update_post_meta($post_id, '_phone_number', $request->get_param('phone_number'));
+        }
     }
 
 }

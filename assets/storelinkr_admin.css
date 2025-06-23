@@ -265,6 +265,10 @@ p.storelinkr-lead {
     content: "\f497" !important;
 }
 
+.storelinkr_stock_locations_options a::before {
+    content: "\f512" !important;
+}
+
 label.storelinkr-attachment-name {
     width: 200px !important;
 }

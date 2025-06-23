@@ -19,12 +19,22 @@ class StoreLinkrAdmin
 
         add_filter('woocommerce_product_data_tabs', [$this, 'storeLinkrProductCustomTab'], 99, 1);
         add_action('woocommerce_product_data_panels', [$this, 'productAttachmentTabContent']);
+        add_action('woocommerce_product_data_panels', [$this, 'productStockLocationsTabContent']);
         add_action('edit_form_after_title', [$this, 'storeLinkrProductMessage']);
         add_action('admin_head', function () {
             $screen = get_current_screen();
             if ($screen && $screen->post_type === 'product_stock_location') {
                 echo '<style>.page-title-action { display: none; }</style>';
             }
+        });
+        add_action('add_meta_boxes', function () {
+            add_meta_box(
+                'stock_location_meta',
+                __('Stock location address', 'storelinkr'),
+                [$this, 'renderStockLocationEditPostMetaBox'],
+                'sl_stock_location',
+                'normal'
+            );
         });
 //        add_action('admin_init', [$this, 'registerSettings']);
     }
@@ -165,6 +175,20 @@ class StoreLinkrAdmin
 
     public function storeLinkrProductMessage($post)
     {
+        if ($post->post_type === 'sl_stock_location') {
+            echo '<div class="notice notice-info inline notice-storelinkr" style="margin: 15px 0;">';
+            echo '<img src="' . esc_attr(
+                    STORELINKR_PLUGIN_URL . 'images/icon_storelinkr_64.png'
+                ) . '" alt="StoreLinkr">';
+            echo '<p><strong>' . __('Please note', 'storelinkr') . ':</strong> ';
+            echo __(
+                    'This stock location is automatically updated by StoreLinkr. You can manage this location in the StoreLinkr portal.',
+                    'storelinkr'
+                ) . '</p>';
+            echo '</div>';
+            return;
+        }
+
         // Alleen tonen bij WooCommerce producten
         if ($post->post_type !== 'product') {
             return;
@@ -214,6 +238,12 @@ class StoreLinkrAdmin
 
     public function storeLinkrProductCustomTab($tabs): array
     {
+        $tabs['storelinkr_stock_locations'] = [
+            'label' => __('Stock locations', 'storelinkr'),
+            'target' => 'storelinkr_stock_locations',
+            'class' => ['show_if_simple', 'show_if_variable', 'show_if_grouped'],
+            'priority' => 24,
+        ];
         $tabs['storelinkr_attachments'] = [
             'label' => __('Attachments', 'storelinkr'),
             'target' => 'storelinkr_attachments',
@@ -227,16 +257,17 @@ class StoreLinkrAdmin
     public function productAttachmentTabContent()
     {
         global $post;
+
         echo '<div id="storelinkr_attachments" class="panel woocommerce_options_panel storelinkr-product-page-content">';
-
-
         echo '<div class="options_group">';
+
         if ($post && $post->post_type === 'product') {
             $product = wc_get_product($post->ID);
+
             if ($product) {
                 $attachments = $product->get_meta('_product_attachments', true);
 
-                if (!empty($attachments)) {
+                if (!empty($attachments) && $attachments !== "[]") {
                     $attachments = json_decode($attachments, true);
 
                     echo '<table class="wp-list-table widefat striped">';
@@ -272,6 +303,97 @@ class StoreLinkrAdmin
         echo '</div>';
         echo '</div>';
     }
+
+    public function productStockLocationsTabContent()
+    {
+        global $post;
+
+        echo '<div id="storelinkr_stock_locations" class="panel woocommerce_options_panel storelinkr-product-page-content">';
+        echo '<div class="options_group">';
+        if ($post && $post->post_type === 'product') {
+            $product = wc_get_product($post->ID);
+            if ($product) {
+                $stockLocations = $product->get_meta('stock_locations', true);
+
+                if (!empty($stockLocations)) {
+                    if (is_string($stockLocations)) {
+                        $stockLocations = json_decode($stockLocations, true);
+                    }
+
+                    echo '<table class="wp-list-table widefat striped">';
+
+                    if (is_iterable($stockLocations) && count($stockLocations) >= 1) {
+                        foreach ($stockLocations as $stockLocation) {
+                            if (empty($stockLocation['post_id'])) {
+                                continue;
+                            }
+
+                            $locationPost = get_post($stockLocation['post_id']);
+                            $address = get_post_meta($locationPost->ID, '_address', true);
+                            echo '<tr>';
+                            echo '<td><strong>' . esc_attr($locationPost->post_title) . '</strong><br />';
+                            if (!empty($address)) {
+                                echo esc_attr($address) . ', ';
+                                echo esc_attr(get_post_meta($locationPost->ID, '_city', true));
+                            }
+                            echo '</td>';
+                            echo '<td>' . esc_attr($stockLocation['quantity']) . ' ' . __('pieces', 'storelinkr') . '</td>';
+                            echo '</tr>';
+                        }
+                    }
+
+                    echo '</table>';
+                } else {
+                    echo '<table class="wp-list-table widefat striped">';
+                    echo '<tr>';
+                    echo '<td><i>' . __(
+                            'No stock locations found for this product.',
+                            'storelinkr'
+                        ) . '</i><br /><br />';
+                    echo '<a href="https://portal.storelinkr.com" target="_blank">';
+                    echo __('Manage stock locations', 'storelinkr');
+                    echo '<span class="dashicons dashicons-external"></span>';
+                    echo '</a>';
+                    echo '</td>';
+                    echo '</tr>';
+                    echo '</table>';
+                }
+            }
+        }
+
+        echo '</div>';
+        echo '</div>';
+    }
+
+    public function renderStockLocationEditPostMetaBox($post)
+    {
+        echo '<table class="form-table">';
+        echo '<tr><th><label for="sl_city">' . esc_attr(__('Phone number', 'storelinkr')) . '</label></th>';
+        echo '<td><input type="text" name="sl_phone_number" id="sl_phone_number" value="' . esc_attr(
+                get_post_meta($post->ID, '_phone_number', true)
+            ) . '" class="regular-text" disabled /></td></tr>';
+        echo '<tr><th><label for="sl_location_code">' . esc_attr(__('Address', 'storelinkr')) . '</label></th>';
+        echo '<td><input type="text" name="sl_address" id="sl_address" value="' . esc_attr(
+                get_post_meta($post->ID, '_address', true)
+            ) . '" class="regular-text" disabled /></td></tr>';
+        echo '<tr><th><label for="sl_location_code">' . esc_attr(__('Postal code', 'storelinkr')) . '</label></th>';
+        echo '<td><input type="text" name="sl_postal_code" id="sl_postal_code" value="' . esc_attr(
+                get_post_meta($post->ID, '_postal_code', true)
+            ) . '" class="regular-text" disabled /></td></tr>';
+        echo '<tr><th><label for="sl_city">' . esc_attr(__('City', 'storelinkr')) . '</label></th>';
+        echo '<td><input type="text" name="sl_city" id="sl_city" value="' . esc_attr(
+                get_post_meta($post->ID, '_city', true)
+            ) . '" class="regular-text" disabled /></td></tr>';
+        echo '<tr><th><label for="sl_city">' . esc_attr(__('Country', 'storelinkr')) . '</label></th>';
+        echo '<td><input type="text" name="sl_country_code" id="sl_country_code" value="' . esc_attr(
+                get_post_meta($post->ID, '_country_code', true)
+            ) . '" class="regular-text" disabled /></td></tr>';
+        echo '</table>';
+
+        // Optional nonce for security
+        wp_nonce_field('save_stock_location_meta', 'stock_location_nonce');
+    }
+
 
     private function getSvgIcon(bool $baseEncode = true): string
     {
