@@ -72,8 +72,9 @@ if (!function_exists('storelinkrWooCommerceRestApi')) {
             return $result;
         }
 
-        $headers = apache_request_headers();
-        $auth = isset($headers['Authorization']) ? $headers['Authorization'] : ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
+        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        $headers = function_exists('apache_request_headers') ? apache_request_headers() : [];
+        $auth = $headers['Authorization'] ?? ($_SERVER['HTTP_AUTHORIZATION'] ?? '');
 
         if (str_starts_with($auth, 'Basic ') || str_starts_with($auth, 'Baerer')) {
             $validToken = base64_encode(
@@ -83,20 +84,20 @@ if (!function_exists('storelinkrWooCommerceRestApi')) {
 
             $inputToken = str_replace(['Basic ', 'Baerer '], '', $auth);
             if ($inputToken === $validToken) {
-                $admin_users = get_users([
-                    'role' => 'administrator',
+                $shop_users = get_users([
+                    'role__in' => ['shop_manager', 'administrator'],
                     'number' => 1,
                     'orderby' => 'ID',
                     'order' => 'ASC',
                     'fields' => ['ID'],
                 ]);
 
-                if (!empty($admin_users)) {
-                    $admin_id = $admin_users[0]->ID;
+                if (!empty($shop_users)) {
+                    $userId = $shop_users[0]->ID;
 
-                    wp_set_current_user($admin_id);
+                    wp_set_current_user($userId);
 
-                    return new WP_User($admin_id);
+                    return new WP_User($userId);
                 } else {
                     return new WP_Error('rest_forbidden', __('No admin user found', 'storelinkr'), ['status' => 403]);
                 }

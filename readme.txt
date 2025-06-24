@@ -132,7 +132,7 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 = 2.8.0 =
 
-Release date: 2025-06-25
+Release date: 2025-06-24
 
 #### Enhancements
 
