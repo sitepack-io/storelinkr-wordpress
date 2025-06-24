@@ -25,6 +25,50 @@ class StoreLinkr
 
     public static function init()
     {
+        self::registerStockLocationPostType();
+    }
+
+    private static function registerStockLocationPostType()
+    {
+        $labels = [
+            'name' => __('Stock locations', 'storelinkr'),
+            'singular_name' => __('Stock location', 'storelinkr'),
+            'menu_name' => __('Stock locations', 'storelinkr'),
+            'name_admin_bar' => __('Stock Location', 'storelinkr'),
+            'add_new' => __('Add New', 'storelinkr'),
+            'add_new_item' => __('Add New Stock location', 'storelinkr'),
+            'new_item' => __('New stock location', 'storelinkr'),
+            'edit_item' => __('Edit stock location', 'storelinkr'),
+            'view_item' => __('View stock location', 'storelinkr'),
+            'all_items' => __('All stock locations', 'storelinkr'),
+            'search_items' => __('Search stock locations', 'storelinkr'),
+            'not_found' => __('No stock locations found.', 'storelinkr'),
+            'not_found_in_trash' => __('No stock locations found in Trash.', 'storelinkr'),
+        ];
+
+        register_post_type('sl_stock_location', [
+            'labels' => $labels,
+            'public' => false,
+            'show_ui' => true,
+            'show_in_menu' => false,
+            'supports' => ['title'],
+            'capability_type' => 'product_stock_location',
+            'capabilities' => [
+                'edit_post' => 'edit_product_stock_location',
+                'read_post' => 'read_product_stock_location',
+                'edit_posts' => 'edit_product_stock_locations',
+                'edit_others_posts' => 'edit_others_product_stock_locations',
+                'publish_posts' => 'publish_product_stock_locations',
+                'read_private_posts' => 'read_private_product_stock_locations',
+                'create_posts' => 'do_not_allow',
+                'delete_post' => 'do_not_allow',
+                'delete_posts' => 'do_not_allow',
+                'delete_private_posts' => 'do_not_allow',
+                'delete_published_posts' => 'do_not_allow',
+                'delete_others_posts' => 'do_not_allow',
+            ],
+            'map_meta_cap' => true,
+        ]);
     }
 
     public function fetchLiveStock(string $siteUuid, string $importSource, string $ean): StoreLinkrStock

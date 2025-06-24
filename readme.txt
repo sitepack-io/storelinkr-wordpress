@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.7.9
+Stable tag: 2.8.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -129,6 +129,21 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.8.0 =
+
+Release date: 2025-06-24
+
+#### Enhancements
+
+* Allow integration with WooCommerce REST API
+* Added custom post type for storing stock locations
+* Link product stock information with stock locations
+* Added custom tab on product edit post page to view stock per activated stock location
+
+#### Bugfixes
+
+None
 
 = 2.7.9 =
 

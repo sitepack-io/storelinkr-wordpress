@@ -952,7 +952,7 @@ class StoreLinkrWooCommerceService
                 $stockMeta = $stockInfo['locations'];
             }
 
-            $product->add_meta_data('stock_locations', $stockMeta, true);
+            $product->update_meta_data('stock_locations', $stockMeta, true);
         }
 
         if ($product->get_date_created() === null) {
