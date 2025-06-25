@@ -81,6 +81,23 @@ class StoreLinkrRestApi
             ],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/products/create-variant', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderCreateProductVariant'],
+            'permission_callback' => '__return_true',
+        ]);
+        register_rest_route('storelinkr/v1', '/products/(?P<id>\d+)/update-variant', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderUpdateProductVariant'],
+            'args' => [
+                'id' => [
+                    'validate_callback' => function ($param) {
+                        return is_numeric($param);
+                    }
+                ],
+            ],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route('storelinkr/v1', '/products/(?P<id>\d+)/image', [
             'methods' => 'POST',
             'callback' => [$this, 'renderImageProduct'],
@@ -393,6 +410,7 @@ class StoreLinkrRestApi
 
             return [
                 'status' => 'success',
+                'type' => $product::class,
                 'product_id' => $productId,
                 'url' => get_permalink($productId),
                 'warnings' => $this->eCommerceService->getWarnings(),
@@ -449,6 +467,115 @@ class StoreLinkrRestApi
 
             return [
                 'status' => 'success',
+                'type' => $product::class,
+                'product_id' => $productId,
+                'url' => get_permalink($productId),
+                'images' => $gallery,
+                'invalid_media' => $invalidMediaIds,
+                'warnings' => $this->eCommerceService->getWarnings(),
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderCreateProductVariant(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'name',
+                'products',
+                'options',
+                'categories',
+                'importSource',
+            ]);
+
+            $product = $this->eCommerceService->mapProductFromDataArray(
+                $this->convertRequestToArray($request),
+                'variant'
+            );
+            assert($product instanceof WC_Product_Variable);
+
+            $product->set_category_ids($request->get_param('categories'));
+
+            $gallery = (array)$request->get_param('images');
+            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            $productId = $this->eCommerceService->saveProduct(
+                $product,
+                $request['facets'],
+                (isset($request['brand'])) ? $request['brand'] : null
+            );
+
+            $variationMap = $this->eCommerceService->buildProductVariantOptions(
+                $productId,
+                $request->get_param('options'),
+                $request->get_param('products'),
+            );
+
+            return [
+                'status' => 'success',
+                'type' => $product::class,
+                'product_id' => $productId,
+                'variant_options' => $variationMap,
+                'url' => get_permalink($productId),
+                'warnings' => $this->eCommerceService->getWarnings(),
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderUpdateProductVariant(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'name',
+                'ean',
+                'site',
+                'importSource',
+                'salesPrice',
+                'categoryId',
+                'id',
+                'inStock',
+                'stockSupplier',
+                'hasStock',
+            ]);
+
+            $product = $this->eCommerceService->mapProductFromDataArray(
+                $this->convertRequestToArray($request),
+                'variant'
+            );
+            assert($product instanceof WC_Product_Variable);
+
+            $gallery = (array)$request->get_param('images');
+            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            $productId = $this->eCommerceService->saveProduct(
+                $product,
+                $request['facets'],
+                (isset($request['brand'])) ? $request['brand'] : null
+            );
+
+            $invalidMediaIds = [];
+            foreach ($gallery as $mediaId) {
+                $mediaItem = get_post($mediaId);
+                if ($mediaItem && $mediaItem->post_type === 'attachment') {
+                    $filePath = get_attached_file($mediaId);
+
+                    if (!$filePath || !file_exists($filePath)) {
+                        $invalidMediaIds[] = $mediaId;
+                    }
+
+                    continue;
+                }
+
+                $invalidMediaIds[] = $mediaId;
+            }
+
+            return [
+                'status' => 'success',
+                'type' => $product::class,
                 'product_id' => $productId,
                 'url' => get_permalink($productId),
                 'images' => $gallery,

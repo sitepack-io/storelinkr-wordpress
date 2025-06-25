@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.8.0
+Stable tag: 2.9.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -129,6 +129,21 @@ Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Ot
 If you want to contribute, please take a look at our [Github Repository](https://github.com/sitepack-io/storelinkr-wordpress).
 
 == Changelog ==
+
+= 2.9.0 =
+
+Release date: 2025-06-26
+
+#### Enhancements
+
+* Added 2 new REST API endpoints for Variable products
+* Allow StoreLinkr to create Variable products
+* Set images per product variation
+* View stock locations for variable products and variations
+
+#### Bugfixes
+
+None
 
 = 2.8.0 =
 

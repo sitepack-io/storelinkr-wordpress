@@ -7,6 +7,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once(STORELINKR_PLUGIN_DIR . 'mappers/class.storelinkr-woocommerce-mapper.php');
 require_once(STORELINKR_PLUGIN_DIR . 'models/class.storelinkr-category.php');
 
 class StoreLinkrWooCommerceService
@@ -158,7 +159,7 @@ class StoreLinkrWooCommerceService
     }
 
     public function saveProduct(
-        WC_Product|WC_Product_Grouped $product,
+        WC_Product|WC_Product_Grouped|WC_Product_Variable $product,
         array $facets,
         ?string $brandName = null
     ): int {
@@ -523,7 +524,7 @@ class StoreLinkrWooCommerceService
     }
 
     public function linkProductGalleryImages(
-        WC_Product|WC_Product_Grouped $product,
+        WC_Product|WC_Product_Grouped|WC_Product_Variable $product,
         array $images
     ): WC_Product|WC_Product_Grouped {
         if (
@@ -641,6 +642,146 @@ class StoreLinkrWooCommerceService
         }
     }
 
+    public function mapProductFromDataArray(array $data, string $type = 'simple'): WC_Product
+    {
+        if ($type === 'simple') {
+            $product = new WC_Product_Simple();
+        } elseif ($type === 'variant') {
+            $product = new WC_Product_Variable();
+        } else {
+            throw new Exception('Invalid type requested!');
+        }
+
+        if (!empty($data['sku'])) {
+            $productSku = $this->findProductBySku($data['sku']);
+
+            if ($productSku !== false) {
+                $product = $productSku;
+            }
+        }
+
+        if (!empty($data['id'])) {
+            $product = $this->findProduct($data['id']);
+        }
+
+        $product = StoreLinkrWooCommerceMapper::convertRequestToProduct(
+            $product,
+            $data,
+        );
+        if (!empty($data['categoryId'])) {
+            $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
+        }
+
+        return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
+    }
+
+    public function buildProductVariantOptions(int $productId, array $optionLabels, array $products): array
+    {
+        $variable_product = wc_get_product($productId);
+        $attribute_taxonomies = [];
+
+        foreach ($optionLabels as $option_name) {
+            $attribute_label = ucfirst($option_name);
+            $attribute_slug = wc_sanitize_taxonomy_name($option_name);
+            $taxonomy = 'pa_' . $attribute_slug;
+
+            if (!taxonomy_exists($taxonomy)) {
+                wc_create_attribute([
+                    'name' => $attribute_label,
+                    'slug' => $attribute_slug,
+                    'type' => 'select',
+                    'order_by' => 'menu_order',
+                    'has_archives' => false,
+                ]);
+                delete_transient('wc_attribute_taxonomies');
+                flush_rewrite_rules();
+            }
+
+            $attribute_taxonomies[$option_name] = $taxonomy;
+
+            $terms = array_unique(array_column(array_column($products, 'options'), $option_name));
+            foreach ($terms as $term_name) {
+                if (!term_exists($term_name, $taxonomy)) {
+                    wp_insert_term($term_name, $taxonomy);
+                }
+            }
+        }
+
+        $product_attributes = [];
+        foreach ($attribute_taxonomies as $label => $taxonomy) {
+            $attribute_slug = wc_sanitize_taxonomy_name($label);
+            $attribute_id = 0;
+
+            foreach (wc_get_attribute_taxonomies() as $attr) {
+                if ($attr->attribute_name === $attribute_slug) {
+                    $attribute_id = (int)$attr->attribute_id;
+                    break;
+                }
+            }
+
+            $term_names = wp_list_pluck(get_terms(['taxonomy' => $taxonomy, 'hide_empty' => false]), 'name');
+
+            $attribute = new WC_Product_Attribute();
+            $attribute->set_id($attribute_id);
+            $attribute->set_name($taxonomy);
+            $attribute->set_options($term_names);
+            $attribute->set_visible(false);
+            $attribute->set_variation(true);
+
+            $product_attributes[] = $attribute;
+        }
+
+        $variable_product->set_attributes($product_attributes);
+        $variable_product->save();
+
+        $variation_map = [];
+        foreach ($products as $productOption) {
+            $variation = new WC_Product_Variation();
+            $variation->set_parent_id($productId);
+            $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
+                $variation,
+                $productOption,
+            );
+
+            if (!empty($data['categoryId'])) {
+                $variation->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
+            }
+
+            $attributes = [];
+
+            foreach ($productOption['options'] as $label => $term_value) {
+                if (!isset($attribute_taxonomies[$label])) {
+                    continue;
+                }
+
+                $taxonomy = $attribute_taxonomies[$label];
+                $term = get_term_by('name', $term_value, $taxonomy);
+
+                // Als die niet gevonden wordt, probeer dan op slug
+                if (!$term) {
+                    $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
+                }
+
+                if ($term) {
+                    $attributes[$taxonomy] = $term->slug;
+                } else {
+                    error_log("Term '$term_value' niet gevonden voor taxonomy '$taxonomy'");
+                }
+            }
+
+            $variation->set_attributes($attributes);
+            $variation->save();
+
+            $variation_id = $variation->get_id();
+            $variation_map[$productOption['ean']] = $variation_id;
+        }
+
+
+        wc_delete_product_transients($productId);
+
+        return $variation_map;
+    }
+
     public function getWarnings(): array
     {
         return $this->warnings;
@@ -687,21 +828,6 @@ class StoreLinkrWooCommerceService
         );
     }
 
-    /**
-     * Format the price cents to a correctly formatted decimal as a float.
-     *
-     * @param int $priceCents
-     * @return float
-     */
-    private function formatPrice(int $priceCents): float
-    {
-        if ($priceCents <= 0) {
-            return \floatval(0);
-        }
-
-        return \floatval($priceCents / 100);
-    }
-
     private function buildAttributeSlug(string $input): string
     {
         $input = trim($input);
@@ -726,6 +852,9 @@ class StoreLinkrWooCommerceService
             $this->logWarning('StoreLinkr error: Attribute create failed: ' . $attribute_id->get_error_message());
             return null;
         }
+
+        delete_transient('wc_attribute_taxonomies');
+        wc_delete_product_transients();
 
         return $attribute_id;
     }
@@ -845,151 +974,5 @@ class StoreLinkrWooCommerceService
     {
         $this->warnings[] = trim($string);
         error_log($string);
-    }
-
-    public function mapProductFromDataArray(array $data): WC_Product
-    {
-        $product = new WC_Product_Simple();
-
-        $updateStockInfo = !(isset($data['updateStock'])) || (bool)$data['updateStock'];
-        $updatePriceInfo = !(isset($data['updatePrice'])) || (bool)$data['updatePrice'];
-
-        if (!empty($data['sku'])) {
-            $productSku = $this->findProductBySku($data['sku']);
-
-            if ($productSku !== false) {
-                $product = $productSku;
-            }
-        }
-
-        if (!empty($data['id'])) {
-            $product = $this->findProduct($data['id']);
-        }
-
-        if (!empty($data['sku'])) {
-            $product->set_sku($data['sku']);
-        }
-
-        if (!empty($data['ean'])) {
-            $product->set_global_unique_id($data['ean']);
-        }
-
-        $product->set_name((isset($data['name'])) ? $data['name'] : null);
-
-        if ($updatePriceInfo === true && isset($data['salesPrice'])) {
-            $product->set_regular_price($this->formatPrice((int)$data['salesPrice']));
-
-            if (!empty($data['promoSalesPrice'])) {
-                $product->set_sale_price($this->formatPrice((int)$data['promoSalesPrice']));
-            }
-
-            $product->set_date_on_sale_from(null);
-            $product->set_date_on_sale_to(null);
-            if (!empty($data['promoStart']) && !empty($data['promoEnd'])) {
-                $product->set_date_on_sale_from(
-                    (new DateTimeImmutable($data['promoStart']))->format('Y-m-d H:i:s')
-                );
-                $product->set_date_on_sale_to(
-                    (new DateTimeImmutable($data['promoEnd']))->format('Y-m-d H:i:s')
-                );
-            }
-        }
-
-        if (!empty($data['shortDescription'])) {
-            $product->set_short_description($data['shortDescription']);
-        }
-
-        if (!empty($data['longDescription'])) {
-            $product->set_description($data['longDescription']);
-        }
-
-        if(!empty($data['categoryId'])) {
-            $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
-        }
-
-        if ($updateStockInfo === true) {
-            $product->set_manage_stock(true);
-            $product->set_stock_quantity(0);
-            $product->set_stock_status('outofstock');
-
-            if (
-                (isset($data['hasStock']) && (bool)$data['hasStock'] === true) ||
-                (isset($data['inStock']) && (int)$data['inStock'] >= 1) ||
-                (isset($data['stockSupplier']) && (int)$data['stockSupplier'] >= 1)
-            ) {
-                $product->set_stock_status('instock');
-                $product->set_stock_quantity(
-                    (int)$data['inStock'] + (int)$data['stockSupplier']
-                );
-
-                if ($product->get_stock_quantity() < 1) {
-                    $product->set_stock_quantity(1);
-                }
-            }
-        }
-
-        if (!empty($data['metadata'])) {
-            $json = \json_decode($data['metadata'], true);
-
-            if (is_array($json)) {
-                foreach ($json as $key => $value) {
-                    $product->add_meta_data($key, $value);
-                }
-            }
-        }
-
-        $product->add_meta_data('import_provider', 'STORELINKR', true);
-        $product->add_meta_data('import_source', (isset($data['importSource'])) ? $data['importSource'] : null, true);
-        $product->add_meta_data('site', (isset($data['site'])) ? $data['site'] : null, true);
-        $product->add_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null, true);
-        $product->add_meta_data('used', (isset($data['isUsed'])) ? (int)$data['isUsed'] : 0, true);
-
-        if (!empty($data['stockLocations'])) {
-            $stockInfo = $data['stockLocations'];
-            $stockMeta = [];
-
-            if (is_array($stockInfo) && isset($stockInfo['locations'])) {
-                $stockMeta = $stockInfo['locations'];
-            }
-
-            $product->update_meta_data('stock_locations', $stockMeta, true);
-        }
-
-        if ($product->get_date_created() === null) {
-            $product->set_date_created((new DateTimeImmutable())->format('Y-m-d H:i:s'));
-        }
-
-        $attachments = [];
-        if (!empty($data['attachments']) && is_array($data['attachments'])) {
-            foreach ($data['attachments'] as $attachment) {
-                if (empty($attachment['uuid'])) {
-                    continue;
-                }
-
-                if (empty($attachment['cdn_url'])) {
-                    $this->logWarning(
-                        sprintf(
-                            'Empty CDN url, product %s attachment %s (data: %s)',
-                            $product->get_id(),
-                            $attachment['uuid'],
-                            json_encode($attachment)
-                        )
-                    );
-                    continue;
-                }
-
-                $attachments[] = [
-                    'uuid' => $attachment['uuid'],
-                    'name' => (!empty($attachment['name'])) ? $attachment['name'] : null,
-                    'title' => (!empty($attachment['title'])) ? $attachment['title'] : null,
-                    'description' => (!empty($attachment['description'])) ? $attachment['description'] : null,
-                    'cdn_url' => $attachment['cdn_url'],
-                ];
-            }
-        }
-
-        $product->update_meta_data('_product_attachments', json_encode($attachments));
-
-        return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
     }
 }
