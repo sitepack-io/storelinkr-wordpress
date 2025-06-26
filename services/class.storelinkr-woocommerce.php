@@ -524,9 +524,9 @@ class StoreLinkrWooCommerceService
     }
 
     public function linkProductGalleryImages(
-        WC_Product|WC_Product_Grouped|WC_Product_Variable $product,
+        WC_Product|WC_Product_Grouped|WC_Product_Variable|WC_Product_Variation $product,
         array $images
-    ): WC_Product|WC_Product_Grouped {
+    ): WC_Product|WC_Product_Grouped|WC_Product_Variable|WC_Product_Variation {
         if (
             empty($images)
             && ($product->get_gallery_image_ids() !== [] || !empty($product->get_image_id()))
@@ -648,6 +648,7 @@ class StoreLinkrWooCommerceService
             $product = new WC_Product_Simple();
         } elseif ($type === 'variant') {
             $product = new WC_Product_Variable();
+            $product->set_manage_stock(false);
         } else {
             throw new Exception('Invalid type requested!');
         }
@@ -731,12 +732,37 @@ class StoreLinkrWooCommerceService
             $product_attributes[] = $attribute;
         }
 
+        $totalStockQuantity = 0;
+        foreach ($products as $productOption) {
+            if (!isset($productOption['inStock']) || !isset($productOption['stockSupplier'])) {
+                continue;
+            }
+
+            $totalStockQuantity += ((int)$productOption['inStock'] + (int)$productOption['stockSupplier']);
+        }
+
         $variable_product->set_attributes($product_attributes);
+
+        $updateStockInfo = !(isset($productOption['updateStock'])) || (bool)$productOption['updateStock'];
+        if ($updateStockInfo === true) {
+            $variable_product->set_manage_stock(true);
+            $variable_product->set_stock_quantity($totalStockQuantity);
+            if ($totalStockQuantity > 1) {
+                $variable_product->set_stock_status('instock');
+            } else {
+                $variable_product->set_stock_status('outofstock');
+            }
+        }
         $variable_product->save();
 
         $variation_map = [];
         foreach ($products as $productOption) {
-            $variation = new WC_Product_Variation();
+            if (!empty($productOption['id'])) {
+                $variation = wc_get_product($productOption['id']);
+            } else {
+                $variation = new WC_Product_Variation();
+            }
+
             $variation->set_parent_id($productId);
             $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
                 $variation,
@@ -757,7 +783,6 @@ class StoreLinkrWooCommerceService
                 $taxonomy = $attribute_taxonomies[$label];
                 $term = get_term_by('name', $term_value, $taxonomy);
 
-                // Als die niet gevonden wordt, probeer dan op slug
                 if (!$term) {
                     $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
                 }
@@ -765,8 +790,12 @@ class StoreLinkrWooCommerceService
                 if ($term) {
                     $attributes[$taxonomy] = $term->slug;
                 } else {
-                    error_log("Term '$term_value' niet gevonden voor taxonomy '$taxonomy'");
+                    $this->logWarning(sprintf('Term %s not found in taxonmy %s', $term_value, $taxonomy));
                 }
+            }
+
+            if (isset($productOption['images'])) {
+                $this->linkProductGalleryImages($variation, (array)$productOption['images']);
             }
 
             $variation->set_attributes($attributes);

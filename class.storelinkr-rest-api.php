@@ -499,8 +499,6 @@ class StoreLinkrRestApi
 
             $product->set_category_ids($request->get_param('categories'));
 
-            $gallery = (array)$request->get_param('images');
-            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $request['facets'],
