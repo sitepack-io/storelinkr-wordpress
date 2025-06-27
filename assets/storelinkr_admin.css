@@ -282,8 +282,22 @@ label.storelinkr-attachment-name {
     font-size: 16px;
 }
 
+.storelinkr-product-page-content h3.sl-tab-heading {
+    padding-left: 10px;
+}
+
 .storelinkr-product-page-content table {
     border: none !important;
+}
+
+.storelinkr-product-page-content .instock {
+    color: #7ad03a;
+    font-weight: 700;
+}
+
+.storelinkr-product-page-content .outofstock {
+    color: #a44;
+    font-weight: 700;
 }
 
 .notice-storelinkr {

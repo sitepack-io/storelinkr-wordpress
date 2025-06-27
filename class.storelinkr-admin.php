@@ -263,9 +263,18 @@ class StoreLinkrAdmin
 
         if ($post && $post->post_type === 'product') {
             $product = wc_get_product($post->ID);
+            $variations = [];
 
-            if ($product) {
-                $attachments = $product->get_meta('_product_attachments', true);
+            if ($product instanceof WC_Product_Variable) {
+                $variations = $product->get_available_variations('object');
+            } elseif ($product) {
+                $variations[] = $product;
+            }
+
+            foreach($variations as $productData) {
+                $attachments = $productData->get_meta('_product_attachments', true);
+
+                echo '<h3 class="sl-tab-heading">' . esc_attr($productData->get_name()) . '</h3>';
 
                 if (!empty($attachments) && $attachments !== "[]") {
                     $attachments = json_decode($attachments, true);
@@ -312,8 +321,18 @@ class StoreLinkrAdmin
         echo '<div class="options_group">';
         if ($post && $post->post_type === 'product') {
             $product = wc_get_product($post->ID);
-            if ($product) {
-                $stockLocations = $product->get_meta('stock_locations', true);
+            $variations = [];
+
+            if ($product instanceof WC_Product_Variable) {
+                $variations = $product->get_available_variations('object');
+            } elseif ($product) {
+                $variations[] = $product;
+            }
+
+            foreach ($variations as $variation) {
+                $stockLocations = $variation->get_meta('stock_locations', true);
+
+                echo '<h3 class="sl-tab-heading">' . esc_attr($variation->get_name()) . '</h3>';
 
                 if (!empty($stockLocations)) {
                     if (is_string($stockLocations)) {
@@ -321,7 +340,10 @@ class StoreLinkrAdmin
                     }
 
                     echo '<table class="wp-list-table widefat striped">';
-
+                    echo '<thead>';
+                    echo '<th>' . __('Stock location', 'storelinkr') . '</th>';
+                    echo '<th>' . __('Quantity', 'storelinkr') . '</th>';
+                    echo '</thead>';
                     if (is_iterable($stockLocations) && count($stockLocations) >= 1) {
                         foreach ($stockLocations as $stockLocation) {
                             if (empty($stockLocation['post_id'])) {
@@ -337,7 +359,17 @@ class StoreLinkrAdmin
                                 echo esc_attr(get_post_meta($locationPost->ID, '_city', true));
                             }
                             echo '</td>';
-                            echo '<td>' . esc_attr($stockLocation['quantity']) . ' ' . __('piece(s)', 'storelinkr') . '</td>';
+                            echo '<td>';
+                            if ((int)$stockLocation['quantity'] >= 1) {
+                                echo '<span class="instock">' . __('In stock', 'storelinkr') . '</span>';
+                            } else {
+                                echo '<span class="outofstock">' . __('Sold out', 'storelinkr') . '</span>';
+                            }
+
+                            echo '<br />' . esc_attr($stockLocation['quantity']) . ' ' . __(
+                                    'piece(s)',
+                                    'storelinkr'
+                                ) . '</td>';
                             echo '</tr>';
                         }
                     }
