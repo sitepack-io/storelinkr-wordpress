@@ -530,15 +530,10 @@ class StoreLinkrRestApi
             $this->authenticateRequest($request);
             $this->validateRequiredFields($request, [
                 'name',
-                'ean',
-                'site',
+                'products',
+                'options',
+                'categories',
                 'importSource',
-                'salesPrice',
-                'categoryId',
-                'id',
-                'inStock',
-                'stockSupplier',
-                'hasStock',
             ]);
 
             $product = $this->eCommerceService->mapProductFromDataArray(
@@ -547,37 +542,26 @@ class StoreLinkrRestApi
             );
             assert($product instanceof WC_Product_Variable);
 
-            $gallery = (array)$request->get_param('images');
-            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            $product->set_category_ids($request->get_param('categories'));
+
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $request['facets'],
                 (isset($request['brand'])) ? $request['brand'] : null
             );
 
-            $invalidMediaIds = [];
-            foreach ($gallery as $mediaId) {
-                $mediaItem = get_post($mediaId);
-                if ($mediaItem && $mediaItem->post_type === 'attachment') {
-                    $filePath = get_attached_file($mediaId);
-
-                    if (!$filePath || !file_exists($filePath)) {
-                        $invalidMediaIds[] = $mediaId;
-                    }
-
-                    continue;
-                }
-
-                $invalidMediaIds[] = $mediaId;
-            }
+            $variationMap = $this->eCommerceService->buildProductVariantOptions(
+                $productId,
+                $request->get_param('options'),
+                $request->get_param('products'),
+            );
 
             return [
                 'status' => 'success',
                 'type' => $product::class,
                 'product_id' => $productId,
+                'variant_options' => $variationMap,
                 'url' => get_permalink($productId),
-                'images' => $gallery,
-                'invalid_media' => $invalidMediaIds,
                 'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
@@ -656,7 +640,7 @@ class StoreLinkrRestApi
 
             $groupedVariant = isset($request['groupedVariant']) && (bool)$request['groupedVariant'];
             $variantId = $this->eCommerceService->linkProductsAsVariant(
-                (!empty($request['products'])) ? (array)$request['products'] : [],
+                (!empty($request['linkProducts'])) ? (array)$request['linkProducts'] : [],
                 (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
                 $groupedVariant,
                 (isset($request['variant'])) ? (array)$request['variant'] : [],

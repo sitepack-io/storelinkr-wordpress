@@ -663,6 +663,10 @@ class StoreLinkrWooCommerceService
 
         if (!empty($data['id'])) {
             $product = $this->findProduct($data['id']);
+
+            if ($type === 'variant' && !$product instanceof WC_Product_Variable) {
+                throw new Exception('Product is not an instance of Variable product!');
+            }
         }
 
         $product = StoreLinkrWooCommerceMapper::convertRequestToProduct(
@@ -762,6 +766,8 @@ class StoreLinkrWooCommerceService
             } else {
                 $variation = new WC_Product_Variation();
             }
+
+            assert($variation instanceof WC_Product_Variation);
 
             $variation->set_parent_id($productId);
             $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
