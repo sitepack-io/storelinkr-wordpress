@@ -188,6 +188,10 @@ class StoreLinkrWooCommerceService
                         continue;
                     }
 
+                    if (wc_check_if_attribute_name_is_reserved(strtolower($facet['name'])) === true) {
+                        continue;
+                    }
+
                     $attribute_taxonomy_key = wc_attribute_taxonomy_name(
                         $this->buildAttributeSlug(self::formatName($facet['name']))
                     );
