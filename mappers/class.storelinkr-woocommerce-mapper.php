@@ -78,7 +78,7 @@ class StoreLinkrWooCommerceMapper
 
             if (is_array($json)) {
                 foreach ($json as $key => $value) {
-                    $product->add_meta_data($key, $value);
+                    $product->update_meta_data($key, $value, true);
                 }
             }
         }
