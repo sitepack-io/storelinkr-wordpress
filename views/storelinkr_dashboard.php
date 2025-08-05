@@ -53,24 +53,6 @@ if (!defined('ABSPATH')) {
                         </div>
                     </div>
                 </div>
-                <div class="storelinkr-block">
-                    <h3>
-                        <?php echo esc_html__('eCommerce plugin', 'storelinkr') ?>
-                    </h3>
-
-                    <?php if(storelinkrWooIsActive() === true) : ?>
-                    <div class="input-group">
-                        <label>
-                            <input type="radio" name="ecommerce" value="woo" checked />
-                            WooCommerce
-                        </label>
-                    </div>
-                    <?php else: ?>
-                    <div class="storelinkr-alert storelinkr-alert-error">
-                        <?php echo esc_html__("storelinkr needs an eCommerce plugin to display products and process orders. For now, this is only compatible with WooCommerce.", 'storelinkr') ?>
-                    </div>
-                    <?php endif; ?>
-                </div>
             </div>
         </div>
     </div>
