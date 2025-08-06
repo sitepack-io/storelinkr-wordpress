@@ -134,7 +134,13 @@ class StoreLinkrWooCommerceService
                     'sku' => $product->get_sku(),
                     'name' => $product->get_name(),
                     'quantity' => $item->get_quantity(),
-                    'price' => intval($order->get_line_total($item, false, false) / $item->get_quantity() * 100),
+                    'price' => intval(
+                        $order->get_line_total(
+                            $item,
+                            false,
+                            false
+                        ) / $item->get_quantity() * 100
+                    ),
                     'price_incl_vat' => intval(
                         $order->get_line_total($item, true, false) / $item->get_quantity() * 100
                     ),
@@ -349,6 +355,7 @@ class StoreLinkrWooCommerceService
      * @param string $name
      * @param string $slug
      * @param string $parentId
+     *
      * @return WP_Term
      * @throws Exception
      */
@@ -544,28 +551,46 @@ class StoreLinkrWooCommerceService
         }
 
         $featuredImage = current($images);
-        $currentImages = $product->get_gallery_image_ids();
-        $newImages = [];
+        $currentGalleryImages = $product->get_gallery_image_ids();
+        $currentFeaturedImage = $product->get_image_id();
+        $validGalleryImages = [];
 
+        // Build the complete list of valid gallery images (all except featured)
         foreach ($images as $imageId) {
-            if ($imageId !== $featuredImage && in_array($imageId, $currentImages) === false) {
-                $newImages[] = $imageId;
+            // Validate if image id still exists, otherwise, log in output:
+            $attachment = get_post($imageId);
+            if (!$attachment || $attachment->post_type !== 'attachment') {
+                $this->warnings[] = sprintf('Image %s does not exist anymore!', $imageId);
+                continue;
+            }
+
+            // Add to gallery if it's not the featured image
+            if ($imageId !== $featuredImage) {
+                $validGalleryImages[] = $imageId;
             }
         }
 
-        if (
-            $product->get_image_id() == $featuredImage
-            && empty(array_diff($newImages, $currentImages))
-            && empty(array_diff($currentImages, $newImages))) {
+        // Check if any changes are needed to prevent unnecessary updates and thumbnail regeneration
+        $featuredImageChanged = $currentFeaturedImage != $featuredImage;
+        $galleryImagesChanged = (
+            count($validGalleryImages) !== count($currentGalleryImages) ||
+            !empty(array_diff($validGalleryImages, $currentGalleryImages)) ||
+            !empty(array_diff($currentGalleryImages, $validGalleryImages))
+        );
+
+        // Return early if no changes are needed
+        if (!$featuredImageChanged && !$galleryImagesChanged) {
             return $product;
         }
 
-        $product->set_gallery_image_ids($newImages);
+        // Update gallery images only if they changed
+        if ($galleryImagesChanged) {
+            $product->set_gallery_image_ids($validGalleryImages);
+        }
 
-        if (!empty($featuredImage)) {
-            if ($product->get_image_id() !== $featuredImage) {
-                $product->set_image_id($featuredImage);
-            }
+        // Update featured image only if it changed
+        if ($featuredImageChanged && !empty($featuredImage)) {
+            $product->set_image_id($featuredImage);
         }
 
         return $product;
@@ -889,6 +914,7 @@ class StoreLinkrWooCommerceService
 
         if (is_wp_error($attribute_id)) {
             $this->logWarning('StoreLinkr error: Attribute create failed: ' . $attribute_id->get_error_message());
+
             return null;
         }
 
@@ -901,6 +927,7 @@ class StoreLinkrWooCommerceService
     /**
      * @param string $slug
      * @param string $attribute_taxonomy_key
+     *
      * @return array<string, bool|int>
      */
     private function findExistingAttribute(
@@ -931,8 +958,12 @@ class StoreLinkrWooCommerceService
         ];
     }
 
-    private function upsertAttributeAndTerm(int $productId, string $attribute_taxonomy_key, string $name, mixed $value)
-    {
+    private function upsertAttributeAndTerm(
+        int $productId,
+        string $attribute_taxonomy_key,
+        string $name,
+        mixed $value
+    ) {
         $slug = $this->buildAttributeSlug(self::formatName($name));
         $attribute_exists = false;
         $attribute_id = 0;
