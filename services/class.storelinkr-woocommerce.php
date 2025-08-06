@@ -2,7 +2,7 @@
 
 use Automattic\WooCommerce\Internal\ProductAttributesLookup\LookupDataStore;
 
-if ( ! defined('ABSPATH')) {
+if (!defined('ABSPATH')) {
     // Exit if accessed directly
     exit;
 }
@@ -17,15 +17,15 @@ class StoreLinkrWooCommerceService
     public function getCategories(): array
     {
         $product_categories = get_terms([
-            'taxonomy'   => 'product_cat',
-            'orderby'    => 'name',
-            'order'      => 'asc',
+            'taxonomy' => 'product_cat',
+            'orderby' => 'name',
+            'order' => 'asc',
             'hide_empty' => false,
         ]);
 
         $categories = [];
 
-        if ( ! empty($product_categories)) {
+        if (!empty($product_categories)) {
             foreach ($product_categories as $category) {
                 $categories[$category->term_id] = $category;
             }
@@ -42,10 +42,10 @@ class StoreLinkrWooCommerceService
     public function getOrders(int $limit = 20): array
     {
         $orders = wc_get_orders([
-            'limit'   => $limit,
+            'limit' => $limit,
             'orderby' => 'date',
-            'order'   => 'DESC',
-            'return'  => 'objects',
+            'order' => 'DESC',
+            'return' => 'objects',
         ]);
 
         $formatted_orders = [];
@@ -58,54 +58,54 @@ class StoreLinkrWooCommerceService
                 continue;
             }
 
-            $billingAddress  = $order->get_address();
+            $billingAddress = $order->get_address();
             $shippingAddress = $order->get_address('shipping');
 
             $shippingMethods = [];
             foreach ($order->get_shipping_methods() as $shippingItem) {
                 $shippingMethods[] = $shippingItem->get_method_title();
             }
-            $deliveryMethod = ! empty($shippingMethods) ? implode(', ', $shippingMethods) : 'default';
+            $deliveryMethod = !empty($shippingMethods) ? implode(', ', $shippingMethods) : 'default';
 
             $formatted_order = [
-                'order_id'             => $order->get_id(),
-                'order_number'         => $order->get_order_number(),
-                'order_status'         => $order->get_status(),
-                'created'              => $order->get_date_created()->format('Y-m-d H:i:s'),
-                'customer'             => [
-                    'first_name'      => $order->get_billing_first_name(),
-                    'last_name'       => $order->get_billing_last_name(),
-                    'email'           => $order->get_billing_email(),
-                    'company_name'    => $order->get_billing_company(),
-                    'billingAddress'  => [
-                        'address'  => $billingAddress['address_1'],
+                'order_id' => $order->get_id(),
+                'order_number' => $order->get_order_number(),
+                'order_status' => $order->get_status(),
+                'created' => $order->get_date_created()->format('Y-m-d H:i:s'),
+                'customer' => [
+                    'first_name' => $order->get_billing_first_name(),
+                    'last_name' => $order->get_billing_last_name(),
+                    'email' => $order->get_billing_email(),
+                    'company_name' => $order->get_billing_company(),
+                    'billingAddress' => [
+                        'address' => $billingAddress['address_1'],
                         'addition' => $billingAddress['address_2'],
-                        'city'     => $billingAddress['city'],
-                        'state'    => $billingAddress['state'],
+                        'city' => $billingAddress['city'],
+                        'state' => $billingAddress['state'],
                         'postcode' => $billingAddress['postcode'],
-                        'country'  => $billingAddress['country'],
-                        'email'    => $billingAddress['email'],
-                        'phone'    => $billingAddress['phone'],
+                        'country' => $billingAddress['country'],
+                        'email' => $billingAddress['email'],
+                        'phone' => $billingAddress['phone'],
                     ],
                     'shippingAddress' => [
-                        'address'  => $shippingAddress['address_1'],
+                        'address' => $shippingAddress['address_1'],
                         'addition' => $shippingAddress['address_2'],
-                        'city'     => $shippingAddress['city'],
-                        'state'    => $shippingAddress['state'],
+                        'city' => $shippingAddress['city'],
+                        'state' => $shippingAddress['state'],
                         'postcode' => $shippingAddress['postcode'],
-                        'country'  => $shippingAddress['country'],
-                        'phone'    => $shippingAddress['phone'],
+                        'country' => $shippingAddress['country'],
+                        'phone' => $shippingAddress['phone'],
                     ],
                 ],
-                'order_lines'          => [],
-                'currency'             => $order->get_currency(),
-                'total_amount_cents'   => intval($order->get_subtotal() * 100),
+                'order_lines' => [],
+                'currency' => $order->get_currency(),
+                'total_amount_cents' => intval($order->get_subtotal() * 100),
                 'shipping_costs_cents' => intval($order->get_shipping_total() * 100),
-                'discount_cents'       => intval($order->get_total_discount() * 100),
-                'grand_total_cents'    => intval($order->get_total() * 100),
-                'ip_address'           => $order->get_customer_ip_address(),
-                'payment_status'       => $order->is_paid() ? 'paid' : 'unpaid',
-                'deliver_method'       => $deliveryMethod,
+                'discount_cents' => intval($order->get_total_discount() * 100),
+                'grand_total_cents' => intval($order->get_total() * 100),
+                'ip_address' => $order->get_customer_ip_address(),
+                'payment_status' => $order->is_paid() ? 'paid' : 'unpaid',
+                'deliver_method' => $deliveryMethod,
             ];
 
             $validLineItems = 0;
@@ -129,26 +129,26 @@ class StoreLinkrWooCommerceService
                 }
 
                 $formatted_order['order_lines'][] = [
-                    'product_id'        => $product->get_id(),
-                    'ean'               => $ean,
-                    'sku'               => $product->get_sku(),
-                    'name'              => $product->get_name(),
-                    'quantity'          => $item->get_quantity(),
-                    'price'             => intval(
+                    'product_id' => $product->get_id(),
+                    'ean' => $ean,
+                    'sku' => $product->get_sku(),
+                    'name' => $product->get_name(),
+                    'quantity' => $item->get_quantity(),
+                    'price' => intval(
                         $order->get_line_total(
                             $item,
                             false,
                             false
                         ) / $item->get_quantity() * 100
                     ),
-                    'price_incl_vat'    => intval(
+                    'price_incl_vat' => intval(
                         $order->get_line_total($item, true, false) / $item->get_quantity() * 100
                     ),
-                    'subtotal'          => intval($order->get_line_subtotal($item, false, false) * 100),
+                    'subtotal' => intval($order->get_line_subtotal($item, false, false) * 100),
                     'subtotal_incl_vat' => intval($order->get_line_subtotal($item, true, false) * 100),
-                    'item_metadata'     => $item->get_meta_data(),
-                    'product_metadata'  => $product->get_meta_data(),
-                    'product_image'     => wp_get_attachment_url($product->get_image_id()),
+                    'item_metadata' => $item->get_meta_data(),
+                    'product_metadata' => $product->get_meta_data(),
+                    'product_image' => wp_get_attachment_url($product->get_image_id()),
                 ];
                 $validLineItems++;
             }
@@ -174,15 +174,15 @@ class StoreLinkrWooCommerceService
 
         $productId = $product->save();
 
-        if ( ! empty($brandName)) {
+        if (!empty($brandName)) {
             $brandTermId = $this->upsertBrandName($brandName);
             wp_set_object_terms($productId, [$brandTermId], 'product_brand');
         }
 
-        if ( ! empty($facets)) {
-            $product            = wc_get_product($productId);
+        if (!empty($facets)) {
+            $product = wc_get_product($productId);
             $product_attributes = $product->get_attributes();
-            $existing_facets    = [];
+            $existing_facets = [];
 
             if (is_string($facets)) {
                 $facets = json_decode($facets, true);
@@ -201,14 +201,14 @@ class StoreLinkrWooCommerceService
                     $attribute_taxonomy_key = wc_attribute_taxonomy_name(
                         $this->buildAttributeSlug(self::formatName($facet['name']))
                     );
-                    $attribute_id           = $this->upsertAttributeAndTerm(
+                    $attribute_id = $this->upsertAttributeAndTerm(
                         $productId,
                         $attribute_taxonomy_key,
                         $facet['name'],
                         $facet['value']
                     );
 
-                    if ( ! is_int($attribute_id)) {
+                    if (!is_int($attribute_id)) {
                         $attribute_object = new WC_Product_Attribute();
                         $attribute_object->set_id($attribute_id);
                         $attribute_object->set_name($attribute_taxonomy_key);
@@ -228,7 +228,7 @@ class StoreLinkrWooCommerceService
             }
 
             foreach ($product_attributes as $key => $attribute) {
-                if ( ! in_array($key, $existing_facets)) {
+                if (!in_array($key, $existing_facets)) {
                     unset($product_attributes[$key]);
                 }
             }
@@ -261,10 +261,10 @@ class StoreLinkrWooCommerceService
     private function findProductBySku(mixed $get_param): WC_Product|WC_Product_Grouped|bool
     {
         $args = [
-            'post_type'      => 'product',
-            'meta_key'       => '_sku',
-            'meta_value'     => sanitize_text_field($get_param),
-            'post_status'    => 'any',
+            'post_type' => 'product',
+            'meta_key' => '_sku',
+            'meta_value' => sanitize_text_field($get_param),
+            'post_status' => 'any',
             'posts_per_page' => 1,
         ];
 
@@ -272,7 +272,7 @@ class StoreLinkrWooCommerceService
 
         if ($query->have_posts()) {
             $product_id = $query->posts[0]->ID;
-            $product    = wc_get_product($product_id);
+            $product = wc_get_product($product_id);
 
             if ($product) {
                 return $product;
@@ -289,7 +289,7 @@ class StoreLinkrWooCommerceService
         require_once ABSPATH . 'wp-admin/includes/media.php';
 
         $imageContent = null;
-        if ( ! empty($request['cdn_url'])) {
+        if (!empty($request['cdn_url'])) {
             $response = wp_remote_get($request['cdn_url'], [
                 'headers' => [
                     'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
@@ -311,7 +311,7 @@ class StoreLinkrWooCommerceService
             throw new Exception('Empty image content!');
         }
 
-        $filename  = sprintf(
+        $filename = sprintf(
             '%d_%s_%d.jpg',
             $product->get_id(),
             self::formatName($product->get_name()),
@@ -329,11 +329,11 @@ class StoreLinkrWooCommerceService
 
         $attachment = [
             'post_mime_type' => $file_type,
-            'post_title'     => sanitize_text_field($product->get_name()),
-            'post_excerpt'   => sanitize_text_field($product->get_name()),
-            'post_content'   => sanitize_text_field($product->get_name()),
-            'post_status'    => 'inherit',
-            'guid'           => $upload['url']
+            'post_title' => sanitize_text_field($product->get_name()),
+            'post_excerpt' => sanitize_text_field($product->get_name()),
+            'post_content' => sanitize_text_field($product->get_name()),
+            'post_status' => 'inherit',
+            'guid' => $upload['url']
         ];
 
         $mediaId = wp_insert_attachment($attachment, $file_path, $product->get_id());
@@ -369,7 +369,7 @@ class StoreLinkrWooCommerceService
 
         $term = wp_insert_term($name, 'product_cat', [
             'description' => null,
-            'parent'      => ( ! empty($parentId)) ? $parentId : 0,
+            'parent' => (!empty($parentId)) ? $parentId : 0,
         ]);
 
         if ($term instanceof WP_Error) {
@@ -381,7 +381,7 @@ class StoreLinkrWooCommerceService
             );
         }
 
-        if ( ! is_array($term)) {
+        if (!is_array($term)) {
             $existing = get_term_by('name', $name, 'product_cat');
 
             if ((int)$existing->parent === (int)$parentId) {
@@ -408,7 +408,7 @@ class StoreLinkrWooCommerceService
         string $parentId
     ): void {
         wp_update_term($category->term_id, $category->taxonomy, [
-            'name'   => $name,
+            'name' => $name,
             'parent' => $parentId,
         ]);
     }
@@ -433,12 +433,12 @@ class StoreLinkrWooCommerceService
             if ($wooProduct instanceof WC_Product) {
                 $variantIds = get_post_meta($wooProductId, 'storelinkr_variant_ids', true);
 
-                if ( ! is_array($variantIds)) {
+                if (!is_array($variantIds)) {
                     $variantIds = [];
                 }
 
                 foreach ($products as $id) {
-                    if ( ! in_array($id, $variantIds)) {
+                    if (!in_array($id, $variantIds)) {
                         $variantIds[] = $id;
                     }
                 }
@@ -461,10 +461,10 @@ class StoreLinkrWooCommerceService
 
         if ($groupedVariant === true) {
             $variantProduct = new WC_Product_Grouped();
-            if ( ! empty($variantId)) {
+            if (!empty($variantId)) {
                 $variantProduct = $this->findProduct($variantId);
 
-                if ( ! $variantProduct instanceof WC_Product_Grouped) {
+                if (!$variantProduct instanceof WC_Product_Grouped) {
                     $this->logWarning('Invalid product class: ' . $variantProduct::class);
 
                     throw new Exception('Invalid product class: ' . $variantProduct::class);
@@ -473,14 +473,14 @@ class StoreLinkrWooCommerceService
 
             $variantProduct->set_children($products);
             $variantProduct->set_category_ids(
-                ( ! empty($variantInfo['categories'])) ? (array)$variantInfo['categories'] : []
+                (!empty($variantInfo['categories'])) ? (array)$variantInfo['categories'] : []
             );
-            $variantProduct->set_name(! empty($variantInfo['name']) ? trim($variantInfo['name']) : '');
+            $variantProduct->set_name(!empty($variantInfo['name']) ? trim($variantInfo['name']) : '');
             $variantProduct->set_short_description(
-                ! empty($variantInfo['shortDescription']) ? trim($variantInfo['shortDescription']) : ''
+                !empty($variantInfo['shortDescription']) ? trim($variantInfo['shortDescription']) : ''
             );
             $variantProduct->set_description(
-                ! empty($variantInfo['description'])
+                !empty($variantInfo['description'])
                     ? trim($variantInfo['description']) : ''
             );
             $variantProduct->set_status('publish');
@@ -496,7 +496,7 @@ class StoreLinkrWooCommerceService
                 $facets,
                 (isset($variantInfo['brand'])) ? $variantInfo['brand'] : null
             );
-        } elseif ($groupedVariant === false && ! empty($variantId)) {
+        } elseif ($groupedVariant === false && !empty($variantId)) {
             $groupedProduct = $this->findProduct($variantId);
 
             if ($groupedProduct instanceof WC_Product_Grouped) {
@@ -540,7 +540,7 @@ class StoreLinkrWooCommerceService
     ): WC_Product|WC_Product_Grouped|WC_Product_Variable|WC_Product_Variation {
         if (
             empty($images)
-            && ($product->get_gallery_image_ids() !== [] || ! empty($product->get_image_id()))
+            && ($product->get_gallery_image_ids() !== [] || !empty($product->get_image_id()))
         ) {
             $product->set_gallery_image_ids([]);
             $product->set_image_id('');
@@ -550,16 +550,16 @@ class StoreLinkrWooCommerceService
             return $product;
         }
 
-        $featuredImage        = current($images);
+        $featuredImage = current($images);
         $currentGalleryImages = $product->get_gallery_image_ids();
         $currentFeaturedImage = $product->get_image_id();
-        $validGalleryImages   = [];
+        $validGalleryImages = [];
 
         // Build the complete list of valid gallery images (all except featured)
         foreach ($images as $imageId) {
             // Validate if image id still exists, otherwise, log in output:
             $attachment = get_post($imageId);
-            if ( ! $attachment || $attachment->post_type !== 'attachment') {
+            if (!$attachment || $attachment->post_type !== 'attachment') {
                 $this->warnings[] = sprintf('Image %s does not exist anymore!', $imageId);
                 continue;
             }
@@ -574,12 +574,12 @@ class StoreLinkrWooCommerceService
         $featuredImageChanged = $currentFeaturedImage != $featuredImage;
         $galleryImagesChanged = (
             count($validGalleryImages) !== count($currentGalleryImages) ||
-            ! empty(array_diff($validGalleryImages, $currentGalleryImages)) ||
-            ! empty(array_diff($currentGalleryImages, $validGalleryImages))
+            !empty(array_diff($validGalleryImages, $currentGalleryImages)) ||
+            !empty(array_diff($currentGalleryImages, $validGalleryImages))
         );
 
         // Return early if no changes are needed
-        if ( ! $featuredImageChanged && ! $galleryImagesChanged) {
+        if (!$featuredImageChanged && !$galleryImagesChanged) {
             return $product;
         }
 
@@ -589,7 +589,7 @@ class StoreLinkrWooCommerceService
         }
 
         // Update featured image only if it changed
-        if ($featuredImageChanged && ! empty($featuredImage)) {
+        if ($featuredImageChanged && !empty($featuredImage)) {
             $product->set_image_id($featuredImage);
         }
 
@@ -605,7 +605,7 @@ class StoreLinkrWooCommerceService
     public function mergeDuplicateAttributes(): void
     {
         $attributeTaxonomies = wc_get_attribute_taxonomies();
-        $attributeNames      = [];
+        $attributeNames = [];
         $duplicateAttributes = [];
 
         foreach ($attributeTaxonomies as $taxonomy) {
@@ -623,13 +623,13 @@ class StoreLinkrWooCommerceService
 
         foreach ($duplicateAttributes as $duplicate) {
             $taxonomyName = wc_attribute_taxonomy_name($duplicate->attribute_name);
-            $terms        = get_terms([
-                'taxonomy'   => $taxonomyName,
+            $terms = get_terms([
+                'taxonomy' => $taxonomyName,
                 'hide_empty' => false,
             ]);
 
-            if ( ! is_wp_error($terms) && ! empty($terms)) {
-                $termNames      = [];
+            if (!is_wp_error($terms) && !empty($terms)) {
+                $termNames = [];
                 $duplicateTerms = [];
 
                 foreach ($terms as $term) {
@@ -644,20 +644,20 @@ class StoreLinkrWooCommerceService
                 foreach ($duplicateTerms as $term) {
                     $termToKeepId = array_search($term->name, $termNames);
 
-                    $args     = [
-                        'post_type'   => 'product',
+                    $args = [
+                        'post_type' => 'product',
                         'numberposts' => -1,
-                        'tax_query'   => [
+                        'tax_query' => [
                             [
                                 'taxonomy' => $taxonomyName,
-                                'field'    => 'term_id',
-                                'terms'    => $term->term_id,
+                                'field' => 'term_id',
+                                'terms' => $term->term_id,
                             ],
                         ],
                     ];
                     $products = get_posts($args);
 
-                    if ( ! empty($products)) {
+                    if (!empty($products)) {
                         foreach ($products as $product) {
                             wp_set_object_terms($product->ID, (int)$termToKeepId, $taxonomyName, true);
                         }
@@ -682,7 +682,7 @@ class StoreLinkrWooCommerceService
             throw new Exception('Invalid type requested!');
         }
 
-        if ( ! empty($data['sku'])) {
+        if (!empty($data['sku'])) {
             $productSku = $this->findProductBySku($data['sku']);
 
             if ($productSku !== false) {
@@ -690,10 +690,10 @@ class StoreLinkrWooCommerceService
             }
         }
 
-        if ( ! empty($data['id'])) {
+        if (!empty($data['id'])) {
             $product = $this->findProduct($data['id']);
 
-            if ($type === 'variant' && ! $product instanceof WC_Product_Variable) {
+            if ($type === 'variant' && !$product instanceof WC_Product_Variable) {
                 throw new Exception('Product is not an instance of Variable product!');
             }
         }
@@ -702,7 +702,7 @@ class StoreLinkrWooCommerceService
             $product,
             $data,
         );
-        if ( ! empty($data['categoryId'])) {
+        if (!empty($data['categoryId'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
         }
 
@@ -711,20 +711,20 @@ class StoreLinkrWooCommerceService
 
     public function buildProductVariantOptions(int $productId, array $optionLabels, array $products): array
     {
-        $variable_product     = wc_get_product($productId);
+        $variable_product = wc_get_product($productId);
         $attribute_taxonomies = [];
 
         foreach ($optionLabels as $option_name) {
             $attribute_label = ucfirst($option_name);
-            $attribute_slug  = wc_sanitize_taxonomy_name($option_name);
-            $taxonomy        = 'pa_' . $attribute_slug;
+            $attribute_slug = wc_sanitize_taxonomy_name($option_name);
+            $taxonomy = 'pa_' . $attribute_slug;
 
-            if ( ! taxonomy_exists($taxonomy)) {
+            if (!taxonomy_exists($taxonomy)) {
                 wc_create_attribute([
-                    'name'         => $attribute_label,
-                    'slug'         => $attribute_slug,
-                    'type'         => 'select',
-                    'order_by'     => 'menu_order',
+                    'name' => $attribute_label,
+                    'slug' => $attribute_slug,
+                    'type' => 'select',
+                    'order_by' => 'menu_order',
                     'has_archives' => false,
                 ]);
                 delete_transient('wc_attribute_taxonomies');
@@ -735,7 +735,7 @@ class StoreLinkrWooCommerceService
 
             $terms = array_unique(array_column(array_column($products, 'options'), $option_name));
             foreach ($terms as $term_name) {
-                if ( ! term_exists($term_name, $taxonomy)) {
+                if (!term_exists($term_name, $taxonomy)) {
                     wp_insert_term($term_name, $taxonomy);
                 }
             }
@@ -744,7 +744,7 @@ class StoreLinkrWooCommerceService
         $product_attributes = [];
         foreach ($attribute_taxonomies as $label => $taxonomy) {
             $attribute_slug = wc_sanitize_taxonomy_name($label);
-            $attribute_id   = 0;
+            $attribute_id = 0;
 
             foreach (wc_get_attribute_taxonomies() as $attr) {
                 if ($attr->attribute_name === $attribute_slug) {
@@ -767,7 +767,7 @@ class StoreLinkrWooCommerceService
 
         $totalStockQuantity = 0;
         foreach ($products as $productOption) {
-            if ( ! isset($productOption['inStock']) || ! isset($productOption['stockSupplier'])) {
+            if (!isset($productOption['inStock']) || !isset($productOption['stockSupplier'])) {
                 continue;
             }
 
@@ -776,7 +776,7 @@ class StoreLinkrWooCommerceService
 
         $variable_product->set_attributes($product_attributes);
 
-        $updateStockInfo = ! (isset($productOption['updateStock'])) || (bool)$productOption['updateStock'];
+        $updateStockInfo = !(isset($productOption['updateStock'])) || (bool)$productOption['updateStock'];
         if ($updateStockInfo === true) {
             $variable_product->set_manage_stock(true);
             $variable_product->set_stock_quantity($totalStockQuantity);
@@ -790,7 +790,7 @@ class StoreLinkrWooCommerceService
 
         $variation_map = [];
         foreach ($products as $productOption) {
-            if ( ! empty($productOption['id'])) {
+            if (!empty($productOption['id'])) {
                 $variation = wc_get_product($productOption['id']);
             } else {
                 $variation = new WC_Product_Variation();
@@ -804,21 +804,21 @@ class StoreLinkrWooCommerceService
                 $productOption,
             );
 
-            if ( ! empty($data['categoryId'])) {
+            if (!empty($data['categoryId'])) {
                 $variation->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
             }
 
             $attributes = [];
 
             foreach ($productOption['options'] as $label => $term_value) {
-                if ( ! isset($attribute_taxonomies[$label])) {
+                if (!isset($attribute_taxonomies[$label])) {
                     continue;
                 }
 
                 $taxonomy = $attribute_taxonomies[$label];
-                $term     = get_term_by('name', $term_value, $taxonomy);
+                $term = get_term_by('name', $term_value, $taxonomy);
 
-                if ( ! $term) {
+                if (!$term) {
                     $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
                 }
 
@@ -836,7 +836,7 @@ class StoreLinkrWooCommerceService
             $variation->set_attributes($attributes);
             $variation->save();
 
-            $variation_id                         = $variation->get_id();
+            $variation_id = $variation->get_id();
             $variation_map[$productOption['ean']] = $variation_id;
         }
 
@@ -853,11 +853,11 @@ class StoreLinkrWooCommerceService
 
     private function getCorrespondingCategoryIds(int $categoryId): array
     {
-        $categories      = [$categoryId];
+        $categories = [$categoryId];
         $currentCategory = $this->findCategory($categoryId);
 
-        while ( ! empty($currentCategory) && ! empty($currentCategory->parent)) {
-            $categories[]    = $currentCategory->parent;
+        while (!empty($currentCategory) && !empty($currentCategory->parent)) {
+            $categories[] = $currentCategory->parent;
             $currentCategory = $this->findCategory($currentCategory->parent);
         }
 
@@ -943,17 +943,17 @@ class StoreLinkrWooCommerceService
                 || $attribute->attribute_name === $attribute_taxonomy_key
             ) {
                 return [
-                    'exists'          => true,
-                    'attribute_id'    => $attribute->attribute_id,
-                    'attribute_name'  => $attribute->attribute_name,
+                    'exists' => true,
+                    'attribute_id' => $attribute->attribute_id,
+                    'attribute_name' => $attribute->attribute_name,
                     'attribute_label' => $attribute->attribute_label,
                 ];
             }
         }
 
         return [
-            'exists'         => false,
-            'attribute_id'   => 0,
+            'exists' => false,
+            'attribute_id' => 0,
             'attribute_name' => $attribute_taxonomy_key,
         ];
     }
@@ -964,9 +964,9 @@ class StoreLinkrWooCommerceService
         string $name,
         mixed $value
     ) {
-        $slug             = $this->buildAttributeSlug(self::formatName($name));
+        $slug = $this->buildAttributeSlug(self::formatName($name));
         $attribute_exists = false;
-        $attribute_id     = 0;
+        $attribute_id = 0;
 
         $existingAttribute = $this->findExistingAttribute(
             $slug,
@@ -974,7 +974,7 @@ class StoreLinkrWooCommerceService
         );
         if (isset($existingAttribute['exists']) && isset($existingAttribute['attribute_id'])) {
             $attribute_exists = $existingAttribute['exists'];
-            $attribute_id     = $existingAttribute['attribute_id'];
+            $attribute_id = $existingAttribute['attribute_id'];
         }
 
         if ($attribute_exists === false || taxonomy_exists($attribute_taxonomy_key) === false) {
@@ -996,7 +996,7 @@ class StoreLinkrWooCommerceService
                 $this->buildAttributeSlug(self::formatName($value)),
                 $attribute_taxonomy_key
             );
-            if ( ! $term) {
+            if (!$term) {
                 $term = wp_insert_term($value, $attribute_taxonomy_key, [
                     'slug' => $this->buildAttributeSlug(self::formatName($value))
                 ]);
@@ -1008,7 +1008,7 @@ class StoreLinkrWooCommerceService
                 );
             }
 
-            if ( ! is_wp_error($term)) {
+            if (!is_wp_error($term)) {
                 wp_set_object_terms(
                     $productId,
                     $value,
@@ -1025,7 +1025,7 @@ class StoreLinkrWooCommerceService
 
     private function upsertBrandName(string $brandName): ?int
     {
-        if ( ! term_exists($brandName, 'product_brand')) {
+        if (!term_exists($brandName, 'product_brand')) {
             wp_insert_term(
                 $brandName,
                 'product_brand',
