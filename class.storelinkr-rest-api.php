@@ -110,6 +110,11 @@ class StoreLinkrRestApi
             ],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/images/create', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderCreateImage'],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route('storelinkr/v1', '/products/(?P<id>\d+)/archive', [
             'methods' => 'POST',
             'callback' => [$this, 'renderArchiveProduct'],
@@ -608,6 +613,100 @@ class StoreLinkrRestApi
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
         }
+    }
+
+    public function renderCreateImage(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'alt',
+            ]);
+
+            $mediaId = $this->createStandaloneImage($request);
+
+            return [
+                'status' => 'success',
+                'image_id' => $mediaId,
+                'media_id' => $mediaId, // Include media_id as requested
+                'image_url' => wp_get_attachment_url($mediaId),
+                'warnings' => $this->eCommerceService->getWarnings(),
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    private function createStandaloneImage(WP_REST_Request $request): int
+    {
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+
+        $imageContent = null;
+        if (!empty($request['cdn_url'])) {
+            $response = wp_remote_get($request['cdn_url'], [
+                'headers' => [
+                    'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
+                ],
+            ]);
+
+            if (is_wp_error($response)) {
+                throw new Exception('Image download failed: ' . $response->get_error_message());
+            }
+
+            $imageContent = wp_remote_retrieve_body($response);
+        }
+
+        if (empty($request['cdn_url']) && empty($request['imageContent'])) {
+            throw new Exception('Please set the image content or provide a CDN url!');
+        }
+
+        if (empty($imageContent)) {
+            $imageContent = $request['imageContent'];
+        }
+
+        if (empty($imageContent)) {
+            throw new Exception('Empty image content!');
+        }
+
+        // Generate filename using alt text or timestamp
+        $alt = sanitize_text_field($request['alt']);
+        $filename = sprintf(
+            'storelinkr_%s_%d.jpg',
+            sanitize_file_name($alt ?: 'image'),
+            wp_rand(1, 50000)
+        );
+        $file_type = 'image/jpeg';
+
+        $upload = wp_upload_bits($filename, null, $imageContent);
+
+        if ($upload['error']) {
+            throw new Exception('Error while uploading image: ' . esc_attr($upload['error']));
+        }
+
+        $file_path = $upload['file'];
+
+        $attachment = [
+            'post_mime_type' => $file_type,
+            'post_title' => $alt,
+            'post_excerpt' => $alt,
+            'post_content' => $alt,
+            'post_status' => 'inherit',
+            'guid' => $upload['url']
+        ];
+
+        $mediaId = wp_insert_attachment($attachment, $file_path);
+
+        if (is_wp_error($mediaId)) {
+            throw new Exception('Image error: ' . $mediaId->get_error_message());
+        }
+
+        $attach_data = wp_generate_attachment_metadata($mediaId, $file_path);
+        wp_update_attachment_metadata($mediaId, $attach_data);
+        update_post_meta($mediaId, '_wp_attachment_image_alt', $alt);
+
+        return $mediaId;
     }
 
     public function renderArchiveProduct(WP_REST_Request $request)
