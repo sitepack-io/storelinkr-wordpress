@@ -419,7 +419,7 @@ class StoreLinkrWooCommerceService
     }
 
     public function linkProductsAsVariant(
-        array $products,
+        array $linkProducts,
         array $removeProducts,
         bool $groupedVariant,
         array $variantInfo = [],
@@ -427,7 +427,7 @@ class StoreLinkrWooCommerceService
         array $images = [],
         array $facets = [],
     ): null|int {
-        foreach ($products as $wooProductId) {
+        foreach ($linkProducts as $wooProductId) {
             $wooProduct = $this->findProduct($wooProductId);
 
             if ($wooProduct instanceof WC_Product) {
@@ -437,7 +437,7 @@ class StoreLinkrWooCommerceService
                     $variantIds = [];
                 }
 
-                foreach ($products as $id) {
+                foreach ($linkProducts as $id) {
                     if (!in_array($id, $variantIds)) {
                         $variantIds[] = $id;
                     }
@@ -446,6 +446,7 @@ class StoreLinkrWooCommerceService
                 update_post_meta($wooProductId, 'storelinkr_variant_ids', $variantIds);
 
                 if ($groupedVariant === true) {
+                    $wooProduct->set_parent_id($variantId);
                     $wooProduct->set_catalog_visibility(
                         apply_filters('storelinkr_single_visibility', 'search', $wooProductId)
                     );
@@ -471,7 +472,7 @@ class StoreLinkrWooCommerceService
                 }
             }
 
-            $variantProduct->set_children($products);
+            $variantProduct->set_children($linkProducts);
             $variantProduct->set_category_ids(
                 (!empty($variantInfo['categories'])) ? (array)$variantInfo['categories'] : []
             );
@@ -507,7 +508,7 @@ class StoreLinkrWooCommerceService
         }
 
         if (count($removeProducts) >= 1) {
-            foreach ($products as $wooProductId) {
+            foreach ($linkProducts as $wooProductId) {
                 $wooProduct = $this->findProduct($wooProductId);
 
                 if ($wooProduct instanceof WC_Product) {
@@ -851,6 +852,12 @@ class StoreLinkrWooCommerceService
         return $this->warnings;
     }
 
+    public function logWarning(string $string): void
+    {
+        $this->warnings[] = trim($string);
+        error_log($string);
+    }
+
     private function getCorrespondingCategoryIds(int $categoryId): array
     {
         $categories = [$categoryId];
@@ -1038,11 +1045,5 @@ class StoreLinkrWooCommerceService
         $brand = get_term_by('name', $brandName, 'product_brand');
 
         return $brand ? $brand->term_id : null;
-    }
-
-    private function logWarning(string $string): void
-    {
-        $this->warnings[] = trim($string);
-        error_log($string);
     }
 }

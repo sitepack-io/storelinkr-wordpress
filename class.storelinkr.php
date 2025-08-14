@@ -26,6 +26,7 @@ class StoreLinkr
     public static function init()
     {
         self::registerStockLocationPostType();
+        self::assignStockLocationCapabilities();
     }
 
     private static function registerStockLocationPostType()
@@ -69,6 +70,77 @@ class StoreLinkr
             ],
             'map_meta_cap' => true,
         ]);
+    }
+
+    private static function assignStockLocationCapabilities()
+    {
+        // Directly add capabilities to roles
+        $capabilities_to_add = [
+            'edit_product_stock_location',
+            'read_product_stock_location',
+            'edit_product_stock_locations',
+            'edit_others_product_stock_locations',
+            'publish_product_stock_locations',
+            'read_private_product_stock_locations',
+            'edit_private_product_stock_locations',
+            'edit_published_product_stock_locations'
+        ];
+        
+        // Add capabilities to administrator role
+        $admin_role = get_role('administrator');
+        if ($admin_role) {
+            foreach ($capabilities_to_add as $cap) {
+                $admin_role->add_cap($cap);
+            }
+        }
+        
+        // Add capabilities to editor role
+        $editor_role = get_role('editor');
+        if ($editor_role) {
+            foreach ($capabilities_to_add as $cap) {
+                $editor_role->add_cap($cap);
+            }
+        }
+        
+        // Add capabilities to shop_manager role
+        $shop_manager_role = get_role('shop_manager');
+        if ($shop_manager_role) {
+            foreach ($capabilities_to_add as $cap) {
+                $shop_manager_role->add_cap($cap);
+            }
+        }
+        
+        // Keep the meta capability mapping filter as backup/fallback
+        add_filter('map_meta_cap', function($caps, $cap, $user_id, $args) {
+            // Handle sl_stock_location meta capabilities
+            switch ($cap) {
+                case 'edit_product_stock_location':
+                case 'read_product_stock_location':
+                case 'edit_product_stock_locations':
+                case 'edit_others_product_stock_locations':
+                case 'publish_product_stock_locations':
+                case 'read_private_product_stock_locations':
+                case 'edit_private_product_stock_locations':
+                case 'edit_published_product_stock_locations':
+                    $user = get_user_by('id', $user_id);
+                    if ($user) {
+                        // Allow administrators full access
+                        if (in_array('administrator', $user->roles)) {
+                            return ['manage_options'];
+                        }
+                        // Allow editors access as well
+                        if (in_array('editor', $user->roles)) {
+                            return ['edit_posts'];
+                        }
+                        // Allow shop managers access with WooCommerce capabilities
+                        if (in_array('shop_manager', $user->roles)) {
+                            return ['manage_woocommerce'];
+                        }
+                    }
+                    break;
+            }
+            return $caps;
+        }, 10, 4);
     }
 
     public function fetchLiveStock(string $siteUuid, string $importSource, string $ean): StoreLinkrStock
