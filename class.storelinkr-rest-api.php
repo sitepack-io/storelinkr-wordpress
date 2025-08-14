@@ -735,15 +735,55 @@ class StoreLinkrRestApi
             $this->authenticateRequest($request);
             $this->validateRequiredFields($request, [
                 'variant',
+                'linkProducts',
             ]);
 
             $groupedVariant = isset($request['groupedVariant']) && (bool)$request['groupedVariant'];
+
+            // Validate and filter linkProducts to ensure only valid product IDs
+            $linkProducts = [];
+            if (isset($request['linkProducts']) && is_array($request['linkProducts'])) {
+                foreach ($request['linkProducts'] as $productId) {
+                    try {
+                        $this->eCommerceService->findProduct($productId);
+                        $linkProducts[] = $productId;
+                    } catch (\Exception $exception) {
+                        $this->eCommerceService->logWarning(
+                            $exception->getMessage(),
+                        );
+                    }
+                }
+            }
+
+            // Validate and filter removeProducts to ensure only valid product IDs
+            $removeProducts = [];
+            if (isset($request['removeProducts']) && is_array($request['removeProducts'])) {
+                foreach ($request['removeProducts'] as $productId) {
+                    try {
+                        $this->eCommerceService->findProduct($productId);
+                        $removeProducts[] = $productId;
+                    } catch (\Exception $exception) {
+                        $this->eCommerceService->logWarning(
+                            $exception->getMessage(),
+                        );
+                    }
+                }
+            }
+
+            // Extract variant ID from either top-level 'id' parameter or nested 'variant.id'
+            $extractedVariantId = null;
+            if (isset($request['variant']['id'])) {
+                $extractedVariantId = (int)$request['variant']['id'];
+            } elseif (isset($request['id'])) {
+                $extractedVariantId = (int)$request['id'];
+            }
+
             $variantId = $this->eCommerceService->linkProductsAsVariant(
-                (!empty($request['linkProducts'])) ? (array)$request['linkProducts'] : [],
-                (!empty($request['removeProducts'])) ? (array)$request['removeProducts'] : [],
+                $linkProducts,
+                $removeProducts,
                 $groupedVariant,
                 (isset($request['variant'])) ? (array)$request['variant'] : [],
-                (isset($request['variant']['id'])) ? (int)$request['variant']['id'] : null,
+                $extractedVariantId,
                 (!empty($request['images'])) ? $request['images'] : [],
                 (!empty($request['facets'])) ? $request['facets'] : [],
             );
@@ -753,6 +793,8 @@ class StoreLinkrRestApi
                 'variant_id' => ($groupedVariant === true) ? $variantId : null,
                 'variant_url' => ($groupedVariant === true && !empty($variantId))
                     ? get_permalink($variantId) : null,
+                'link_to' => $linkProducts,
+                'remove_from' => $removeProducts,
                 'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
