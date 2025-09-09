@@ -258,12 +258,12 @@ class StoreLinkrWooCommerceService
         return $product;
     }
 
-    private function findProductBySku(mixed $get_param): WC_Product|WC_Product_Grouped|bool
+    private function findProductBySku(string $sku): WC_Product|WC_Product_Grouped|bool
     {
         $args = [
             'post_type' => 'product',
             'meta_key' => '_sku',
-            'meta_value' => sanitize_text_field($get_param),
+            'meta_value' => sanitize_text_field($sku),
             'post_status' => 'any',
             'posts_per_page' => 1,
         ];
@@ -277,6 +277,26 @@ class StoreLinkrWooCommerceService
             if ($product) {
                 return $product;
             }
+        }
+
+        return false;
+    }
+
+    private function findProductByEan(string $ean): WC_Product|WC_Product_Grouped|bool
+    {
+        $products = get_posts([
+            'post_type' => 'product',
+            'meta_query' => [
+                [
+                    'key' => 'ean',
+                    'value' => sanitize_text_field($ean),
+                    'compare' => '='
+                ]
+            ]
+        ]);
+
+        if (!empty($products)) {
+            return wc_get_product($products[0]->ID);
         }
 
         return false;
@@ -856,6 +876,178 @@ class StoreLinkrWooCommerceService
     {
         $this->warnings[] = trim($string);
         error_log($string);
+    }
+
+    public function createOrder(WP_REST_Request $request): ?string
+    {
+        try {
+            // Extract request data
+            $data = $request->get_params();
+
+            // Create WooCommerce order
+            $order = wc_create_order();
+
+            if (is_wp_error($order)) {
+                $this->logWarning('StoreLinkr error: Failed to create WooCommerce order: ' . $order->get_error_message());
+                return null;
+            }
+
+            // Set basic order information
+            $order->set_currency($data['currency'] ?? 'EUR');
+
+            if (!empty($data['order_number'])) {
+                $order->set_order_key($data['order_number']);
+            }
+
+            // Set customer information
+            $order->set_billing_first_name($data['first_name'] ?? '');
+            $order->set_billing_last_name($data['last_name'] ?? '');
+            $order->set_billing_company($data['company_name'] ?? '');
+            $order->set_billing_email($data['mail_address'] ?? '');
+            $order->set_billing_phone($data['phone_number'] ?? '');
+
+            // Set billing address
+            $order->set_billing_address_1($data['billing_address'] ?? '');
+            $order->set_billing_address_2($data['billing_address_two'] ?? '');
+            $order->set_billing_postcode($data['billing_postal_code'] ?? '');
+            $order->set_billing_city($data['billing_city'] ?? '');
+            $order->set_billing_country($data['billing_country_code'] ?? '');
+
+            // Set shipping address
+            $order->set_shipping_first_name($data['first_name'] ?? '');
+            $order->set_shipping_last_name($data['last_name'] ?? '');
+            $order->set_shipping_company($data['company_name'] ?? '');
+            $order->set_shipping_address_1($data['shipping_address'] ?? '');
+            $order->set_shipping_address_2($data['shipping_address_two'] ?? '');
+            $order->set_shipping_postcode($data['shipping_postal_code'] ?? '');
+            $order->set_shipping_city($data['shipping_city'] ?? '');
+            $order->set_shipping_country($data['shipping_country_code'] ?? '');
+
+            // Add line items
+            if (!empty($data['items']) && is_array($data['items'])) {
+                foreach ($data['items'] as $item) {
+                    // Find product by SKU
+                    $product = null;
+                    if (!empty($item['sku'])) {
+                        $product = $this->findProductBySku($item['sku']);
+                    }
+
+                    // If no product found by SKU, try to find by EAN
+                    if (!$product && !empty($item['ean'])) {
+                        $product = $this->findProductByEan($item['ean']);
+                    }
+
+                    // Create order item
+                    $order_item = new WC_Order_Item_Product();
+                    $order_item->set_name($item['name'] ?? '');
+                    $order_item->set_quantity($item['quantity'] ?? 1);
+
+                    // Set price from cents
+                    $price = isset($item['price']) ? floatval($item['price']) : 0;
+                    $order_item->set_subtotal($price * ($item['quantity'] ?? 1));
+                    $order_item->set_total($price * ($item['quantity'] ?? 1));
+
+                    // Link to product if found
+                    if ($product) {
+                        $order_item->set_product($product);
+                        $order_item->set_product_id($product->get_id());
+                        $order_item->set_variation_id($product->get_type() === 'variation' ? $product->get_id() : 0);
+                    }
+
+                    // Add metadata
+                    if (!empty($item['sku'])) {
+                        $order_item->add_meta_data('sku', $item['sku'], true);
+                    }
+                    if (!empty($item['ean'])) {
+                        $order_item->add_meta_data('ean', $item['ean'], true);
+                    }
+                    if (!empty($item['vat_rate'])) {
+                        $order_item->add_meta_data('vat_rate', $item['vat_rate'], true);
+                    }
+                    if (!empty($item['commission_costs'])) {
+                        $order_item->add_meta_data('commission_costs', $item['commission_costs'], true);
+                    }
+                    if (!empty($item['metadata'])) {
+                        $order_item->add_meta_data('item_metadata', $item['metadata'], true);
+                    }
+
+                    $order->add_item($order_item);
+                }
+            }
+
+            // Set order totals from cents
+            if (isset($data['total_amount_cents'])) {
+                $order->set_total(floatval($data['total_amount_cents']) / 100);
+            }
+
+            if (!empty($data['shipping_method']) || isset($data['shipping_costs_cents'])) {
+                $shipping_item = new WC_Order_Item_Shipping();
+                $shipping_item->set_method_title($data['shipping_method'] ?? 'Custom Shipping');
+                $shipping_item->set_method_id($data['shipping_method'] ?? 'custom');
+                if (isset($data['shipping_costs_cents'])) {
+                    $shipping_item->set_total(((int)$data['shipping_costs_cents'] > 0)
+                        ? (floatval($data['shipping_costs_cents']) / 100) : 0);
+                }
+                $order->add_item($shipping_item);
+            }
+
+            // Add discount as coupon item if discount is present
+            if (isset($data['discount_cents']) && (int)$data['discount_cents'] > 0) {
+                $discount_amount = floatval($data['discount_cents']) / 100;
+                $coupon_item = new WC_Order_Item_Coupon();
+                $coupon_item->set_props(
+                    array(
+                        'code' => 'discount',
+                        'discount' => $discount_amount,
+                        'discount_tax' => 0, // Assuming no tax on discount for now
+                    )
+                );
+                $order->add_item($coupon_item);
+            }
+
+            // Set order metadata
+            $order->add_meta_data('_storelinkr_uuid', $data['uuid'] ?? '', true);
+            $order->add_meta_data('vat_number', $data['vat_number'] ?? '', true);
+            $order->add_meta_data('order_number', $data['order_number'] ?? '', true);
+            $order->add_meta_data('discount_cents', $data['discount_cents'] ?? 0, true);
+            $order->add_meta_data('grand_total_amount_cents', $data['grand_total_amount_cents'] ?? 0, true);
+            $order->add_meta_data('commission_costs_cents', $data['commission_costs_cents'] ?? 0, true);
+            if (!empty($data['import_source'])) {
+                $order->add_meta_data('import_source', $data['import_source']);
+            }
+
+            // Set customer notes
+            if (!empty($data['notes'])) {
+                $order->set_customer_note($data['notes']);
+            }
+
+            // Set order status based on payment status
+            if (isset($data['paid']) && (bool)$data['paid'] === true) {
+                $order->set_date_paid((new DateTimeImmutable())->format('Y-m-d H:i:s'));
+                $order->set_status('processing');
+            } else {
+                $order->set_status('pending');
+            }
+
+            // Save the order
+            $order->save();
+
+            // Calculate totals
+            $order->calculate_totals();
+
+            // Apply discount after calculate_totals() if needed
+            if (isset($data['discount_cents']) && (int)$data['discount_cents'] > 0) {
+                $discount_amount = floatval($data['discount_cents']) / 100;
+                $order->set_discount_total($discount_amount);
+                $order->save();
+            }
+
+            return strval($order->get_id());
+
+        } catch (Exception $e) {
+            $this->logWarning('StoreLinkr error: Failed to create order: ' . $e->getMessage());
+            return null;
+        }
     }
 
     private function getCorrespondingCategoryIds(int $categoryId): array
