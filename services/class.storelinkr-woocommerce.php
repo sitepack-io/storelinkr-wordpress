@@ -980,12 +980,29 @@ class StoreLinkrWooCommerceService
                 $order->set_total(floatval($data['total_amount_cents']) / 100);
             }
 
-            // Add shipping method if provided
-            if (!empty($data['shipping_method'])) {
+            if (!empty($data['shipping_method']) || isset($data['shipping_costs_cents'])) {
                 $shipping_item = new WC_Order_Item_Shipping();
-                $shipping_item->set_method_title($data['shipping_method']);
-                $shipping_item->set_method_id($data['shipping_method']);
+                $shipping_item->set_method_title($data['shipping_method'] ?? 'Custom Shipping');
+                $shipping_item->set_method_id($data['shipping_method'] ?? 'custom');
+                if (isset($data['shipping_costs_cents'])) {
+                    $shipping_item->set_total(((int)$data['shipping_costs_cents'] > 0)
+                        ? (floatval($data['shipping_costs_cents']) / 100) : 0);
+                }
                 $order->add_item($shipping_item);
+            }
+
+            // Add discount as coupon item if discount is present
+            if (isset($data['discount_cents']) && (int)$data['discount_cents'] > 0) {
+                $discount_amount = floatval($data['discount_cents']) / 100;
+                $coupon_item = new WC_Order_Item_Coupon();
+                $coupon_item->set_props(
+                    array(
+                        'code' => 'discount',
+                        'discount' => $discount_amount,
+                        'discount_tax' => 0, // Assuming no tax on discount for now
+                    )
+                );
+                $order->add_item($coupon_item);
             }
 
             // Set order metadata
@@ -1017,6 +1034,13 @@ class StoreLinkrWooCommerceService
 
             // Calculate totals
             $order->calculate_totals();
+
+            // Apply discount after calculate_totals() if needed
+            if (isset($data['discount_cents']) && (int)$data['discount_cents'] > 0) {
+                $discount_amount = floatval($data['discount_cents']) / 100;
+                $order->set_discount_total($discount_amount);
+                $order->save();
+            }
 
             return strval($order->get_id());
 
