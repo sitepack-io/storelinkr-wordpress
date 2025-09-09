@@ -59,6 +59,11 @@ class StoreLinkrRestApi
             'callback' => [$this, 'renderOrders'],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/orders/create', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderOrderCreate'],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route('storelinkr/v1', '/products', [
             'methods' => 'GET',
             'callback' => [$this, 'renderListProducts'],
@@ -257,6 +262,31 @@ class StoreLinkrRestApi
             return [
                 'status' => 'success',
                 'orders' => $this->eCommerceService->getOrders(),
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderOrderCreate(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'uuid',
+                'first_name',
+                'last_name',
+                'currency',
+                'mail_address',
+                'billing_address',
+                'shipping_address',
+            ]);
+
+            $orderId = $this->eCommerceService->createOrder($request);
+
+            return [
+                'status' => 'success',
+                'id' => $orderId,
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());
