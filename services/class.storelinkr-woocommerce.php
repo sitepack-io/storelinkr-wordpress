@@ -258,7 +258,7 @@ class StoreLinkrWooCommerceService
         return $product;
     }
 
-    private function findProductBySku(string $sku): WC_Product|WC_Product_Grouped|bool
+    public function findProductBySku(string $sku): WC_Product|WC_Product_Grouped|bool
     {
         $args = [
             'post_type' => 'product',
@@ -282,8 +282,13 @@ class StoreLinkrWooCommerceService
         return false;
     }
 
-    private function findProductByEan(string $ean): WC_Product|WC_Product_Grouped|bool
+    public function findProductByEan(string $ean): WC_Product|WC_Product_Grouped|bool
     {
+        $productId = wc_get_product_id_by_global_unique_id($ean);
+        if (!empty($productId)) {
+            return wc_get_product($productId);
+        }
+
         $products = get_posts([
             'post_type' => 'product',
             'meta_query' => [
@@ -709,6 +714,10 @@ class StoreLinkrWooCommerceService
             if ($productSku !== false) {
                 $product = $productSku;
             }
+        }
+
+        if (!empty($data['ean'])) {
+            $product = $this->findProductByEan($data['ean']);
         }
 
         if (!empty($data['id'])) {
