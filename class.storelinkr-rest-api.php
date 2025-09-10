@@ -115,6 +115,11 @@ class StoreLinkrRestApi
             ],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/products/archive/validate', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderArchiveValidation'],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route('storelinkr/v1', '/images/create', [
             'methods' => 'POST',
             'callback' => [$this, 'renderCreateImage'],
@@ -639,6 +644,49 @@ class StoreLinkrRestApi
                 'image_id' => $mediaId,
                 'image_url' => wp_get_attachment_url($mediaId),
                 'warnings' => $this->eCommerceService->getWarnings(),
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderArchiveValidation(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+            $this->validateRequiredFields($request, [
+                'products',
+            ]);
+
+            $archivedProducts = [];
+
+            foreach ($request['products'] as $productData) {
+
+                if (!empty($productData['ean'])) {
+                    $product = $this->eCommerceService->findProductByEan($productData['ean']);
+                } elseif (!empty($productData['sku'])) {
+                    $product = $this->eCommerceService->findProductBySku($productData['sku']);
+                }
+
+                if (!empty($product)) {
+                    $product->set_status('trash');
+                    $product->save();
+
+                    $archivedProducts[] = [
+                        'ean' => $product->get_global_unique_id(),
+                        'sku' => $product->get_sku(),
+                        'post_id' => $product->get_id(),
+                        'post_type' => $product->get_type(),
+                    ];
+                    continue;
+                }
+
+                $notFound[] = $productData;
+            }
+
+            return [
+                'archived' => $archivedProducts,
+                'not_found' => $notFound,
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());

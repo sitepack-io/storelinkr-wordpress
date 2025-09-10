@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.9.7
+Stable tag: 2.9.8
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,19 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.9.8 =
+
+Release date: 2025-09-10
+
+#### Enhancements
+
+* Archived products validation implemented
+* Added new metadata field "advised_price" on product level when we know an advised product price
+
+#### Bugfixes
+
+* Find product by ean (global unique identifier) fixed
 
 = 2.9.7 =
 
