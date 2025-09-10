@@ -91,7 +91,7 @@ class StoreLinkrWooCommerceMapper
         $product->update_meta_data('used', (isset($data['isUsed'])) ? (int)$data['isUsed'] : 0, true);
 
         if (!empty($data['advisedPrice'])) {
-            $product->update_meta_data('advised_price', self::formatPrice((int)$data['advisedPrice']));
+            $product->update_meta_data('advised_price', self::formatPrice((int)$data['advisedPrice']), true);
         }
 
         if (!empty($data['stockLocations'])) {
