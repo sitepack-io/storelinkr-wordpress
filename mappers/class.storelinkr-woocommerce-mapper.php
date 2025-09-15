@@ -10,10 +10,31 @@ class StoreLinkrWooCommerceMapper
 
     public static function convertRequestToProduct(
         WC_Product|WC_Product_Variable|WC_Product_Variation $product,
-        array $data
+        array $data,
+        array $settings = [],
     ): WC_Product|WC_Product_Variable|WC_Product_Variation {
         $updateStockInfo = !(isset($data['updateStock'])) || (bool)$data['updateStock'];
         $updatePriceInfo = !(isset($data['updatePrice'])) || (bool)$data['updatePrice'];
+        $updateShortDescription = true;
+        $updateLongDescription = true;
+        $allowBackOrder = true;
+
+        // Read settings and apply them;
+        if (isset($settings['overwrite_product_prices'])) {
+            $updatePriceInfo = (bool)$settings['overwrite_product_prices'];
+        }
+        if (isset($settings['overwrite_product_stock'])) {
+            $updateStockInfo = (bool)$settings['overwrite_product_stock'];
+        }
+        if (isset($settings['overwrite_short_description'])) {
+            $updateShortDescription = (bool)$settings['overwrite_short_description'];
+        }
+        if (isset($settings['overwrite_long_description'])) {
+            $updateLongDescription = (bool)$settings['overwrite_long_description'];
+        }
+        if (isset($settings['allow_backorder'])) {
+            $allowBackOrder = (bool)$settings['allow_backorder'];
+        }
 
         if (!empty($data['sku'])) {
             $product->set_sku($data['sku']);
@@ -44,11 +65,11 @@ class StoreLinkrWooCommerceMapper
             }
         }
 
-        if (!empty($data['shortDescription'])) {
+        if ($updateShortDescription === true && isset($data['shortDescription'])) {
             $product->set_short_description($data['shortDescription']);
         }
 
-        if (!empty($data['longDescription'])) {
+        if ($updateLongDescription === true && isset($data['longDescription'])) {
             $product->set_description($data['longDescription']);
         }
 
@@ -56,6 +77,11 @@ class StoreLinkrWooCommerceMapper
             $product->set_manage_stock(true);
             $product->set_stock_quantity(0);
             $product->set_stock_status('outofstock');
+            if ($allowBackOrder === true) {
+                $product->set_backorders('yes');
+            } else {
+                $product->set_backorders('no');
+            }
 
             if (
                 (isset($data['hasStock']) && (bool)$data['hasStock'] === true) ||
@@ -90,7 +116,7 @@ class StoreLinkrWooCommerceMapper
         $product->update_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null, true);
         $product->update_meta_data('used', (isset($data['isUsed'])) ? (int)$data['isUsed'] : 0, true);
 
-        if (!empty($data['advisedPrice'])) {
+        if ($updatePriceInfo === true && isset($data['advisedPrice'])) {
             $product->update_meta_data('advised_price', self::formatPrice((int)$data['advisedPrice']), true);
         }
 
@@ -139,11 +165,15 @@ class StoreLinkrWooCommerceMapper
     /**
      * Format the price cents to a correctly formatted decimal as a float.
      *
-     * @param int $priceCents
+     * @param int|null $priceCents
      * @return float
      */
-    private static function formatPrice(int $priceCents): float
+    private static function formatPrice(?int $priceCents): float
     {
+        if (empty($priceCents)) {
+            return 0;
+        }
+
         if ($priceCents <= 0) {
             return \floatval(0);
         }

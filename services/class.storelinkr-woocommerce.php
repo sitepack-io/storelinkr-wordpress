@@ -728,9 +728,15 @@ class StoreLinkrWooCommerceService
             }
         }
 
+        $settings = [];
+        if(isset($data['settings'])){
+            $settings = $data['settings'];
+        }
+
         $product = StoreLinkrWooCommerceMapper::convertRequestToProduct(
             $product,
             $data,
+            $settings
         );
         if (!empty($data['categoryId'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
