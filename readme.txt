@@ -138,10 +138,10 @@ Release date: 2025-09-15
 
 #### Enhancements
 
-* Overwrite short description is now optional
-* Overwrite long description is now optional
-* Product are published by default, draft is possible as setting
-* Configure backorder setting on site level from StoreLinkr
+* Overwrite short description is now optional, default true
+* Overwrite long description is now optional, default true
+* Product are published by default, draft is possible as setting. Default is published.
+* Configure backorder setting on site level from StoreLinkr, default not allowed
 
 #### Bugfixes
 

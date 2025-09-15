@@ -167,10 +167,21 @@ class StoreLinkrWooCommerceService
     public function saveProduct(
         WC_Product|WC_Product_Grouped|WC_Product_Variable $product,
         array $facets,
-        ?string $brandName = null
+        ?string $brandName = null,
+        bool $publishNewProduct = true,
+        bool $isNewProduct = false,
     ): int {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
-        $product->set_status('publish');
+        if ($publishNewProduct === true) {
+            // new: allow publish
+            $product->set_status('publish');
+        } elseif ($publishNewProduct === false && $isNewProduct === true) {
+            // new: deny publish, set draft
+            $product->set_status('draft');
+        } elseif ($product->get_status() !== 'draft' && $isNewProduct === false) {
+            // update: only set publish
+            $product->set_status('publish');
+        }
 
         $productId = $product->save();
 
@@ -729,8 +740,8 @@ class StoreLinkrWooCommerceService
         }
 
         $settings = [];
-        if(isset($data['settings'])){
-            $settings = $data['settings'];
+        if (isset($data['settings'])) {
+            $settings = (array)$data['settings'];
         }
 
         $product = StoreLinkrWooCommerceMapper::convertRequestToProduct(
@@ -745,8 +756,12 @@ class StoreLinkrWooCommerceService
         return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
     }
 
-    public function buildProductVariantOptions(int $productId, array $optionLabels, array $products): array
-    {
+    public function buildProductVariantOptions(
+        int $productId,
+        array $optionLabels,
+        array $products,
+        array $settings
+    ): array {
         $variable_product = wc_get_product($productId);
         $attribute_taxonomies = [];
 
@@ -838,6 +853,7 @@ class StoreLinkrWooCommerceService
             $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
                 $variation,
                 $productOption,
+                $settings
             );
 
             if (!empty($data['categoryId'])) {
