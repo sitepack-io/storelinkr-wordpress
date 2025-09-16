@@ -172,15 +172,21 @@ class StoreLinkrWooCommerceService
         bool $isNewProduct = false,
     ): int {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
-        if ($publishNewProduct === true) {
-            // new: allow publish
-            $product->set_status('publish');
-        } elseif ($publishNewProduct === false && $isNewProduct === true) {
-            // new: deny publish, set draft
-            $product->set_status('draft');
-        } elseif ($product->get_status() !== 'draft' && $isNewProduct === false) {
-            // update: only set publish
-            $product->set_status('publish');
+        $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
+
+        $status = $product->get_status();
+
+        if ($status !== 'draft') {
+            if ($status === 'archived') {
+                // Archived → publish of draft
+                $product->set_status($publishNewProduct ? 'publish' : 'draft');
+            } elseif ($isNewProduct === true) {
+                // New product
+                $product->set_status($publishNewProduct ? 'publish' : 'draft');
+            } else {
+                // Existing product
+                $product->set_status('publish');
+            }
         }
 
         $productId = $product->save();
@@ -728,7 +734,11 @@ class StoreLinkrWooCommerceService
         }
 
         if (!empty($data['ean'])) {
-            $product = $this->findProductByEan($data['ean']);
+            $productEan = $this->findProductByEan($data['ean']);
+
+            if ($productEan !== false) {
+                $product = $productEan;
+            }
         }
 
         if (!empty($data['id'])) {
