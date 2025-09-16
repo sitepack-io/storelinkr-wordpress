@@ -134,7 +134,7 @@ Please read the changelog.txt for more commit history of this plugin.
 
 = 2.9.9 =
 
-Release date: 2025-09-15
+Release date: 2025-09-16
 
 #### Enhancements
 
@@ -147,6 +147,7 @@ Release date: 2025-09-15
 
 * Clean advised price field when data is empty
 * Remove variant ids field when the product is a single product
+* Search product by EAN sometimes failed, now handled correctly
 
 = 2.9.8 =
 
