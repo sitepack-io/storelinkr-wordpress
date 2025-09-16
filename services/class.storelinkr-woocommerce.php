@@ -167,10 +167,27 @@ class StoreLinkrWooCommerceService
     public function saveProduct(
         WC_Product|WC_Product_Grouped|WC_Product_Variable $product,
         array $facets,
-        ?string $brandName = null
+        ?string $brandName = null,
+        bool $publishNewProduct = true,
+        bool $isNewProduct = false,
     ): int {
         $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
-        $product->set_status('publish');
+        $product->set_date_modified((new DateTimeImmutable())->format('Y-m-d H:i:s'));
+
+        $status = $product->get_status();
+
+        if ($status !== 'draft') {
+            if ($status === 'archived') {
+                // Archived → publish of draft
+                $product->set_status($publishNewProduct ? 'publish' : 'draft');
+            } elseif ($isNewProduct === true) {
+                // New product
+                $product->set_status($publishNewProduct ? 'publish' : 'draft');
+            } else {
+                // Existing product
+                $product->set_status('publish');
+            }
+        }
 
         $productId = $product->save();
 
@@ -717,7 +734,11 @@ class StoreLinkrWooCommerceService
         }
 
         if (!empty($data['ean'])) {
-            $product = $this->findProductByEan($data['ean']);
+            $productEan = $this->findProductByEan($data['ean']);
+
+            if ($productEan !== false) {
+                $product = $productEan;
+            }
         }
 
         if (!empty($data['id'])) {
@@ -728,9 +749,15 @@ class StoreLinkrWooCommerceService
             }
         }
 
+        $settings = [];
+        if (isset($data['settings'])) {
+            $settings = (array)$data['settings'];
+        }
+
         $product = StoreLinkrWooCommerceMapper::convertRequestToProduct(
             $product,
             $data,
+            $settings
         );
         if (!empty($data['categoryId'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
@@ -739,8 +766,12 @@ class StoreLinkrWooCommerceService
         return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
     }
 
-    public function buildProductVariantOptions(int $productId, array $optionLabels, array $products): array
-    {
+    public function buildProductVariantOptions(
+        int $productId,
+        array $optionLabels,
+        array $products,
+        array $settings
+    ): array {
         $variable_product = wc_get_product($productId);
         $attribute_taxonomies = [];
 
@@ -832,6 +863,7 @@ class StoreLinkrWooCommerceService
             $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
                 $variation,
                 $productOption,
+                $settings
             );
 
             if (!empty($data['categoryId'])) {

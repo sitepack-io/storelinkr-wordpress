@@ -440,12 +440,20 @@ class StoreLinkrRestApi
                 $this->convertRequestToArray($request)
             );
 
+            $publishNewProduct = true;
+            $settings = $this->fetchSettingsFromRequest($request);
+            if (isset($settings['publish_new_products'])) {
+                $publishNewProduct = (bool)$settings['publish_new_products'];
+            }
+
             $gallery = (array)$request->get_param('images');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $request['facets'],
-                (isset($request['brand'])) ? $request['brand'] : null
+                (isset($request['brand'])) ? $request['brand'] : null,
+                $publishNewProduct,
+                true
             );
 
             return [
@@ -486,7 +494,7 @@ class StoreLinkrRestApi
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $request['facets'],
-                (isset($request['brand'])) ? $request['brand'] : null
+                (isset($request['brand'])) ? $request['brand'] : null,
             );
 
             $invalidMediaIds = [];
@@ -539,16 +547,25 @@ class StoreLinkrRestApi
 
             $product->set_category_ids($request->get_param('categories'));
 
+            $publishNewProduct = true;
+            $settings = $this->fetchSettingsFromRequest($request);
+            if (isset($settings['publish_new_products'])) {
+                $publishNewProduct = (bool)$settings['publish_new_products'];
+            }
+
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $request['facets'],
-                (isset($request['brand'])) ? $request['brand'] : null
+                (isset($request['brand'])) ? $request['brand'] : null,
+                $publishNewProduct,
+                true
             );
 
             $variationMap = $this->eCommerceService->buildProductVariantOptions(
                 $productId,
                 $request->get_param('options'),
                 $request->get_param('products'),
+                $this->fetchSettingsFromRequest($request)
             );
 
             return [
@@ -594,6 +611,7 @@ class StoreLinkrRestApi
                 $productId,
                 $request->get_param('options'),
                 $request->get_param('products'),
+                $this->fetchSettingsFromRequest($request)
             );
 
             return [
@@ -659,6 +677,7 @@ class StoreLinkrRestApi
             ]);
 
             $archivedProducts = [];
+            $notFound = null;
 
             foreach ($request['products'] as $productData) {
 
@@ -1060,6 +1079,7 @@ class StoreLinkrRestApi
             'images' => $request->get_param('images'),
             'facets' => $request->get_param('facets'),
             'isUsed' => $request->get_param('isUsed'),
+            'settings' => $request->get_param('settings'),
         ];
     }
 
@@ -1080,6 +1100,16 @@ class StoreLinkrRestApi
         if (!empty($request->get_param('phone_number'))) {
             update_post_meta($post_id, '_phone_number', $request->get_param('phone_number'));
         }
+    }
+
+    private function fetchSettingsFromRequest(WP_REST_Request $request): array
+    {
+        $settings = [];
+        if ($request->get_param('settings') !== null && is_iterable($request->get_param('settings'))) {
+            $settings = (array)$request->get_param('settings');
+        }
+
+        return $settings;
     }
 
 }

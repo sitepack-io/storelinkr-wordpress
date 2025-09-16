@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.9.8
+Stable tag: 2.9.9
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,23 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.9.9 =
+
+Release date: 2025-09-16
+
+#### Enhancements
+
+* Overwrite short description is now optional, default true
+* Overwrite long description is now optional, default true
+* Product are published by default, draft is possible as setting. Default is published.
+* Configure backorder setting on site level from StoreLinkr, default not allowed
+
+#### Bugfixes
+
+* Clean advised price field when data is empty
+* Remove variant ids field when the product is a single product
+* Search product by EAN sometimes failed, now handled correctly
 
 = 2.9.8 =
 
