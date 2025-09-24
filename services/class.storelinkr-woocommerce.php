@@ -757,7 +757,11 @@ class StoreLinkrWooCommerceService
         $product = StoreLinkrWooCommerceMapper::convertRequestToProduct(
             $product,
             $data,
-            $settings
+            $settings,
+            (isset($data['cross_sell_products']))
+                ? $this->onlyValidProductIds($data['cross_sell_products']) : [],
+            (isset($data['upsell_products']))
+                ? $this->onlyValidProductIds($data['upsell_products']) : [],
         );
         if (!empty($data['categoryId'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
@@ -867,7 +871,11 @@ class StoreLinkrWooCommerceService
             $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
                 $variation,
                 $productOption,
-                $settings
+                $settings,
+                (isset($productOption['cross_sell_products']))
+                    ? $this->onlyValidProductIds($productOption['cross_sell_products']) : [],
+                (isset($productOption['upsell_products']))
+                    ? $this->onlyValidProductIds($productOption['upsell_products']) : [],
             );
 
             if (!empty($data['categoryId'])) {
@@ -875,7 +883,6 @@ class StoreLinkrWooCommerceService
             }
 
             $attributes = [];
-
             foreach ($productOption['options'] as $label => $term_value) {
                 if (!isset($attribute_taxonomies[$label])) {
                     continue;
@@ -891,7 +898,7 @@ class StoreLinkrWooCommerceService
                 if ($term) {
                     $attributes[$taxonomy] = $term->slug;
                 } else {
-                    $this->logWarning(sprintf('Term %s not found in taxonmy %s', $term_value, $taxonomy));
+                    $this->logWarning(sprintf('Term %s not found in taxonomy %s', $term_value, $taxonomy));
                 }
             }
 
@@ -1281,5 +1288,18 @@ class StoreLinkrWooCommerceService
         $brand = get_term_by('name', $brandName, 'product_brand');
 
         return $brand ? $brand->term_id : null;
+    }
+
+    private function onlyValidProductIds(array $productIds): array
+    {
+        foreach ($productIds as $key => $productId) {
+            $product = wc_get_product($productId);
+
+            if ($product === false) {
+                unset($productIds[$key]);
+            }
+        }
+
+        return array_values($productIds);
     }
 }

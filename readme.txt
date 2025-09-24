@@ -139,10 +139,10 @@ Release date: 2025-09-24
 #### Enhancements
 
 * Overwrite images is now optional, default true
-* Added positive points (metafield positive_points)
-* Added negative points (metafield negative_points)
-* Link cross-sell products
-* Link upsell products
+* Added positive points (metafield "_positive_points")
+* Added negative points (metafield "_negative_points")
+* Link cross-sell products when available
+* Link upsell products when available
 
 #### Bugfixes
 
