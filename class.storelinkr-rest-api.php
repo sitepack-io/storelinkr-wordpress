@@ -1080,6 +1080,10 @@ class StoreLinkrRestApi
             'facets' => $request->get_param('facets'),
             'isUsed' => $request->get_param('isUsed'),
             'settings' => $request->get_param('settings'),
+            'positive_points' => $request->get_param('positive_points'),
+            'negative_points' => $request->get_param('negative_points'),
+            'upsell_products' => $request->get_param('upsell_products'),
+            'cross_sell_products' => $request->get_param('cross_sell_products'),
         ];
     }
 

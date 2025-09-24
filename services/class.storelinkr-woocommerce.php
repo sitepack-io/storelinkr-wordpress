@@ -197,6 +197,10 @@ class StoreLinkrWooCommerceService
         }
 
         if (!empty($facets)) {
+            // Preserve cross-sell and upsell IDs before reloading the product
+            $crossSellIds = $product->get_cross_sell_ids();
+            $upsellIds = $product->get_upsell_ids();
+
             $product = wc_get_product($productId);
             $product_attributes = $product->get_attributes();
             $existing_facets = [];
@@ -251,6 +255,11 @@ class StoreLinkrWooCommerceService
             }
 
             $product->set_attributes($product_attributes);
+
+            // Restore cross-sell and upsell IDs that were set by the mapper
+            $product->set_cross_sell_ids($crossSellIds);
+            $product->set_upsell_ids($upsellIds);
+
             $product->save();
         }
 
@@ -767,7 +776,14 @@ class StoreLinkrWooCommerceService
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
         }
 
-        return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
+        if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === false) {
+            return $product;
+        }
+
+        return $this->linkProductGalleryImages(
+            $product,
+            (isset($data['images'])) ? (array)$data['images'] : []
+        );
     }
 
     public function buildProductVariantOptions(
@@ -902,7 +918,12 @@ class StoreLinkrWooCommerceService
                 }
             }
 
-            if (isset($productOption['images'])) {
+            $overwriteImages = true;
+            if (isset($settings['overwrite_images'])) {
+                $overwriteImages = (bool)$settings['overwrite_images'];
+            }
+
+            if (isset($productOption['images']) && $overwriteImages === true) {
                 $this->linkProductGalleryImages($variation, (array)$productOption['images']);
             }
 

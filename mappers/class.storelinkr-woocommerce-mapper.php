@@ -167,8 +167,8 @@ class StoreLinkrWooCommerceMapper
 
         $product->update_meta_data('_product_attachments', json_encode($attachments), true);
 
-        $product->set_cross_sell_ids($validCrossSellIds);
-        $product->set_upsell_ids($validUpsellIds);
+        $product->set_cross_sell_ids(array_values($validCrossSellIds));
+        $product->set_upsell_ids(array_values($validUpsellIds));
 
         return $product;
     }
