@@ -853,6 +853,10 @@ class StoreLinkrWooCommerceService
         foreach ($products as $productOption) {
             if (!empty($productOption['id'])) {
                 $variation = wc_get_product($productOption['id']);
+
+                if ($variation === false) {
+                    $variation = new WC_Product_Variation();
+                }
             } else {
                 $variation = new WC_Product_Variation();
             }
@@ -901,7 +905,6 @@ class StoreLinkrWooCommerceService
             $variation_id = $variation->get_id();
             $variation_map[$productOption['ean']] = $variation_id;
         }
-
 
         wc_delete_product_transients($productId);
 
