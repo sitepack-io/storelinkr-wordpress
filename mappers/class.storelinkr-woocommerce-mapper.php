@@ -12,6 +12,8 @@ class StoreLinkrWooCommerceMapper
         WC_Product|WC_Product_Variable|WC_Product_Variation $product,
         array $data,
         array $settings = [],
+        array $validCrossSellIds = [],
+        array $validUpsellIds = [],
     ): WC_Product|WC_Product_Variable|WC_Product_Variation {
         $updateStockInfo = !(isset($data['updateStock'])) || (bool)$data['updateStock'];
         $updatePriceInfo = !(isset($data['updatePrice'])) || (bool)$data['updatePrice'];
@@ -156,7 +158,17 @@ class StoreLinkrWooCommerceMapper
             }
         }
 
-        $product->update_meta_data('_product_attachments', json_encode($attachments));
+        if (isset($data['positive_points'])) {
+            $product->update_meta_data('_positive_points', $data['positive_points'], true);
+        }
+        if (isset($data['negative_points'])) {
+            $product->update_meta_data('_negative_points', $data['negative_points'], true);
+        }
+
+        $product->update_meta_data('_product_attachments', json_encode($attachments), true);
+
+        $product->set_cross_sell_ids(array_values($validCrossSellIds));
+        $product->set_upsell_ids(array_values($validUpsellIds));
 
         return $product;
     }

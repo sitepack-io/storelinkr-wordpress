@@ -197,6 +197,10 @@ class StoreLinkrWooCommerceService
         }
 
         if (!empty($facets)) {
+            // Preserve cross-sell and upsell IDs before reloading the product
+            $crossSellIds = $product->get_cross_sell_ids();
+            $upsellIds = $product->get_upsell_ids();
+
             $product = wc_get_product($productId);
             $product_attributes = $product->get_attributes();
             $existing_facets = [];
@@ -251,6 +255,11 @@ class StoreLinkrWooCommerceService
             }
 
             $product->set_attributes($product_attributes);
+
+            // Restore cross-sell and upsell IDs that were set by the mapper
+            $product->set_cross_sell_ids($crossSellIds);
+            $product->set_upsell_ids($upsellIds);
+
             $product->save();
         }
 
@@ -757,13 +766,24 @@ class StoreLinkrWooCommerceService
         $product = StoreLinkrWooCommerceMapper::convertRequestToProduct(
             $product,
             $data,
-            $settings
+            $settings,
+            (isset($data['cross_sell_products']))
+                ? $this->onlyValidProductIds($data['cross_sell_products']) : [],
+            (isset($data['upsell_products']))
+                ? $this->onlyValidProductIds($data['upsell_products']) : [],
         );
         if (!empty($data['categoryId'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
         }
 
-        return $this->linkProductGalleryImages($product, (isset($data['images'])) ? (array)$data['images'] : []);
+        if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === false) {
+            return $product;
+        }
+
+        return $this->linkProductGalleryImages(
+            $product,
+            (isset($data['images'])) ? (array)$data['images'] : []
+        );
     }
 
     public function buildProductVariantOptions(
@@ -853,6 +873,10 @@ class StoreLinkrWooCommerceService
         foreach ($products as $productOption) {
             if (!empty($productOption['id'])) {
                 $variation = wc_get_product($productOption['id']);
+
+                if ($variation === false) {
+                    $variation = new WC_Product_Variation();
+                }
             } else {
                 $variation = new WC_Product_Variation();
             }
@@ -863,7 +887,11 @@ class StoreLinkrWooCommerceService
             $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
                 $variation,
                 $productOption,
-                $settings
+                $settings,
+                (isset($productOption['cross_sell_products']))
+                    ? $this->onlyValidProductIds($productOption['cross_sell_products']) : [],
+                (isset($productOption['upsell_products']))
+                    ? $this->onlyValidProductIds($productOption['upsell_products']) : [],
             );
 
             if (!empty($data['categoryId'])) {
@@ -871,7 +899,6 @@ class StoreLinkrWooCommerceService
             }
 
             $attributes = [];
-
             foreach ($productOption['options'] as $label => $term_value) {
                 if (!isset($attribute_taxonomies[$label])) {
                     continue;
@@ -887,11 +914,16 @@ class StoreLinkrWooCommerceService
                 if ($term) {
                     $attributes[$taxonomy] = $term->slug;
                 } else {
-                    $this->logWarning(sprintf('Term %s not found in taxonmy %s', $term_value, $taxonomy));
+                    $this->logWarning(sprintf('Term %s not found in taxonomy %s', $term_value, $taxonomy));
                 }
             }
 
-            if (isset($productOption['images'])) {
+            $overwriteImages = true;
+            if (isset($settings['overwrite_images'])) {
+                $overwriteImages = (bool)$settings['overwrite_images'];
+            }
+
+            if (isset($productOption['images']) && $overwriteImages === true) {
                 $this->linkProductGalleryImages($variation, (array)$productOption['images']);
             }
 
@@ -901,7 +933,6 @@ class StoreLinkrWooCommerceService
             $variation_id = $variation->get_id();
             $variation_map[$productOption['ean']] = $variation_id;
         }
-
 
         wc_delete_product_transients($productId);
 
@@ -1278,5 +1309,18 @@ class StoreLinkrWooCommerceService
         $brand = get_term_by('name', $brandName, 'product_brand');
 
         return $brand ? $brand->term_id : null;
+    }
+
+    private function onlyValidProductIds(array $productIds): array
+    {
+        foreach ($productIds as $key => $productId) {
+            $product = wc_get_product($productId);
+
+            if ($product === false) {
+                unset($productIds[$key]);
+            }
+        }
+
+        return array_values($productIds);
     }
 }

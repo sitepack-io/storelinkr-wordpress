@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.9.9
+Stable tag: 2.9.10
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,22 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.9.10 =
+
+Release date: 2025-09-24
+
+#### Enhancements
+
+* Overwrite images is now optional, default true
+* Added positive points (metafield "_positive_points")
+* Added negative points (metafield "_negative_points")
+* Link cross-sell products when available
+* Link upsell products when available
+
+#### Bugfixes
+
+* Set parent ID on single product fixed
 
 = 2.9.9 =
 
