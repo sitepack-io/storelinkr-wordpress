@@ -134,7 +134,7 @@ Please read the changelog.txt for more commit history of this plugin.
 
 = 2.9.11 =
 
-Release date: 2025-09-26
+Release date: 2025-09-25
 
 #### Enhancements
 
