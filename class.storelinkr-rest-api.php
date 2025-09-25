@@ -436,6 +436,13 @@ class StoreLinkrRestApi
                 'hasStock',
             ]);
 
+            if (!empty($request->get_param('ean')) && !empty($request->get_param('id'))) {
+                $this->eCommerceService->removeDuplicateByEan(
+                    $request->get_param('ean'),
+                    (int)$request->get_param('id')
+                );
+            }
+
             $product = $this->eCommerceService->mapProductFromDataArray(
                 $this->convertRequestToArray($request)
             );
@@ -561,10 +568,17 @@ class StoreLinkrRestApi
                 true
             );
 
+            $productVariations = $request->get_param('products');
+            foreach ($productVariations as $variation) {
+                if (!empty($variation['ean'])) {
+                    $this->eCommerceService->removeDuplicateByEan($variation['ean']);
+                }
+            }
+
             $variationMap = $this->eCommerceService->buildProductVariantOptions(
                 $productId,
                 $request->get_param('options'),
-                $request->get_param('products'),
+                $productVariations,
                 $this->fetchSettingsFromRequest($request)
             );
 
@@ -607,10 +621,20 @@ class StoreLinkrRestApi
                 (isset($request['brand'])) ? $request['brand'] : null
             );
 
+            $productVariations = $request->get_param('products');
+            foreach ($productVariations as $productVariation) {
+                if (!empty($productVariation['ean']) && !empty($productVariation['id'])) {
+                    $this->eCommerceService->removeDuplicateByEan(
+                        $productVariation['ean'],
+                        (int)$productVariation['id']
+                    );
+                }
+            }
+
             $variationMap = $this->eCommerceService->buildProductVariantOptions(
                 $productId,
                 $request->get_param('options'),
-                $request->get_param('products'),
+                $productVariations,
                 $this->fetchSettingsFromRequest($request)
             );
 

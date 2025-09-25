@@ -1122,6 +1122,20 @@ class StoreLinkrWooCommerceService
         }
     }
 
+    public function removeDuplicateByEan(string $ean, ?int $allowedId = null): void
+    {
+        $duplicateProduct = $this->findProductByEan($ean);
+
+        if ($duplicateProduct !== false && method_exists($duplicateProduct, 'get_id')) {
+            $duplicateId = (int)$duplicateProduct->get_id();
+
+            if ($allowedId === null || ($allowedId !== $duplicateId)) {
+                wp_delete_post($duplicateId, true);
+                wc_delete_product_transients($duplicateId);
+            }
+        }
+    }
+
     private function getCorrespondingCategoryIds(int $categoryId): array
     {
         $categories = [$categoryId];
@@ -1323,4 +1337,5 @@ class StoreLinkrWooCommerceService
 
         return array_values($productIds);
     }
+
 }

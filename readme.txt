@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.9.10
+Stable tag: 2.9.11
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.9.11 =
+
+Release date: 2025-09-25
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Remove duplicate GTIN / EAN before creating a new variant option to prevent errors
 
 = 2.9.10 =
 
