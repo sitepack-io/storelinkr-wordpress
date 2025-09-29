@@ -134,15 +134,17 @@ Please read the changelog.txt for more commit history of this plugin.
 
 = 2.9.11 =
 
-Release date: 2025-09-25
+Release date: 2025-09-29
 
 #### Enhancements
 
-None
+* Save attributes on product variable level
+* Support for multiple attribute values on single attribute name
 
 #### Bugfixes
 
 * Remove duplicate GTIN / EAN before creating a new variant option to prevent errors
+* Product variant only link facet values to main variant
 
 = 2.9.10 =
 
