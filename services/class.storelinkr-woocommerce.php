@@ -196,7 +196,7 @@ class StoreLinkrWooCommerceService
             wp_set_object_terms($productId, [$brandTermId], 'product_brand');
         }
 
-        if (!empty($facets)) {
+        if (!empty($facets) && $product instanceof WC_Product) {
             // Preserve cross-sell and upsell IDs before reloading the product
             $crossSellIds = $product->get_cross_sell_ids();
             $upsellIds = $product->get_upsell_ids();
@@ -730,6 +730,13 @@ class StoreLinkrWooCommerceService
         } elseif ($type === 'variant') {
             $product = new WC_Product_Variable();
             $product->set_manage_stock(false);
+
+            if(!empty($data['variant']['name'])){
+                $emptyVariable = $this->findEmptyVariableProductByName($data['variant']['name']);
+                if ($emptyVariable instanceof WC_Product_Variable) {
+                    $product = $emptyVariable;
+                }
+            }
         } else {
             throw new Exception('Invalid type requested!');
         }
@@ -1336,6 +1343,54 @@ class StoreLinkrWooCommerceService
         }
 
         return array_values($productIds);
+    }
+
+    /**
+     * Find a variable product by exact name that has no variations.
+     *
+     * @param string $name
+     * @return WC_Product_Variable|bool
+     */
+    private function findEmptyVariableProductByName(string $name): WC_Product_Variable|bool
+    {
+        if (empty($name)) {
+            return false;
+        }
+
+        $query = new WP_Query([
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'title' => $name,
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'tax_query' => [
+                [
+                    'taxonomy' => 'product_type',
+                    'field' => 'slug',
+                    'terms' => 'variable',
+                ],
+            ],
+        ]);
+
+        if (empty($query->posts)) {
+            return false; // no match
+        }
+
+        // Take the first match
+        $product_id = $query->posts[0];
+        $product = wc_get_product($product_id);
+
+        if (!$product instanceof WC_Product_Variable) {
+            return false;
+        }
+
+        // Ensure no variations exist
+        $variations = $product->get_children();
+        if (!empty($variations)) {
+            return false;
+        }
+
+        return $product;
     }
 
 }
