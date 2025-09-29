@@ -196,7 +196,7 @@ class StoreLinkrWooCommerceService
             wp_set_object_terms($productId, [$brandTermId], 'product_brand');
         }
 
-        if (!empty($facets) && $product instanceof WC_Product) {
+        if (!empty($facets)) {
             // Preserve cross-sell and upsell IDs before reloading the product
             $crossSellIds = $product->get_cross_sell_ids();
             $upsellIds = $product->get_upsell_ids();
@@ -829,7 +829,18 @@ class StoreLinkrWooCommerceService
             }
         }
 
+        // Preserve existing non-variation attributes (main-level facets)
+        $existing_attributes = $variable_product->get_attributes();
         $product_attributes = [];
+        
+        // First, add existing non-variation attributes
+        foreach ($existing_attributes as $key => $existing_attribute) {
+            if (!$existing_attribute->get_variation()) {
+                $product_attributes[$key] = $existing_attribute;
+            }
+        }
+        
+        // Then add variation attributes
         foreach ($attribute_taxonomies as $label => $taxonomy) {
             $attribute_slug = wc_sanitize_taxonomy_name($label);
             $attribute_id = 0;
@@ -841,16 +852,17 @@ class StoreLinkrWooCommerceService
                 }
             }
 
-            $term_names = wp_list_pluck(get_terms(['taxonomy' => $taxonomy, 'hide_empty' => false]), 'name');
+            // Get only the terms used by product variants instead of all terms
+            $used_terms = array_unique(array_column(array_column($products, 'options'), $label));
 
             $attribute = new WC_Product_Attribute();
             $attribute->set_id($attribute_id);
             $attribute->set_name($taxonomy);
-            $attribute->set_options($term_names);
+            $attribute->set_options($used_terms);
             $attribute->set_visible(false);
             $attribute->set_variation(true);
 
-            $product_attributes[] = $attribute;
+            $product_attributes[$taxonomy] = $attribute;
         }
 
         $totalStockQuantity = 0;
@@ -941,6 +953,9 @@ class StoreLinkrWooCommerceService
             $variation_map[$productOption['ean']] = $variation_id;
         }
 
+        // Clean up unused attribute terms after saving variants
+        $this->cleanupUnusedVariantAttributes($productId, $products, $optionLabels);
+
         wc_delete_product_transients($productId);
 
         return $variation_map;
@@ -949,6 +964,64 @@ class StoreLinkrWooCommerceService
     public function getWarnings(): array
     {
         return $this->warnings;
+    }
+
+    /**
+     * Clean up unused attribute terms that are not used by any product variants
+     *
+     * @param int $productId The variable product ID
+     * @param array $products Array of product variants
+     * @param array $optionLabels Array of option labels (attribute names)
+     */
+    private function cleanupUnusedVariantAttributes(int $productId, array $products, array $optionLabels): void
+    {
+        foreach ($optionLabels as $option_name) {
+            $attribute_slug = wc_sanitize_taxonomy_name($option_name);
+            $taxonomy = 'pa_' . $attribute_slug;
+
+            if (!taxonomy_exists($taxonomy)) {
+                continue;
+            }
+
+            // Get terms currently used by the variants
+            $used_terms = array_unique(array_column(array_column($products, 'options'), $option_name));
+            
+            // Get all existing terms in this taxonomy
+            $all_terms = get_terms([
+                'taxonomy' => $taxonomy,
+                'hide_empty' => false,
+                'fields' => 'names'
+            ]);
+
+            // Find terms that are no longer used by any variant
+            $unused_terms = array_diff($all_terms, $used_terms);
+
+            // Remove unused terms that are not being used by other products
+            foreach ($unused_terms as $unused_term) {
+                $term = get_term_by('name', $unused_term, $taxonomy);
+                if ($term) {
+                    // Check if this term is used by other products before deleting
+                    $products_using_term = get_posts([
+                        'post_type' => 'product',
+                        'posts_per_page' => 1,
+                        'tax_query' => [
+                            [
+                                'taxonomy' => $taxonomy,
+                                'field' => 'term_id',
+                                'terms' => $term->term_id
+                            ]
+                        ],
+                        'post__not_in' => [$productId], // Exclude current product
+                        'fields' => 'ids'
+                    ]);
+
+                    // Only delete term if no other products are using it
+                    if (empty($products_using_term)) {
+                        wp_delete_term($term->term_id, $taxonomy);
+                    }
+                }
+            }
+        }
     }
 
     public function logWarning(string $string): void
