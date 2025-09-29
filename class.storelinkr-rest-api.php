@@ -5,6 +5,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-ean-helper.php');
 require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-admin.php');
 
@@ -546,6 +547,14 @@ class StoreLinkrRestApi
                 'importSource',
             ]);
 
+            foreach ($request->get_param('products') as $product) {
+                if (!empty($product['ean'])) {
+                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
+                        throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
+                    }
+                }
+            }
+
             $product = $this->eCommerceService->mapProductFromDataArray(
                 $this->convertRequestToArray($request),
                 'variant'
@@ -606,6 +615,14 @@ class StoreLinkrRestApi
                 'categories',
                 'importSource',
             ]);
+
+            foreach ($request->get_param('products') as $product) {
+                if (!empty($product['ean'])) {
+                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
+                        throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
+                    }
+                }
+            }
 
             $product = $this->eCommerceService->mapProductFromDataArray(
                 $this->convertRequestToArray($request),

@@ -222,27 +222,48 @@ class StoreLinkrWooCommerceService
                     $attribute_taxonomy_key = wc_attribute_taxonomy_name(
                         $this->buildAttributeSlug(self::formatName($facet['name']))
                     );
-                    $attribute_id = $this->upsertAttributeAndTerm(
-                        $productId,
-                        $attribute_taxonomy_key,
-                        $facet['name'],
-                        $facet['value']
-                    );
 
-                    if (!is_int($attribute_id)) {
-                        $attribute_object = new WC_Product_Attribute();
-                        $attribute_object->set_id($attribute_id);
-                        $attribute_object->set_name($attribute_taxonomy_key);
-                        $attribute_object->set_options([$facet['value']]);
-                        $attribute_object->set_visible(true);
-                        $attribute_object->set_variation(false);
-
-                        if (isset($facet['position'])) {
-                            $attribute_object->set_position($facet['position']);
-                        }
-
-                        $product_attributes[$attribute_taxonomy_key] = $attribute_object;
+                    // Check if facet value contains commas and split into multiple terms
+                    // Since facets are not used for variations (set_variation(false) below),
+                    // we can safely split comma-separated values
+                    $facet_values = [];
+                    if (str_contains($facet['value'], ',')) {
+                        // Split by comma and trim whitespace
+                        $split_values = array_map('trim', explode(',', $facet['value']));
+                        $facet_values = array_filter($split_values, function($value) {
+                            return !empty($value);
+                        });
+                    } else {
+                        $facet_values = [$facet['value']];
                     }
+
+                    // Process each facet value separately
+                    $all_values = [];
+                    $attribute_id = null;
+                    foreach ($facet_values as $index => $single_value) {
+                        $attribute_id = $this->upsertAttributeAndTerm(
+                            $productId,
+                            $attribute_taxonomy_key,
+                            $facet['name'],
+                            $single_value,
+                            $index > 0 // append for subsequent values
+                        );
+                        $all_values[] = $single_value;
+                    }
+
+                    // Always create the attribute object to handle multiple values properly
+                    $attribute_object = new WC_Product_Attribute();
+                    $attribute_object->set_id($attribute_id);
+                    $attribute_object->set_name($attribute_taxonomy_key);
+                    $attribute_object->set_options($all_values);
+                    $attribute_object->set_visible(true);
+                    $attribute_object->set_variation(false);
+
+                    if (isset($facet['position'])) {
+                        $attribute_object->set_position($facet['position']);
+                    }
+
+                    $product_attributes[$attribute_taxonomy_key] = $attribute_object;
 
                     $existing_facets[] = $attribute_taxonomy_key;
                 }
@@ -1327,7 +1348,8 @@ class StoreLinkrWooCommerceService
         int $productId,
         string $attribute_taxonomy_key,
         string $name,
-        mixed $value
+        mixed $value,
+        bool $append = false
     ) {
         $slug = $this->buildAttributeSlug(self::formatName($name));
         $attribute_exists = false;
@@ -1378,7 +1400,7 @@ class StoreLinkrWooCommerceService
                     $productId,
                     $value,
                     $attribute_taxonomy_key,
-                    false
+                    $append
                 );
 
                 return $attribute_id;

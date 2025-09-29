@@ -139,6 +139,7 @@ Release date: 2025-09-29
 #### Enhancements
 
 * Save attributes on product variable level
+* Support for multiple attribute values on single attribute name
 
 #### Bugfixes
 
