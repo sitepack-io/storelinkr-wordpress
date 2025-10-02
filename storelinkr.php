@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Stop manual work: the all-in-one platform for complete online store automation. Integrate with marketplaces, product feeds, and suppliers.
-Version: 2.9.11
+Version: 2.9.12
 Author: StoreLinkr
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.9.11');
+define('STORELINKR_VERSION', '2.9.12');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STORELINKR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -36,6 +36,8 @@ $storelinkrRestApi = new StoreLinkrRestApi(STORELINKR_VERSION);
 add_action('rest_api_init', [$storelinkrRestApi, 'init']);
 add_action('wp_ajax_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
 add_action('wp_ajax_nopriv_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
+add_action('wp_ajax_storelinkr_merge_duplicate_attributes', 'storelinkrMergeDuplicateAttributesAjaxHandler');
+add_action('wp_ajax_storelinkr_remove_unused_terms', 'storelinkrRemoveUnusedTermsAjaxHandler');
 
 add_filter('woocommerce_product_tabs', 'storelinkrProductTabs', 10, 2);
 add_filter('rest_authentication_errors', 'storelinkrWooCommerceRestApi');
@@ -191,6 +193,96 @@ if (!function_exists('storelinkrStockAjaxHandler')) {
             ];
 
             wp_send_json_success($response);
+            wp_die();
+        }
+    }
+}
+
+if (!function_exists('storelinkrMergeDuplicateAttributesAjaxHandler')) {
+    function storelinkrMergeDuplicateAttributesAjaxHandler(): void
+    {
+        try {
+            if (!isset($_POST['nonce'])) {
+                throw new Exception('Empty nonce!');
+            }
+
+            $nonce = sanitize_text_field(wp_unslash($_POST['nonce']));
+
+            if (empty($nonce)) {
+                throw new Exception('Empty token!');
+            }
+
+            if (!wp_verify_nonce($nonce, 'storelinkr_merge_duplicate_attributes')) {
+                throw new Exception('Invalid nonce given!');
+            }
+
+            if (!current_user_can('manage_woocommerce')) {
+                throw new Exception('Insufficient permissions!');
+            }
+
+            require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
+            $woocommerceService = new StoreLinkrWooCommerceService();
+            $woocommerceService->mergeDuplicateAttributes();
+
+            $response = [
+                'success' => true,
+                'message' => __('Duplicate attributes merged successfully!', 'storelinkr'),
+            ];
+
+            wp_send_json_success($response);
+            wp_die();
+        } catch (\Exception $exception) {
+            $response = [
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ];
+
+            wp_send_json_error($response);
+            wp_die();
+        }
+    }
+}
+
+if (!function_exists('storelinkrRemoveUnusedTermsAjaxHandler')) {
+    function storelinkrRemoveUnusedTermsAjaxHandler(): void
+    {
+        try {
+            if (!isset($_POST['nonce'])) {
+                throw new Exception('Empty nonce!');
+            }
+
+            $nonce = sanitize_text_field(wp_unslash($_POST['nonce']));
+
+            if (empty($nonce)) {
+                throw new Exception('Empty token!');
+            }
+
+            if (!wp_verify_nonce($nonce, 'storelinkr_remove_unused_terms')) {
+                throw new Exception('Invalid nonce given!');
+            }
+
+            if (!current_user_can('manage_woocommerce')) {
+                throw new Exception('Insufficient permissions!');
+            }
+
+            require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
+            $woocommerceService = new StoreLinkrWooCommerceService();
+            $woocommerceService->removeUnusedTerms();
+
+            $response = [
+                'success' => true,
+                'message' => __('Unused terms removed successfully!', 'storelinkr'),
+            ];
+
+            wp_send_json_success($response);
+            wp_die();
+        } catch (\Exception $exception) {
+            $response = [
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ];
+
+            wp_send_json_error($response);
             wp_die();
         }
     }

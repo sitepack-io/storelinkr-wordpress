@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.9.11
+Stable tag: 2.9.12
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,20 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.9.12 =
+
+Release date: 2025-10-02
+
+#### Enhancements
+
+* New: danger zone area to execute "one time" actions
+* Danger zone: merge duplicate attributes
+* Danger zone: remove unused attribute values (not linked to any product)
+
+#### Bugfixes
+
+None
 
 = 2.9.11 =
 

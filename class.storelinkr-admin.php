@@ -93,6 +93,11 @@ class StoreLinkrAdmin
 
     public function renderDashboardPage(): void
     {
+        if (isset($_GET['subpage']) && esc_attr($_GET['subpage']) == 'danger-zone') {
+            require_once(STORELINKR_PLUGIN_DIR . 'views/storelinkr_danger_zone.php');
+            return;
+        }
+
         if (isset($_GET['subpage']) && esc_attr($_GET['subpage']) == 'diagnostic') {
             $phpVersion = phpversion();
             $wpVersion = get_bloginfo('version');

@@ -230,7 +230,7 @@ class StoreLinkrWooCommerceService
                     if (str_contains($facet['value'], ',')) {
                         // Split by comma and trim whitespace
                         $split_values = array_map('trim', explode(',', $facet['value']));
-                        $facet_values = array_filter($split_values, function($value) {
+                        $facet_values = array_filter($split_values, function ($value) {
                             return !empty($value);
                         });
                     } else {
@@ -678,16 +678,19 @@ class StoreLinkrWooCommerceService
     public function mergeDuplicateAttributes(): void
     {
         $attributeTaxonomies = wc_get_attribute_taxonomies();
-        $attributeNames = [];
+        $seenLabels = [];
         $duplicateAttributes = [];
 
+        // Step 1: Identify duplicates by label
         foreach ($attributeTaxonomies as $taxonomy) {
-            if (in_array($taxonomy->attribute_name, $attributeNames)) {
+            $label = $taxonomy->attribute_label;
+
+            if (isset($seenLabels[$label])) {
                 $duplicateAttributes[] = $taxonomy;
                 continue;
             }
 
-            $attributeNames[] = $taxonomy->attribute_name;
+            $seenLabels[$label] = $taxonomy; // The "canonical" attribute
         }
 
         if (empty($duplicateAttributes)) {
@@ -695,54 +698,121 @@ class StoreLinkrWooCommerceService
         }
 
         foreach ($duplicateAttributes as $duplicate) {
-            $taxonomyName = wc_attribute_taxonomy_name($duplicate->attribute_name);
-            $terms = get_terms([
-                'taxonomy' => $taxonomyName,
+            $duplicateTaxonomy = 'pa_' . $duplicate->attribute_name;
+
+            // Step 2: Find the canonical attribute to merge into
+            $canonical = $seenLabels[$duplicate->attribute_label];
+            $canonicalTaxonomy = 'pa_' . $canonical->attribute_name;
+
+            // Step 3: Get all terms of the duplicate attribute
+            $duplicateTerms = get_terms([
+                'taxonomy' => $duplicateTaxonomy,
                 'hide_empty' => false,
+                'fields' => 'all',
             ]);
 
-            if (!is_wp_error($terms) && !empty($terms)) {
-                $termNames = [];
-                $duplicateTerms = [];
+            if (is_wp_error($duplicateTerms) || empty($duplicateTerms)) {
+                wc_delete_attribute($duplicate->attribute_id);
+                continue;
+            }
 
-                foreach ($terms as $term) {
-                    if (in_array($term->name, $termNames)) {
-                        $duplicateTerms[] = $term;
-                        continue;
-                    }
+            // Step 4: Map canonical term names to IDs
+            $canonicalTerms = get_terms([
+                'taxonomy' => $canonicalTaxonomy,
+                'hide_empty' => false,
+                'fields' => 'all',
+            ]);
+            $canonicalMap = [];
+            if (!is_wp_error($canonicalTerms)) {
+                foreach ($canonicalTerms as $term) {
+                    $canonicalMap[$term->name] = $term->term_id;
+                }
+            }
 
-                    $termNames[$term->term_id] = $term->name;
+            // Step 5: Reassign products from duplicate terms to canonical terms
+            foreach ($duplicateTerms as $term) {
+                // Determine the term ID to keep
+                $termToKeepId = $canonicalMap[$term->name] ?? wp_insert_term($term->name,
+                    $canonicalTaxonomy)['term_id'] ?? null;
+
+                if (!$termToKeepId) {
+                    continue; // Skip if term creation failed
                 }
 
-                foreach ($duplicateTerms as $term) {
-                    $termToKeepId = array_search($term->name, $termNames);
-
-                    $args = [
+                // Reassign products
+                $paged = 1;
+                do {
+                    $products = get_posts([
                         'post_type' => 'product',
-                        'numberposts' => -1,
+                        'posts_per_page' => 100,
+                        'fields' => 'ids',
+                        'paged' => $paged,
                         'tax_query' => [
                             [
-                                'taxonomy' => $taxonomyName,
+                                'taxonomy' => $duplicateTaxonomy,
                                 'field' => 'term_id',
                                 'terms' => $term->term_id,
                             ],
                         ],
-                    ];
-                    $products = get_posts($args);
+                    ]);
 
-                    if (!empty($products)) {
-                        foreach ($products as $product) {
-                            wp_set_object_terms($product->ID, (int)$termToKeepId, $taxonomyName, true);
-                        }
+                    foreach ($products as $productId) {
+                        wp_set_object_terms($productId, (int)$termToKeepId, $canonicalTaxonomy, true);
                     }
 
-                    wp_delete_term($term->term_id, $taxonomyName);
-                }
+                    $paged++;
+                } while (!empty($products));
+
+                // Delete the duplicate term
+                wp_delete_term($term->term_id, $duplicateTaxonomy);
             }
 
+            // Step 6: Delete the duplicate attribute
             wc_delete_attribute($duplicate->attribute_id);
         }
     }
+
+    public function removeUnusedTerms(): void
+    {
+        $attributeTaxonomies = wc_get_attribute_taxonomies();
+
+        foreach ($attributeTaxonomies as $taxonomy) {
+            $taxonomyName = 'pa_' . $taxonomy->attribute_name;
+
+            // Get all terms for this attribute
+            $terms = get_terms([
+                'taxonomy' => $taxonomyName,
+                'hide_empty' => false,
+                'fields' => 'all',
+            ]);
+
+            if (is_wp_error($terms) || empty($terms)) {
+                continue;
+            }
+
+            foreach ($terms as $term) {
+                // Check if term is linked to any products
+                $products = get_posts([
+                    'post_type' => 'product',
+                    'posts_per_page' => 1, // only need to check if at least one exists
+                    'fields' => 'ids',
+                    'tax_query' => [
+                        [
+                            'taxonomy' => $taxonomyName,
+                            'field' => 'term_id',
+                            'terms' => $term->term_id,
+                        ],
+                    ],
+                ]);
+
+                // Delete term if no products are linked
+                if (empty($products)) {
+                    wp_delete_term($term->term_id, $taxonomyName);
+                }
+            }
+        }
+    }
+
 
     public function mapProductFromDataArray(array $data, string $type = 'simple'): WC_Product
     {
@@ -752,7 +822,7 @@ class StoreLinkrWooCommerceService
             $product = new WC_Product_Variable();
             $product->set_manage_stock(false);
 
-            if(!empty($data['variant']['name'])){
+            if (!empty($data['variant']['name'])) {
                 $emptyVariable = $this->findEmptyVariableProductByName($data['variant']['name']);
                 if ($emptyVariable instanceof WC_Product_Variable) {
                     $product = $emptyVariable;
@@ -853,14 +923,14 @@ class StoreLinkrWooCommerceService
         // Preserve existing non-variation attributes (main-level facets)
         $existing_attributes = $variable_product->get_attributes();
         $product_attributes = [];
-        
+
         // First, add existing non-variation attributes
         foreach ($existing_attributes as $key => $existing_attribute) {
             if (!$existing_attribute->get_variation()) {
                 $product_attributes[$key] = $existing_attribute;
             }
         }
-        
+
         // Then add variation attributes
         foreach ($attribute_taxonomies as $label => $taxonomy) {
             $attribute_slug = wc_sanitize_taxonomy_name($label);
@@ -1006,7 +1076,7 @@ class StoreLinkrWooCommerceService
 
             // Get terms currently used by the variants
             $used_terms = array_unique(array_column(array_column($products, 'options'), $option_name));
-            
+
             // Get all existing terms in this taxonomy
             $all_terms = get_terms([
                 'taxonomy' => $taxonomy,
