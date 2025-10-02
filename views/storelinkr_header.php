@@ -26,5 +26,10 @@
                 <?php echo esc_html__('Diagnostic', 'storelinkr') ?>
             </a>
         </li>
+        <li class="text-danger">
+            <a href="<?php echo esc_url(admin_url('admin.php?page=storelinkr&subpage=danger-zone')) ?>" <?php if($page === 'danger-zone'): ?> class="active"<?php endif; ?>>
+                <?php echo esc_html__('Danger zone', 'storelinkr') ?>
+            </a>
+        </li>
     </ul>
 </div>

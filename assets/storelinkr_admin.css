@@ -17,6 +17,15 @@
     padding-right: 15px;
 }
 
+.storelinkr-container .storelinkr-heading, .storelinkr-container .storelinkr-menu ul li.text-danger {
+    color: #af0505;
+}
+
+.storelinkr-container .storelinkr-heading, .storelinkr-container .storelinkr-menu ul li.text-danger a {
+    color: #af0505;
+    /*border-color: #af0505;*/
+}
+
 .storelinkr-container .storelinkr-heading img.storelinkr-icon {
     margin: 5px 8px;
     display: inline-block;
@@ -157,6 +166,18 @@
 .storelinkr-dashboard .storelinkr-block-full {
     width: calc(96% + 30px);
     margin-right: 15px;
+}
+
+.storelinkr-dashboard .storelinkr-danger-zone-block h2 {
+    color: #af0505;
+    margin-top: 0;
+}
+
+.storelinkr-dashboard .storelinkr-danger-zone-block .row-danger-item {
+    border: 1px solid #ccc;
+    border-left-width: 0;
+    border-right-width: 0;
+    padding: 20px 0;
 }
 
 p.storelinkr-lead {
