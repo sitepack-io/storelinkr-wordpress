@@ -553,7 +553,12 @@ class StoreLinkrRestApi
                         throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
                     }
 
-                    // TODO: find existing products and remove them;
+                    $eanSearch = $this->eCommerceService->findProductByEan($product['ean']);
+                    if ($eanSearch !== false) {
+                        $this->eCommerceService->removeDuplicateByEan(
+                            $product['ean']
+                        );
+                    }
                 }
             }
 
