@@ -552,6 +552,8 @@ class StoreLinkrRestApi
                     if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
                         throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
                     }
+
+                    // TODO: find existing products and remove them;
                 }
             }
 
@@ -1125,6 +1127,8 @@ class StoreLinkrRestApi
             'negative_points' => $request->get_param('negative_points'),
             'upsell_products' => $request->get_param('upsell_products'),
             'cross_sell_products' => $request->get_param('cross_sell_products'),
+            'digital' => $request->get_param('digital'),
+            'adult' => $request->get_param('adult'),
         ];
     }
 

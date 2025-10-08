@@ -106,6 +106,7 @@ class StoreLinkrWooCommerceService
                 'ip_address' => $order->get_customer_ip_address(),
                 'payment_status' => $order->is_paid() ? 'paid' : 'unpaid',
                 'deliver_method' => $deliveryMethod,
+                'customer_notes' => $order->get_notes(),
             ];
 
             $validLineItems = 0;
