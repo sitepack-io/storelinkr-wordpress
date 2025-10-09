@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Stop manual work: the all-in-one platform for complete online store automation. Integrate with marketplaces, product feeds, and suppliers.
-Version: 2.10.0
+Version: 2.11.0
 Author: StoreLinkr
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -22,7 +22,7 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.10.0');
+define('STORELINKR_VERSION', '2.11.0');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STORELINKR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -38,6 +38,7 @@ add_action('wp_ajax_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
 add_action('wp_ajax_nopriv_storelinkr_product_stock', 'storelinkrStockAjaxHandler');
 add_action('wp_ajax_storelinkr_merge_duplicate_attributes', 'storelinkrMergeDuplicateAttributesAjaxHandler');
 add_action('wp_ajax_storelinkr_remove_unused_terms', 'storelinkrRemoveUnusedTermsAjaxHandler');
+add_action('wp_ajax_storelinkr_search_product_by_ean', 'storelinkrSearchProductByEanAjaxHandler');
 
 add_filter('woocommerce_product_tabs', 'storelinkrProductTabs', 10, 2);
 add_filter('rest_authentication_errors', 'storelinkrWooCommerceRestApi');
@@ -496,5 +497,90 @@ if (!function_exists('storelinkrAddLinkBeforeGroupedProductLabel')) {
         }
 
         return $value;
+    }
+}
+
+if (!function_exists('storelinkrSearchProductByEanAjaxHandler')) {
+    function storelinkrSearchProductByEanAjaxHandler(): void
+    {
+        try {
+            if (!isset($_POST['ean']) || !isset($_POST['nonce'])) {
+                throw new Exception('Missing EAN or nonce!');
+            }
+
+            $ean = sanitize_text_field(wp_unslash($_POST['ean']));
+            $nonce = sanitize_text_field(wp_unslash($_POST['nonce']));
+
+            if (empty($ean)) {
+                throw new Exception('Empty EAN number!');
+            }
+
+            if (empty($nonce)) {
+                throw new Exception('Empty nonce!');
+            }
+
+            if (!wp_verify_nonce($nonce, 'storelinkr_search_product_by_ean')) {
+                throw new Exception('Invalid nonce given!');
+            }
+
+            if (!current_user_can('manage_woocommerce')) {
+                throw new Exception('Insufficient permissions!');
+            }
+
+            require_once(STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php');
+            $woocommerceService = new StoreLinkrWooCommerceService();
+            $product = $woocommerceService->findProductByEan($ean);
+
+            $response = [
+                'success' => true,
+                'product' => null
+            ];
+
+            if ($product && $product instanceof WC_Product) {
+                // Get product type
+                $product_type = $product->get_type();
+                
+                // Determine if this is a variant and get parent info
+                $parent_id = $product->get_parent_id();
+                $edit_product_id = $product->get_id();
+                $edit_url = admin_url('post.php?post=' . $edit_product_id . '&action=edit');
+                
+                // If this is a variation, link to parent for editing
+                if ($parent_id > 0) {
+                    $edit_product_id = $parent_id;
+                    $edit_url = admin_url('post.php?post=' . $parent_id . '&action=edit');
+                }
+                
+                // Format product type for display
+                $type_display = ucfirst(str_replace(['_', '-'], ' ', $product_type));
+                if ($parent_id > 0) {
+                    $type_display = 'Variation';
+                }
+                
+                $response['product'] = [
+                    'id' => $product->get_id(),
+                    'name' => $product->get_name(),
+                    'sku' => $product->get_sku() ?: '',
+                    'ean' => $product->get_meta('ean') ?: $ean,
+                    'price' => $product->get_price_html(),
+                    'stock_status' => $product->get_stock_status() === 'instock' ? __('In Stock', 'storelinkr') : __('Out of Stock', 'storelinkr'),
+                    'product_type' => $type_display,
+                    'is_variation' => $parent_id > 0,
+                    'parent_id' => $parent_id,
+                    'edit_url' => $edit_url
+                ];
+            }
+
+            wp_send_json_success($response);
+            wp_die();
+        } catch (\Exception $exception) {
+            $response = [
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ];
+
+            wp_send_json_error($response);
+            wp_die();
+        }
     }
 }

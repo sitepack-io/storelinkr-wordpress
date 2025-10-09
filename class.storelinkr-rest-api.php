@@ -552,6 +552,13 @@ class StoreLinkrRestApi
                     if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
                         throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
                     }
+
+                    $eanSearch = $this->eCommerceService->findProductByEan($product['ean']);
+                    if ($eanSearch !== false) {
+                        $this->eCommerceService->removeDuplicateByEan(
+                            $product['ean']
+                        );
+                    }
                 }
             }
 
@@ -621,6 +628,18 @@ class StoreLinkrRestApi
                     if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
                         throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
                     }
+                }
+
+                if (!empty($product['id']) && !empty($product['ean'])) {
+                    $this->eCommerceService->removeDuplicateByEan(
+                        $product['ean'],
+                        (int)$product['id']
+                    );
+                } elseif (empty($product['id']) && !empty($product['ean'])) {
+                    $this->eCommerceService->removeDuplicateByEan(
+                        $product['ean'],
+                        null
+                    );
                 }
             }
 
@@ -721,7 +740,6 @@ class StoreLinkrRestApi
             $notFound = null;
 
             foreach ($request['products'] as $productData) {
-
                 if (!empty($productData['ean'])) {
                     $product = $this->eCommerceService->findProductByEan($productData['ean']);
                 } elseif (!empty($productData['sku'])) {
@@ -1125,6 +1143,8 @@ class StoreLinkrRestApi
             'negative_points' => $request->get_param('negative_points'),
             'upsell_products' => $request->get_param('upsell_products'),
             'cross_sell_products' => $request->get_param('cross_sell_products'),
+            'digital' => $request->get_param('digital'),
+            'adult' => $request->get_param('adult'),
         ];
     }
 

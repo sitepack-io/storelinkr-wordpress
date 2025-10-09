@@ -335,3 +335,7 @@ label.storelinkr-attachment-name {
     margin-left: -5px;
     margin-right: 3px;
 }
+
+#productResults {
+    width: calc(100% - 30px);
+}

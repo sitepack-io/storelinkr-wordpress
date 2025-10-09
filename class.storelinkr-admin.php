@@ -97,6 +97,10 @@ class StoreLinkrAdmin
             require_once(STORELINKR_PLUGIN_DIR . 'views/storelinkr_danger_zone.php');
             return;
         }
+        if (isset($_GET['subpage']) && esc_attr($_GET['subpage']) == 'product-search') {
+            require_once(STORELINKR_PLUGIN_DIR . 'views/storelinkr_product_search.php');
+            return;
+        }
 
         if (isset($_GET['subpage']) && esc_attr($_GET['subpage']) == 'diagnostic') {
             $phpVersion = phpversion();
