@@ -635,6 +635,11 @@ class StoreLinkrRestApi
                         $product['ean'],
                         (int)$product['id']
                     );
+                } elseif (empty($product['id']) && !empty($product['ean'])) {
+                    $this->eCommerceService->removeDuplicateByEan(
+                        $product['ean'],
+                        null
+                    );
                 }
             }
 
