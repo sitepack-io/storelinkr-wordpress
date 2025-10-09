@@ -26,6 +26,11 @@
                 <?php echo esc_html__('Diagnostic', 'storelinkr') ?>
             </a>
         </li>
+        <li>
+            <a href="<?php echo esc_url(admin_url('admin.php?page=storelinkr&subpage=product-search')) ?>" <?php if($page === 'product_search'): ?> class="active"<?php endif; ?>>
+                <?php echo esc_html__('Product search', 'storelinkr') ?>
+            </a>
+        </li>
         <li class="text-danger">
             <a href="<?php echo esc_url(admin_url('admin.php?page=storelinkr&subpage=danger-zone')) ?>" <?php if($page === 'danger-zone'): ?> class="active"<?php endif; ?>>
                 <?php echo esc_html__('Danger zone', 'storelinkr') ?>
