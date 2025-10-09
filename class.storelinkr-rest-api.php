@@ -629,6 +629,13 @@ class StoreLinkrRestApi
                         throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
                     }
                 }
+
+                if (!empty($product['id']) && !empty($product['ean'])) {
+                    $this->eCommerceService->removeDuplicateByEan(
+                        $product['ean'],
+                        (int)$product['id']
+                    );
+                }
             }
 
             $product = $this->eCommerceService->mapProductFromDataArray(
@@ -728,7 +735,6 @@ class StoreLinkrRestApi
             $notFound = null;
 
             foreach ($request['products'] as $productData) {
-
                 if (!empty($productData['ean'])) {
                     $product = $this->eCommerceService->findProductByEan($productData['ean']);
                 } elseif (!empty($productData['sku'])) {

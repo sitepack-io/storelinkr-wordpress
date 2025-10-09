@@ -733,8 +733,10 @@ class StoreLinkrWooCommerceService
             // Step 5: Reassign products from duplicate terms to canonical terms
             foreach ($duplicateTerms as $term) {
                 // Determine the term ID to keep
-                $termToKeepId = $canonicalMap[$term->name] ?? wp_insert_term($term->name,
-                    $canonicalTaxonomy)['term_id'] ?? null;
+                $termToKeepId = $canonicalMap[$term->name] ?? wp_insert_term(
+                    $term->name,
+                    $canonicalTaxonomy
+                )['term_id'] ?? null;
 
                 if (!$termToKeepId) {
                     continue; // Skip if term creation failed
@@ -850,9 +852,11 @@ class StoreLinkrWooCommerceService
         }
 
         if (!empty($data['id'])) {
-            $product = $this->findProduct($data['id']);
+            $productSearch = $this->findProduct($data['id']);
 
-            if ($type === 'variant' && !$product instanceof WC_Product_Variable) {
+            if ($productSearch !== false) {
+                $product = $productSearch;
+            } elseif ($type === 'variant' && !$productSearch instanceof WC_Product_Variable) {
                 throw new Exception('Product is not an instance of Variable product!');
             }
         }
@@ -1039,6 +1043,11 @@ class StoreLinkrWooCommerceService
             }
 
             $variation->set_attributes($attributes);
+
+            if (isset($productOption['facets'])) {
+                $variation->update_meta_data('_product_attributes', $productOption['facets'], true);
+            }
+
             $variation->save();
 
             $variation_id = $variation->get_id();
@@ -1132,7 +1141,9 @@ class StoreLinkrWooCommerceService
             $order = wc_create_order();
 
             if (is_wp_error($order)) {
-                $this->logWarning('StoreLinkr error: Failed to create WooCommerce order: ' . $order->get_error_message());
+                $this->logWarning(
+                    'StoreLinkr error: Failed to create WooCommerce order: ' . $order->get_error_message()
+                );
                 return null;
             }
 
@@ -1229,8 +1240,10 @@ class StoreLinkrWooCommerceService
                 $shipping_item->set_method_title($data['shipping_method'] ?? 'Custom Shipping');
                 $shipping_item->set_method_id($data['shipping_method'] ?? 'custom');
                 if (isset($data['shipping_costs_cents'])) {
-                    $shipping_item->set_total(((int)$data['shipping_costs_cents'] > 0)
-                        ? (floatval($data['shipping_costs_cents']) / 100) : 0);
+                    $shipping_item->set_total(
+                        ((int)$data['shipping_costs_cents'] > 0)
+                            ? (floatval($data['shipping_costs_cents']) / 100) : 0
+                    );
                 }
                 $order->add_item($shipping_item);
             }
@@ -1287,7 +1300,6 @@ class StoreLinkrWooCommerceService
             }
 
             return strval($order->get_id());
-
         } catch (Exception $e) {
             $this->logWarning('StoreLinkr error: Failed to create order: ' . $e->getMessage());
             return null;
