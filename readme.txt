@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.10.1
+Stable tag: 2.11.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -132,14 +132,16 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 Please read the changelog.txt for more commit history of this plugin.
 
-= 2.10.1 =
+= 2.11.0 =
 
-Release date: 2025-10-08
+Release date: 2025-10-09
 
 #### Enhancements
 
 * Mark product as digital / virtual good
 * Before creating a product variant, we look up existing EAN/GTIN numbers and move them to trash
+* Before updating a product variant, we validate EAN/GTIN numbers with products
+* Added a new debug tool to find products based on EAN in the StoreLinkr WP admin
 
 #### Bugfixes
 
