@@ -874,10 +874,10 @@ class StoreLinkrWooCommerceService
             (isset($data['upsell_products']))
                 ? $this->onlyValidProductIds($data['upsell_products']) : [],
         );
-        if (!empty($data['categoryId'])) {
-            $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
-        } elseif (!empty($data['category_path'])) {
+        if (!empty($data['category_path'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIdsByPath($data['category_path']));
+        } elseif (!empty($data['categoryId'])) {
+            $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
         }
 
         if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === false) {
