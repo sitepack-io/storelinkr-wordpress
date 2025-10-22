@@ -432,7 +432,7 @@ class StoreLinkrWooCommerceService
      * @return WP_Term
      * @throws Exception
      */
-    public function createCategory(string $source, string $name, string $slug, string $parentId): WP_Term
+    public function createCategory(string $source, string $name, string $parentId): WP_Term
     {
         $termExists = term_exists($name, 'product_cat', $parentId);
 
@@ -816,7 +816,6 @@ class StoreLinkrWooCommerceService
         }
     }
 
-
     public function mapProductFromDataArray(array $data, string $type = 'simple'): WC_Product
     {
         if ($type === 'simple') {
@@ -877,6 +876,8 @@ class StoreLinkrWooCommerceService
         );
         if (!empty($data['categoryId'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
+        } elseif (!empty($data['category_path'])) {
+            $product->set_category_ids($this->getCorrespondingCategoryIdsByPath($data['category_path']));
         }
 
         if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === false) {
@@ -1331,6 +1332,32 @@ class StoreLinkrWooCommerceService
         }
 
         return $categories;
+    }
+
+    private function getCorrespondingCategoryIdsByPath(array $categoryPath): array
+    {
+        $categories = [];
+        $keys = ['main', 'sub', 'subSub', 'subSubSub', 'subSubSubSub'];
+        $parentId = '';
+
+        foreach ($keys as $key) {
+            if (empty($categoryPath[$key])) {
+                continue;
+            }
+
+            $category = $this->createCategory(
+                'storelinkr',
+                $categoryPath[$key],
+                $parentId
+            );
+
+            if ($category instanceof WP_Term) {
+                $categories[] = $category->term_id;
+                $parentId = $category->term_id;
+            }
+        }
+
+        return array_unique($categories);
     }
 
     private static function formatName(string $name): string
