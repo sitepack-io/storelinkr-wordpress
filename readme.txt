@@ -142,7 +142,7 @@ Release date: 2025-10-22
 
 #### Bugfixes
 
-None
+* Fixed an error in the saveProduct method, facets was sometimes null instead of array
 
 = 2.11.0 =
 

@@ -494,10 +494,11 @@ class StoreLinkrRestApi
             );
 
             $gallery = (array)$request->get_param('images');
+            $facets = (array)$request->get_param('facets');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct(
                 $product,
-                $request['facets'],
+                $facets,
                 (isset($request['brand'])) ? $request['brand'] : null,
             );
 
@@ -574,7 +575,7 @@ class StoreLinkrRestApi
 
             $productId = $this->eCommerceService->saveProduct(
                 $product,
-                $request['facets'],
+                (array)$request->get_param('facets'),
                 (isset($request['brand'])) ? $request['brand'] : null,
                 $publishNewProduct,
                 true
@@ -649,7 +650,7 @@ class StoreLinkrRestApi
 
             $productId = $this->eCommerceService->saveProduct(
                 $product,
-                $request['facets'],
+                (array)$request->get_param('facets'),
                 (isset($request['brand'])) ? $request['brand'] : null
             );
 
