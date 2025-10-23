@@ -385,12 +385,12 @@ class StoreLinkrWooCommerceService
         }
 
         $filename = sprintf(
-            '%d_%s_%d.jpg',
+            '%d_%s_%d.webp',
             $product->get_id(),
             self::formatName($product->get_name()),
             wp_rand(1, 50000)
         );
-        $file_type = 'image/jpeg';
+        $file_type = 'image/webp';
 
         $upload = wp_upload_bits($filename, null, $imageContent);
 
