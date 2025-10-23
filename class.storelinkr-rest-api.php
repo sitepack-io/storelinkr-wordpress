@@ -826,11 +826,11 @@ class StoreLinkrRestApi
         // Generate filename using alt text or timestamp
         $alt = sanitize_text_field($request['alt']);
         $filename = sprintf(
-            'storelinkr_%s_%d.jpg',
+            'storelinkr_%s_%d.webp',
             sanitize_file_name($alt ?: 'image'),
             wp_rand(1, 50000)
         );
-        $file_type = 'image/jpeg';
+        $file_type = 'image/webp';
 
         $upload = wp_upload_bits($filename, null, $imageContent);
 
