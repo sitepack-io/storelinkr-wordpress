@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.11.0
+Stable tag: 2.12.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.12.0 =
+
+Release date: 2025-10-22
+
+#### Enhancements
+
+* Create and validate a category path when a product is pushed
+
+#### Bugfixes
+
+* Fixed an error in the saveProduct method, facets was sometimes null instead of array
 
 = 2.11.0 =
 

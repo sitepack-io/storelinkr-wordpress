@@ -206,14 +206,12 @@ class StoreLinkrRestApi
             $this->validateRequiredFields($request, [
                 'import_source',
                 'name',
-                'slug',
                 'parentId',
             ]);
 
             $category = $this->eCommerceService->createCategory(
                 $request['import_source'],
                 $request['name'],
-                $request['slug'],
                 $request['parentId'],
             );
 
@@ -431,7 +429,6 @@ class StoreLinkrRestApi
                 'site',
                 'importSource',
                 'salesPrice',
-                'categoryId',
                 'inStock',
                 'stockSupplier',
                 'hasStock',
@@ -486,7 +483,6 @@ class StoreLinkrRestApi
                 'site',
                 'importSource',
                 'salesPrice',
-                'categoryId',
                 'id',
                 'inStock',
                 'stockSupplier',
@@ -498,10 +494,11 @@ class StoreLinkrRestApi
             );
 
             $gallery = (array)$request->get_param('images');
+            $facets = (array)$request->get_param('facets');
             $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             $productId = $this->eCommerceService->saveProduct(
                 $product,
-                $request['facets'],
+                $facets,
                 (isset($request['brand'])) ? $request['brand'] : null,
             );
 
@@ -578,7 +575,7 @@ class StoreLinkrRestApi
 
             $productId = $this->eCommerceService->saveProduct(
                 $product,
-                $request['facets'],
+                (array)$request->get_param('facets'),
                 (isset($request['brand'])) ? $request['brand'] : null,
                 $publishNewProduct,
                 true
@@ -653,7 +650,7 @@ class StoreLinkrRestApi
 
             $productId = $this->eCommerceService->saveProduct(
                 $product,
-                $request['facets'],
+                (array)$request->get_param('facets'),
                 (isset($request['brand'])) ? $request['brand'] : null
             );
 
@@ -1145,6 +1142,7 @@ class StoreLinkrRestApi
             'cross_sell_products' => $request->get_param('cross_sell_products'),
             'digital' => $request->get_param('digital'),
             'adult' => $request->get_param('adult'),
+            'category_path' => $request->get_param('category_path'),
         ];
     }
 
