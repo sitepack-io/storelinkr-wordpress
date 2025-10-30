@@ -106,7 +106,7 @@ class StoreLinkrWooCommerceService
                 'ip_address' => $order->get_customer_ip_address(),
                 'payment_status' => $order->is_paid() ? 'paid' : 'unpaid',
                 'deliver_method' => $deliveryMethod,
-                'customer_notes' => $order->get_notes(),
+                'customer_notes' => $order->get_customer_note(),
             ];
 
             $validLineItems = 0;
@@ -130,6 +130,7 @@ class StoreLinkrWooCommerceService
                 }
 
                 $formatted_order['order_lines'][] = [
+                    'item_id' => $item->get_id(),
                     'product_id' => $product->get_id(),
                     'ean' => $ean,
                     'sku' => $product->get_sku(),

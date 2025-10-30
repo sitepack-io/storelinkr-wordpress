@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.14.0
+Stable tag: 2.14.1
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -132,9 +132,21 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 Please read the changelog.txt for more commit history of this plugin.
 
+= 2.14.1 =
+
+Release date: 2025-10-30
+
+#### Enhancements
+
+* Added the WooCommerce line item id in the response
+
+#### Bugfixes
+
+* Removed deprecated method get_notes() from WooCommerce order and replaced with current method
+
 = 2.14.0 =
 
-Release date: 2025-10-23
+Release date: 2025-10-30
 
 #### Enhancements
 
