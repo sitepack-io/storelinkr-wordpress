@@ -77,7 +77,7 @@ class StoreLinkrWooCommerceMapper
             $product->set_description($data['longDescription']);
         }
 
-        if ($updateStockInfo === true && method_exists($product, 'set_manage_stock')) {
+        if ($updateStockInfo === true && method_exists($product, 'set_stock_status')) {
             $product->set_manage_stock(true);
             $product->set_stock_quantity(0);
             $product->set_stock_status('outofstock');
