@@ -38,15 +38,17 @@ class StoreLinkrWooCommerceMapper
             $allowBackOrder = (bool)$settings['allow_backorder'];
         }
 
-        if (!empty($data['sku'])) {
+        if (!empty($data['sku']) && method_exists($product, 'set_sku')) {
             $product->set_sku($data['sku']);
         }
 
-        if (!empty($data['ean'])) {
+        if (!empty($data['ean']) && method_exists($product, 'set_global_unique_id')) {
             $product->set_global_unique_id($data['ean']);
         }
 
-        $product->set_name((isset($data['name'])) ? $data['name'] : null);
+        if(method_exists($product, 'set_name')) {
+            $product->set_name((isset($data['name'])) ? $data['name'] : null);
+        }
 
         if ($updatePriceInfo === true && isset($data['salesPrice'])) {
             $product->set_regular_price(self::formatPrice((int)$data['salesPrice']));
@@ -75,7 +77,7 @@ class StoreLinkrWooCommerceMapper
             $product->set_description($data['longDescription']);
         }
 
-        if ($updateStockInfo === true) {
+        if ($updateStockInfo === true && method_exists($product, 'set_manage_stock')) {
             $product->set_manage_stock(true);
             $product->set_stock_quantity(0);
             $product->set_stock_status('outofstock');
@@ -133,7 +135,7 @@ class StoreLinkrWooCommerceMapper
             $product->update_meta_data('stock_locations', $stockMeta, true);
         }
 
-        if ($product->get_date_created() === null) {
+        if (method_exists($product, 'set_date_created') && $product->get_date_created() === null) {
             $product->set_date_created((new DateTimeImmutable())->format('Y-m-d H:i:s'));
         }
 
@@ -167,8 +169,10 @@ class StoreLinkrWooCommerceMapper
 
         $product->update_meta_data('_product_attachments', json_encode($attachments), true);
 
-        $product->set_cross_sell_ids(array_values($validCrossSellIds));
-        $product->set_upsell_ids(array_values($validUpsellIds));
+        if(method_exists($product, 'set_cross_sell_ids')) {
+            $product->set_cross_sell_ids(array_values($validCrossSellIds));
+            $product->set_upsell_ids(array_values($validUpsellIds));
+        }
 
         return $product;
     }
