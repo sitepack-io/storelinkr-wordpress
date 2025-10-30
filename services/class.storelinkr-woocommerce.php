@@ -919,7 +919,15 @@ class StoreLinkrWooCommerceService
 
             $attribute_taxonomies[$option_name] = $taxonomy;
 
-            $terms = array_unique(array_column(array_column($products, 'options'), $option_name));
+            // Collect all term values from all products for this option
+            $terms = [];
+            foreach ($products as $product) {
+                if (isset($product['options'][$option_name])) {
+                    $terms[] = $product['options'][$option_name];
+                }
+            }
+            $terms = array_unique($terms);
+            
             foreach ($terms as $term_name) {
                 if (!term_exists($term_name, $taxonomy)) {
                     wp_insert_term($term_name, $taxonomy);
@@ -950,8 +958,14 @@ class StoreLinkrWooCommerceService
                 }
             }
 
-            // Get only the terms used by product variants instead of all terms
-            $used_terms = array_unique(array_column(array_column($products, 'options'), $label));
+            // Get all terms used by product variants for this attribute
+            $used_terms = [];
+            foreach ($products as $product) {
+                if (isset($product['options'][$label])) {
+                    $used_terms[] = $product['options'][$label];
+                }
+            }
+            $used_terms = array_unique($used_terms);
 
             $attribute = new WC_Product_Attribute();
             $attribute->set_id($attribute_id);
@@ -991,7 +1005,7 @@ class StoreLinkrWooCommerceService
             if (!empty($productOption['id'])) {
                 $variation = wc_get_product($productOption['id']);
 
-                if ($variation === false) {
+                if ($variation === false || $variation === null) {
                     $variation = new WC_Product_Variation();
                 }
             } else {
