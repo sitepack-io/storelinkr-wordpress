@@ -1,3 +1,207 @@
+
+= 2.12.0 =
+
+Release date: 2025-10-22
+
+#### Enhancements
+
+* Create and validate a category path when a product is pushed
+
+#### Bugfixes
+
+* Fixed an error in the saveProduct method, facets was sometimes null instead of array
+
+= 2.11.0 =
+
+Release date: 2025-10-09
+
+#### Enhancements
+
+* Mark product as digital / virtual good
+* Before creating a product variant, we look up existing EAN/GTIN numbers and move them to trash
+* Before updating a product variant, we validate EAN/GTIN numbers with products
+* Added a new debug tool to find products based on EAN in the StoreLinkr WP admin
+
+#### Bugfixes
+
+* Fixed a case where the plugin searched for an attribute name instead of the object
+
+= 2.10.0 =
+
+Release date: 2025-10-02
+
+#### Enhancements
+
+* New: danger zone area to execute "one time" actions
+* Danger zone: merge duplicate attributes
+* Danger zone: remove unused attribute values (not linked to any product)
+
+#### Bugfixes
+
+None
+
+= 2.9.11 =
+
+Release date: 2025-09-29
+
+#### Enhancements
+
+* Save attributes on product variable level
+* Support for multiple attribute values on single attribute name
+
+#### Bugfixes
+
+* Remove duplicate GTIN / EAN before creating a new variant option to prevent errors
+* Product variant only link facet values to main variant
+
+= 2.9.10 =
+
+Release date: 2025-09-24
+
+#### Enhancements
+
+* Overwrite images is now optional, default true
+* Added positive points (metafield "_positive_points")
+* Added negative points (metafield "_negative_points")
+* Link cross-sell products when available
+* Link upsell products when available
+
+#### Bugfixes
+
+* Set parent ID on single product fixed
+
+= 2.9.9 =
+
+Release date: 2025-09-16
+
+#### Enhancements
+
+* Overwrite short description is now optional, default true
+* Overwrite long description is now optional, default true
+* Product are published by default, draft is possible as setting. Default is published.
+* Configure backorder setting on site level from StoreLinkr, default not allowed
+
+#### Bugfixes
+
+* Clean advised price field when data is empty
+* Remove variant ids field when the product is a single product
+* Search product by EAN sometimes failed, now handled correctly
+
+= 2.9.8 =
+
+Release date: 2025-09-10
+
+#### Enhancements
+
+* Archived products validation implemented
+* Added new metadata field "advised_price" on product level when we know an advised product price
+
+#### Bugfixes
+
+* Find product by ean (global unique identifier) fixed
+
+= 2.9.7 =
+
+Release date: 2025-09-09
+
+#### Enhancements
+
+* Create new orders from the API
+
+#### Bugfixes
+
+None
+
+= 2.9.6 =
+
+Release date: 2025-08-14
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Linking variants in grouped products (deprecated) fixed
+* Permissions for stock location management fixed
+
+= 2.9.5 =
+
+Release date: 2025-08-12
+
+#### Enhancements
+
+* Added new REST API endpoint `/wp-json/storelinkr/v1/images/create` for standalone image creation in WordPress media library
+
+#### Bugfixes
+
+None
+
+= 2.9.4 =
+
+Release date: 2025-08-06
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Report if image ID does not exist in WP installation
+* Fixed edge cases in the handling links with media to post IDs
+
+= 2.9.3 =
+
+Release date: 2025-08-05
+
+#### Enhancements
+
+* Added dependency requirement to Woo
+* Removed dashboard widget for dependency selection
+
+#### Bugfixes
+
+None
+
+= 2.9.2 =
+
+Release date: 2025-07-03
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Fixed add meta in metadata fields
+
+= 2.9.1 =
+
+Release date: 2025-07-03
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Fixed reserved slug names in WooCommerce attributes
+
+= 2.9.0 =
+
+Release date: 2025-06-27
+
+#### Enhancements
+
+* Added 2 new REST API endpoints for Variable products
+* Allow StoreLinkr to create Variable products
+* Set images per product variation
+* View stock locations for variable products and variations
+
+#### Bugfixes
+
+None
+
 = 2.8.0 =
 
 Release date: 2025-06-24

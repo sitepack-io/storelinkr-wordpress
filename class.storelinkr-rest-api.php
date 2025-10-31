@@ -580,8 +580,9 @@ class StoreLinkrRestApi
                 $publishNewProduct,
                 true
             );
-
-            $productVariations = $request->get_param('products');
+            
+            $json = $request->get_json_params();
+            $productVariations = $json['products'] ?? [];
             foreach ($productVariations as $variation) {
                 if (!empty($variation['ean'])) {
                     $this->eCommerceService->removeDuplicateByEan($variation['ean']);
@@ -655,7 +656,8 @@ class StoreLinkrRestApi
                 (isset($request['brand'])) ? $request['brand'] : null
             );
 
-            $productVariations = $request->get_param('products');
+            $json = $request->get_json_params();
+            $productVariations = $json['products'] ?? [];
             foreach ($productVariations as $productVariation) {
                 if (!empty($productVariation['ean']) && !empty($productVariation['id'])) {
                     $this->eCommerceService->removeDuplicateByEan(
