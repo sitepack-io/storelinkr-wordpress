@@ -601,6 +601,7 @@ class StoreLinkrRestApi
                 'product_id' => $productId,
                 'variant_options' => $variationMap,
                 'url' => get_permalink($productId),
+                'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {
@@ -677,6 +678,7 @@ class StoreLinkrRestApi
                 'product_id' => $productId,
                 'variant_options' => $variationMap,
                 'url' => get_permalink($productId),
+                'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
             ];
         } catch (\Exception $exception) {

@@ -930,9 +930,15 @@ class StoreLinkrWooCommerceService
             
             foreach ($terms as $term_name) {
                 if (!term_exists($term_name, $taxonomy)) {
-                    wp_insert_term($term_name, $taxonomy);
+                    $result = wp_insert_term($term_name, $taxonomy);
+                    if (is_wp_error($result)) {
+                        $this->logWarning(sprintf('Failed to create term %s in taxonomy %s: %s', $term_name, $taxonomy, $result->get_error_message()));
+                    }
                 }
             }
+            
+            // Clear term cache to ensure newly created terms are available
+            clean_term_cache(array(), $taxonomy);
         }
 
         // Preserve existing non-variation attributes (main-level facets)
@@ -1040,6 +1046,27 @@ class StoreLinkrWooCommerceService
 
                 if (!$term) {
                     $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
+                }
+                
+                // If term still not found, try to create it
+                if (!$term) {
+                    if (!term_exists($term_value, $taxonomy)) {
+                        $result = wp_insert_term($term_value, $taxonomy);
+                        if (is_wp_error($result)) {
+                            $this->logWarning(sprintf('Failed to create term %s in taxonomy %s: %s', $term_value, $taxonomy, $result->get_error_message()));
+                        } else {
+                            // Clear cache and try to get the term again
+                            clean_term_cache(array(), $taxonomy);
+                            $term = get_term_by('name', $term_value, $taxonomy);
+                        }
+                    } else {
+                        // Term exists but couldn't be found - try again after cache clear
+                        clean_term_cache(array(), $taxonomy);
+                        $term = get_term_by('name', $term_value, $taxonomy);
+                        if (!$term) {
+                            $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
+                        }
+                    }
                 }
 
                 if ($term) {

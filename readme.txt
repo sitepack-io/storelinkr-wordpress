@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.4
 Tested up to: 6.8
-Stable tag: 2.14.2
+Stable tag: 2.14.3
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.14.3 =
+
+Release date: 2025-10-31
+
+#### Enhancements
+
+* Return the received amount of productoptions for validation on a variant call
+
+#### Bugfixes
+
+* Clear the cache when a new term is created in the variant create/update flow
 
 = 2.14.2 =
 
