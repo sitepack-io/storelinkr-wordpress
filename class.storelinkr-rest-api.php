@@ -560,9 +560,10 @@ class StoreLinkrRestApi
             }
 
             $product = $this->eCommerceService->mapProductFromDataArray(
-                $this->convertRequestToArray($request),
+                $this->convertRequestToArray($request, 'variant'),
                 'variant'
             );
+
             assert($product instanceof WC_Product_Variable);
 
             $product->set_category_ids($request->get_param('categories'));
@@ -580,7 +581,7 @@ class StoreLinkrRestApi
                 $publishNewProduct,
                 true
             );
-            
+
             $json = $request->get_json_params();
             $productVariations = $json['products'] ?? [];
             foreach ($productVariations as $variation) {
@@ -643,7 +644,7 @@ class StoreLinkrRestApi
             }
 
             $product = $this->eCommerceService->mapProductFromDataArray(
-                $this->convertRequestToArray($request),
+                $this->convertRequestToArray($request, 'variant'),
                 'variant'
             );
             assert($product instanceof WC_Product_Variable);
@@ -1112,9 +1113,9 @@ class StoreLinkrRestApi
         }
     }
 
-    private function convertRequestToArray(WP_REST_Request $request): array
+    private function convertRequestToArray(WP_REST_Request $request, string $type = 'single'): array
     {
-        return [
+        $data = [
             'updateStock' => $request->get_param('updateStock'),
             'updatePrice' => $request->get_param('updatePrice'),
             'sku' => $request->get_param('sku'),
@@ -1148,6 +1149,27 @@ class StoreLinkrRestApi
             'adult' => $request->get_param('adult'),
             'category_path' => $request->get_param('category_path'),
         ];
+
+        if ($type === 'variant') {
+            $variantData = $request->get_param('variant');
+
+            if (isset($variantData['name'])) {
+                $data['name'] = $variantData['name'];
+            }
+            if (isset($variantData['brand'])) {
+                $data['brand'] = $variantData['brand'];
+            }
+            if (isset($variantData['shortDescription'])) {
+                $data['shortDescription'] = $variantData['shortDescription'];
+            }
+            if (isset($variantData['description'])) {
+                $data['longDescription'] = $variantData['description'];
+            }
+
+            return $data;
+        }
+
+        return $data;
     }
 
     private function updateStockLocationMetaFields(WP_Error|int $post_id, WP_REST_Request $request): void

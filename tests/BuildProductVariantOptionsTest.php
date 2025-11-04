@@ -57,6 +57,20 @@ class BuildProductVariantOptionsTest extends TestCase
                 return true;
             }
         }
+
+        // Polyfill is_wp_error for test context
+        if (!function_exists('is_wp_error')) {
+            function is_wp_error($thing) {
+                return class_exists('WP_Error') ? ($thing instanceof WP_Error) : false;
+            }
+        }
+
+        // Polyfill clean_term_cache for test context (no-op)
+        if (!function_exists('clean_term_cache')) {
+            function clean_term_cache($ids, $taxonomy = '', $clean_taxonomy = true) {
+                return true;
+            }
+        }
     }
     
     protected function tearDown(): void

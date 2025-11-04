@@ -875,6 +875,7 @@ class StoreLinkrWooCommerceService
             (isset($data['upsell_products']))
                 ? $this->onlyValidProductIds($data['upsell_products']) : [],
         );
+
         if (!empty($data['category_path'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIdsByPath($data['category_path']));
         } elseif (!empty($data['categoryId'])) {

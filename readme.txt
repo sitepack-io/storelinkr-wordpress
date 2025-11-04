@@ -1,9 +1,9 @@
 === StoreLinkr: all-in-one platform for webshops ===
 Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
-Requires at least: 6.4
+Requires at least: 6.6
 Tested up to: 6.8
-Stable tag: 2.14.4
+Stable tag: 2.15.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -132,6 +132,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 Please read the changelog.txt for more commit history of this plugin.
 
+= 2.15.0 =
+
+Release date: 2025-11-04
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* Short- and long descriptions fixed in main variant
+
 = 2.14.4 =
 
 Release date: 2025-10-31
@@ -150,7 +162,7 @@ Release date: 2025-10-31
 
 #### Enhancements
 
-* Return the received amount of productoptions for validation on a variant call
+* Return the received amount of product options for validation on a variant call
 
 #### Bugfixes
 

@@ -46,7 +46,7 @@ class StoreLinkrWooCommerceMapper
             $product->set_global_unique_id($data['ean']);
         }
 
-        if(method_exists($product, 'set_name')) {
+        if (method_exists($product, 'set_name')) {
             $product->set_name((isset($data['name'])) ? $data['name'] : null);
         }
 
@@ -114,8 +114,11 @@ class StoreLinkrWooCommerceMapper
         }
 
         $product->update_meta_data('import_provider', 'STORELINKR', true);
-        $product->update_meta_data('import_source', (isset($data['importSource'])) ? $data['importSource'] : null,
-            true);
+        $product->update_meta_data(
+            'import_source',
+            (isset($data['importSource'])) ? $data['importSource'] : null,
+            true
+        );
         $product->update_meta_data('site', (isset($data['site'])) ? $data['site'] : null, true);
         $product->update_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null, true);
         $product->update_meta_data('used', (isset($data['isUsed'])) ? (int)$data['isUsed'] : 0, true);
@@ -169,7 +172,7 @@ class StoreLinkrWooCommerceMapper
 
         $product->update_meta_data('_product_attachments', json_encode($attachments), true);
 
-        if(method_exists($product, 'set_cross_sell_ids')) {
+        if (method_exists($product, 'set_cross_sell_ids')) {
             $product->set_cross_sell_ids(array_values($validCrossSellIds));
             $product->set_upsell_ids(array_values($validUpsellIds));
         }
