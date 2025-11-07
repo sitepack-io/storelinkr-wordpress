@@ -993,7 +993,7 @@ class StoreLinkrRestApi
 
                     $product = $this->eCommerceService->mapProductFromDataArray($rawProduct);
 
-                    if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === true) {
+                    if (isset($rawProduct['overwrite_images']) && $rawProduct['overwrite_images'] === true) {
                         $gallery = [];
                         if (isset($rawProduct['images'])) {
                             $gallery = (array)$rawProduct['images'];
