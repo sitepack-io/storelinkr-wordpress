@@ -451,8 +451,12 @@ class StoreLinkrRestApi
                 $publishNewProduct = (bool)$settings['publish_new_products'];
             }
 
-            $gallery = (array)$request->get_param('images');
-            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            $settings = $this->fetchSettingsFromRequest($request);
+            if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === true) {
+                $gallery = (array)$request->get_param('images');
+                $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            }
+
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $request['facets'],
@@ -495,7 +499,11 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $facets = (array)$request->get_param('facets');
-            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            $settings = $this->fetchSettingsFromRequest($request);
+            if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === true) {
+                $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            }
+
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $facets,
@@ -972,16 +980,28 @@ class StoreLinkrRestApi
                 throw new Exception('Products is not an array!');
             }
 
+            $settings = [];
+            if (is_array($request->get_param('settings'))) {
+                $settings = $request->get_param('settings');
+            }
+
             $result = [];
             foreach ($request->get_param('products') as $uuid => $rawProduct) {
                 try {
                     $rawProduct = (array)$rawProduct;
+                    $rawProduct['settings'] = $settings;
+
                     $product = $this->eCommerceService->mapProductFromDataArray($rawProduct);
-                    $gallery = [];
-                    if (isset($rawProduct['images'])) {
-                        $gallery = (array)$rawProduct['images'];
+
+                    if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === true) {
+                        $gallery = [];
+                        if (isset($rawProduct['images'])) {
+                            $gallery = (array)$rawProduct['images'];
+                        }
+
+                        $this->eCommerceService->linkProductGalleryImages($product, $gallery);
                     }
-                    $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+
                     $productId = $this->eCommerceService->saveProduct(
                         $product,
                         (!empty($rawProduct['facets']) && is_array($rawProduct['facets'])) ? $rawProduct['facets'] : [],
