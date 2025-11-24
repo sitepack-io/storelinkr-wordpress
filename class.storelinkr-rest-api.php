@@ -451,8 +451,12 @@ class StoreLinkrRestApi
                 $publishNewProduct = (bool)$settings['publish_new_products'];
             }
 
-            $gallery = (array)$request->get_param('images');
-            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            $settings = $this->fetchSettingsFromRequest($request);
+            if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === true) {
+                $gallery = (array)$request->get_param('images');
+                $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            }
+
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $request['facets'],
@@ -495,7 +499,11 @@ class StoreLinkrRestApi
 
             $gallery = (array)$request->get_param('images');
             $facets = (array)$request->get_param('facets');
-            $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            $settings = $this->fetchSettingsFromRequest($request);
+            if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === true) {
+                $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+            }
+
             $productId = $this->eCommerceService->saveProduct(
                 $product,
                 $facets,
@@ -804,13 +812,20 @@ class StoreLinkrRestApi
         $imageContent = null;
         if (!empty($request['cdn_url'])) {
             $response = wp_remote_get($request['cdn_url'], [
+                'timeout' => 15,
                 'headers' => [
                     'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
                 ],
             ]);
 
             if (is_wp_error($response)) {
-                throw new Exception('Image download failed: ' . $response->get_error_message());
+                throw new Exception(
+                    sprintf(
+                        'Image download failed: %s for url %s',
+                        $response->get_error_message(),
+                        $request['cdn_url']
+                    )
+                );
             }
 
             $imageContent = wp_remote_retrieve_body($response);
@@ -972,16 +987,28 @@ class StoreLinkrRestApi
                 throw new Exception('Products is not an array!');
             }
 
+            $settings = [];
+            if (is_array($request->get_param('settings'))) {
+                $settings = $request->get_param('settings');
+            }
+
             $result = [];
             foreach ($request->get_param('products') as $uuid => $rawProduct) {
                 try {
                     $rawProduct = (array)$rawProduct;
+                    $rawProduct['settings'] = $settings;
+
                     $product = $this->eCommerceService->mapProductFromDataArray($rawProduct);
-                    $gallery = [];
-                    if (isset($rawProduct['images'])) {
-                        $gallery = (array)$rawProduct['images'];
+
+                    if (isset($rawProduct['overwrite_images']) && $rawProduct['overwrite_images'] === true) {
+                        $gallery = [];
+                        if (isset($rawProduct['images'])) {
+                            $gallery = (array)$rawProduct['images'];
+                        }
+
+                        $this->eCommerceService->linkProductGalleryImages($product, $gallery);
                     }
-                    $this->eCommerceService->linkProductGalleryImages($product, $gallery);
+
                     $productId = $this->eCommerceService->saveProduct(
                         $product,
                         (!empty($rawProduct['facets']) && is_array($rawProduct['facets'])) ? $rawProduct['facets'] : [],
