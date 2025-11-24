@@ -134,11 +134,11 @@ Please read the changelog.txt for more commit history of this plugin.
 
 = 2.15.1 =
 
-Release date: 2025-11-07
+Release date: 2025-11-24
 
 #### Enhancements
 
-None
+* Set a longer timeout for downloading images to prevent a 5 seconds timeout error message
 
 #### Bugfixes
 

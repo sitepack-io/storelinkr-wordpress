@@ -812,13 +812,20 @@ class StoreLinkrRestApi
         $imageContent = null;
         if (!empty($request['cdn_url'])) {
             $response = wp_remote_get($request['cdn_url'], [
+                'timeout' => 15,
                 'headers' => [
                     'Accept' => 'image/webp,image/apng,image/*,*/*;q=0.8',
                 ],
             ]);
 
             if (is_wp_error($response)) {
-                throw new Exception('Image download failed: ' . $response->get_error_message());
+                throw new Exception(
+                    sprintf(
+                        'Image download failed: %s for url %s',
+                        $response->get_error_message(),
+                        $request['cdn_url']
+                    )
+                );
             }
 
             $imageContent = wp_remote_retrieve_body($response);
