@@ -50,11 +50,13 @@ class StoreLinkrWooCommerceMapper
             $product->set_name((isset($data['name'])) ? $data['name'] : null);
         }
 
-        if ($updatePriceInfo === true && isset($data['salesPrice'])) {
+        if ($updatePriceInfo === true && !empty($data['salesPrice'])) {
             $product->set_regular_price(self::formatPrice((int)$data['salesPrice']));
 
             if (!empty($data['promoSalesPrice'])) {
                 $product->set_sale_price(self::formatPrice((int)$data['promoSalesPrice']));
+            } else {
+                $product->set_sale_price(null);
             }
 
             $product->set_date_on_sale_from(null);
@@ -67,6 +69,10 @@ class StoreLinkrWooCommerceMapper
                     (new DateTimeImmutable($data['promoEnd']))->format('Y-m-d H:i:s')
                 );
             }
+        } elseif ($updatePriceInfo === true && empty($data['salesPrice'])) {
+            // fallback for empty price
+            $product->set_regular_price(self::formatPrice(0));
+            $product->set_sale_price(null);
         }
 
         if ($updateShortDescription === true && isset($data['shortDescription'])) {

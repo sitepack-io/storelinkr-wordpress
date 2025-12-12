@@ -2,8 +2,8 @@
 Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.6
-Tested up to: 6.8
-Stable tag: 2.15.1
+Tested up to: 6.9
+Stable tag: 2.16.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.16.0 =
+
+Release date: 2025-12-12
+
+#### Enhancements
+
+* Compatible with new WordPress version 6.9
+
+#### Bugfixes
+
+* When a price is empty, set 0 value for product variant option
 
 = 2.15.1 =
 
