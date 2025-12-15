@@ -616,10 +616,10 @@ class StoreLinkrRestApi
                 'status' => 'success',
                 'type' => $product::class,
                 'product_id' => $productId,
-                // Only return EAN => product_id mapping inside variant_options
-                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean']) ? $variationMap['ean'] : [],
-                // New root-level variant_map for UUID => product_id mapping
-                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid']) ? $variationMap['uuid'] : [],
+                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean'])
+                    ? $variationMap['ean'] : [],
+                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid'])
+                    ? $variationMap['uuid'] : [],
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
@@ -695,10 +695,10 @@ class StoreLinkrRestApi
                 'status' => 'success',
                 'type' => $product::class,
                 'product_id' => $productId,
-                // Only return EAN => product_id mapping inside variant_options
-                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean']) ? $variationMap['ean'] : [],
-                // New root-level variant_map for UUID => product_id mapping
-                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid']) ? $variationMap['uuid'] : [],
+                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean'])
+                    ? $variationMap['ean'] : [],
+                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid'])
+                    ? $variationMap['uuid'] : [],
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),

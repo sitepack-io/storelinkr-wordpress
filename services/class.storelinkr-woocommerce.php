@@ -354,7 +354,7 @@ class StoreLinkrWooCommerceService
         }
 
         $products = get_posts([
-            'post_type' => 'product',
+            'post_type' => ['product', 'product_variation'],
             'meta_query' => [
                 [
                     'key' => 'ean',
@@ -943,16 +943,23 @@ class StoreLinkrWooCommerceService
                 }
             }
             $terms = array_unique($terms);
-            
+
             foreach ($terms as $term_name) {
                 if (!term_exists($term_name, $taxonomy)) {
                     $result = wp_insert_term($term_name, $taxonomy);
                     if (is_wp_error($result)) {
-                        $this->logWarning(sprintf('Failed to create term %s in taxonomy %s: %s', $term_name, $taxonomy, $result->get_error_message()));
+                        $this->logWarning(
+                            sprintf(
+                                'Failed to create term %s in taxonomy %s: %s',
+                                $term_name,
+                                $taxonomy,
+                                $result->get_error_message()
+                            )
+                        );
                     }
                 }
             }
-            
+
             // Clear term cache to ensure newly created terms are available
             clean_term_cache(array(), $taxonomy);
         }
@@ -1065,13 +1072,20 @@ class StoreLinkrWooCommerceService
                 if (!$term) {
                     $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
                 }
-                
+
                 // If term still not found, try to create it
                 if (!$term) {
                     if (!term_exists($term_value, $taxonomy)) {
                         $result = wp_insert_term($term_value, $taxonomy);
                         if (is_wp_error($result)) {
-                            $this->logWarning(sprintf('Failed to create term %s in taxonomy %s: %s', $term_value, $taxonomy, $result->get_error_message()));
+                            $this->logWarning(
+                                sprintf(
+                                    'Failed to create term %s in taxonomy %s: %s',
+                                    $term_value,
+                                    $taxonomy,
+                                    $result->get_error_message()
+                                )
+                            );
                         } else {
                             // Clear cache and try to get the term again
                             clean_term_cache(array(), $taxonomy);
