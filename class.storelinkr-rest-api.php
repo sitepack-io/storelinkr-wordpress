@@ -554,14 +554,21 @@ class StoreLinkrRestApi
 
             foreach ($request->get_param('products') as $product) {
                 if (!empty($product['ean'])) {
-                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
-                        throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
+                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === true) {
+                        $eanSearch = $this->eCommerceService->findProductByEan($product['ean']);
+                        if ($eanSearch !== false) {
+                            $this->eCommerceService->removeDuplicateByEan(
+                                $product['ean']
+                            );
+                        }
                     }
+                }
 
-                    $eanSearch = $this->eCommerceService->findProductByEan($product['ean']);
-                    if ($eanSearch !== false) {
-                        $this->eCommerceService->removeDuplicateByEan(
-                            $product['ean']
+                if(!empty($product['sku'])) {
+                    $skuSearch = $this->eCommerceService->findProductBySku($product['sku']);
+                    if ($skuSearch !== false) {
+                        $this->eCommerceService->removeDuplicateBySku(
+                            $product['sku']
                         );
                     }
                 }
@@ -593,7 +600,7 @@ class StoreLinkrRestApi
             $json = $request->get_json_params();
             $productVariations = $json['products'] ?? [];
             foreach ($productVariations as $variation) {
-                if (!empty($variation['ean'])) {
+                if (!empty($variation['ean']) && StoreLinkrEanHelper::validateBarcode($variation['ean']) === true) {
                     $this->eCommerceService->removeDuplicateByEan($variation['ean']);
                 }
             }
@@ -609,7 +616,10 @@ class StoreLinkrRestApi
                 'status' => 'success',
                 'type' => $product::class,
                 'product_id' => $productId,
-                'variant_options' => $variationMap,
+                // Only return EAN => product_id mapping inside variant_options
+                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean']) ? $variationMap['ean'] : [],
+                // New root-level variant_map for UUID => product_id mapping
+                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid']) ? $variationMap['uuid'] : [],
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
@@ -633,21 +643,19 @@ class StoreLinkrRestApi
 
             foreach ($request->get_param('products') as $product) {
                 if (!empty($product['ean'])) {
-                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
-                        throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
+                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === true) {
+                        if (!empty($product['id'])) {
+                            $this->eCommerceService->removeDuplicateByEan(
+                                $product['ean'],
+                                (int)$product['id']
+                            );
+                        } else {
+                            $this->eCommerceService->removeDuplicateByEan(
+                                $product['ean'],
+                                null
+                            );
+                        }
                     }
-                }
-
-                if (!empty($product['id']) && !empty($product['ean'])) {
-                    $this->eCommerceService->removeDuplicateByEan(
-                        $product['ean'],
-                        (int)$product['id']
-                    );
-                } elseif (empty($product['id']) && !empty($product['ean'])) {
-                    $this->eCommerceService->removeDuplicateByEan(
-                        $product['ean'],
-                        null
-                    );
                 }
             }
 
@@ -687,7 +695,10 @@ class StoreLinkrRestApi
                 'status' => 'success',
                 'type' => $product::class,
                 'product_id' => $productId,
-                'variant_options' => $variationMap,
+                // Only return EAN => product_id mapping inside variant_options
+                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean']) ? $variationMap['ean'] : [],
+                // New root-level variant_map for UUID => product_id mapping
+                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid']) ? $variationMap['uuid'] : [],
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
@@ -1143,6 +1154,7 @@ class StoreLinkrRestApi
     private function convertRequestToArray(WP_REST_Request $request, string $type = 'single'): array
     {
         $data = [
+            'uuid' => $request->get_param('uuid'),
             'updateStock' => $request->get_param('updateStock'),
             'updatePrice' => $request->get_param('updatePrice'),
             'sku' => $request->get_param('sku'),

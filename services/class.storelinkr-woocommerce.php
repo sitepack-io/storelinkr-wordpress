@@ -309,10 +309,26 @@ class StoreLinkrWooCommerceService
 
     public function findProductBySku(string $sku): WC_Product|WC_Product_Grouped|bool
     {
+        // Normalize SKU similar to WooCommerce internals
+        $normalizedSku = trim((string)$sku);
+        if ($normalizedSku === '') {
+            return false;
+        }
+
+        // Use WooCommerce helper which searches across products AND variations
+        $productId = wc_get_product_id_by_sku($normalizedSku);
+        if (!empty($productId)) {
+            $product = wc_get_product($productId);
+            if ($product) {
+                return $product;
+            }
+        }
+
+        // Fallback search including product variations just in case
         $args = [
-            'post_type' => 'product',
+            'post_type' => ['product', 'product_variation'],
             'meta_key' => '_sku',
-            'meta_value' => sanitize_text_field($sku),
+            'meta_value' => sanitize_text_field($normalizedSku),
             'post_status' => 'any',
             'posts_per_page' => 1,
         ];
@@ -320,9 +336,8 @@ class StoreLinkrWooCommerceService
         $query = new WP_Query($args);
 
         if ($query->have_posts()) {
-            $product_id = $query->posts[0]->ID;
-            $product = wc_get_product($product_id);
-
+            $fallbackId = $query->posts[0]->ID;
+            $product = wc_get_product($fallbackId);
             if ($product) {
                 return $product;
             }
@@ -1007,7 +1022,9 @@ class StoreLinkrWooCommerceService
         }
         $variable_product->save();
 
-        $variation_map = [];
+        // Build mapping for variants
+        $variation_map_ean = [];
+        $variation_map_uuid = [];
         foreach ($products as $productOption) {
             if (!empty($productOption['id'])) {
                 $variation = wc_get_product($productOption['id']);
@@ -1095,7 +1112,24 @@ class StoreLinkrWooCommerceService
             $variation->save();
 
             $variation_id = $variation->get_id();
-            $variation_map[$productOption['ean']] = $variation_id;
+
+            // Map by valid EAN (optional)
+            if (!empty($productOption['ean'])) {
+                $ean = (string)$productOption['ean'];
+                $isValidEan = true;
+                if (class_exists('StoreLinkrEanHelper')) {
+                    $isValidEan = StoreLinkrEanHelper::validateBarcode($ean) === true;
+                }
+                if ($isValidEan) {
+                    $variation_map_ean[$ean] = $variation_id;
+                }
+            }
+
+            // Map by provided UUID (recommended)
+            if (!empty($productOption['uuid'])) {
+                $uuid = (string)$productOption['uuid'];
+                $variation_map_uuid[$uuid] = $variation_id;
+            }
         }
 
         // Clean up unused attribute terms after saving variants
@@ -1103,7 +1137,10 @@ class StoreLinkrWooCommerceService
 
         wc_delete_product_transients($productId);
 
-        return $variation_map;
+        return [
+            'ean' => $variation_map_ean,
+            'uuid' => $variation_map_uuid,
+        ];
     }
 
     public function getWarnings(): array
@@ -1361,6 +1398,32 @@ class StoreLinkrWooCommerceService
                 wp_delete_post($duplicateId, true);
                 wc_delete_product_transients($duplicateId);
             }
+        }
+    }
+
+    public function removeDuplicateBySku(string $sku, ?int $allowedId = null): void
+    {
+        $normalizedSku = trim((string)$sku);
+        if ($normalizedSku === '') {
+            return;
+        }
+
+        // Keep removing while a duplicate is found (in case of multiple)
+        while (true) {
+            $duplicateProduct = $this->findProductBySku($normalizedSku);
+            if ($duplicateProduct === false || !method_exists($duplicateProduct, 'get_id')) {
+                break;
+            }
+
+            $duplicateId = (int)$duplicateProduct->get_id();
+
+            if ($allowedId !== null && $allowedId === $duplicateId) {
+                // The duplicate we found is the allowed one; stop.
+                break;
+            }
+
+            wp_delete_post($duplicateId, true);
+            wc_delete_product_transients($duplicateId);
         }
     }
 
