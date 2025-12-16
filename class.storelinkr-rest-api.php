@@ -421,6 +421,8 @@ class StoreLinkrRestApi
 
     public function renderCreateProduct(WP_REST_Request $request)
     {
+        add_filter('wc_product_pre_lock_on_sku', '__return_true');
+
         try {
             $this->authenticateRequest($request);
             $this->validateRequiredFields($request, [
@@ -434,10 +436,18 @@ class StoreLinkrRestApi
                 'hasStock',
             ]);
 
-            if (!empty($request->get_param('ean')) && !empty($request->get_param('id'))) {
+            // Always remove duplicates by EAN/SKU before creation; allow passing an allowed ID when present
+            if (!empty($request->get_param('ean'))) {
                 $this->eCommerceService->removeDuplicateByEan(
                     $request->get_param('ean'),
-                    (int)$request->get_param('id')
+                    !empty($request->get_param('id')) ? (int)$request->get_param('id') : null
+                );
+            }
+
+            if (!empty($item['sku'])) {
+                $this->eCommerceService->removeDuplicateBySku(
+                    $item['sku'],
+                    !empty($request->get_param('id')) ? (int)$request->get_param('id') : null
                 );
             }
 
@@ -464,6 +474,11 @@ class StoreLinkrRestApi
                 $publishNewProduct,
                 true
             );
+
+            // Ensure lookup tables are in sync for the new product.
+            if (!empty($productId)) {
+                $this->eCommerceService->rebuildLookupTableForProduct((int)$productId);
+            }
 
             return [
                 'status' => 'success',
@@ -496,6 +511,20 @@ class StoreLinkrRestApi
             $product = $this->eCommerceService->mapProductFromDataArray(
                 $this->convertRequestToArray($request)
             );
+
+            if (!empty($request->get_param('ean')) && !empty($request->get_param('id'))) {
+                $this->eCommerceService->removeDuplicateByEan(
+                    $request->get_param('ean'),
+                    (int)$request->get_param('id')
+                );
+            }
+
+            if (!empty($item['sku']) && !empty($request->get_param('id'))) {
+                $this->eCommerceService->removeDuplicateBySku(
+                    $item['sku'],
+                    (int)$request->get_param('id')
+                );
+            }
 
             $gallery = (array)$request->get_param('images');
             $facets = (array)$request->get_param('facets');
@@ -564,7 +593,7 @@ class StoreLinkrRestApi
                     }
                 }
 
-                if(!empty($product['sku'])) {
+                if (!empty($product['sku'])) {
                     $skuSearch = $this->eCommerceService->findProductBySku($product['sku']);
                     if ($skuSearch !== false) {
                         $this->eCommerceService->removeDuplicateBySku(
@@ -610,6 +639,13 @@ class StoreLinkrRestApi
                 $request->get_param('options'),
                 $productVariations,
                 $this->fetchSettingsFromRequest($request)
+            );
+
+            // Cleanup: ensure this is the only variable product with the exact same title.
+            // Delegate duplicate removal to the WooCommerce service.
+            $this->eCommerceService->removeDuplicateVariableProductsByTitle(
+                (string)$request->get_param('name'),
+                (int)$productId
             );
 
             return [
@@ -689,6 +725,13 @@ class StoreLinkrRestApi
                 $request->get_param('options'),
                 $productVariations,
                 $this->fetchSettingsFromRequest($request)
+            );
+
+            // Cleanup: ensure this is the only variable product with the exact same title.
+            // Delegate duplicate removal to the WooCommerce service.
+            $this->eCommerceService->removeDuplicateVariableProductsByTitle(
+                $product->get_title(),
+                (int)$productId
             );
 
             return [
@@ -988,6 +1031,8 @@ class StoreLinkrRestApi
 
     public function renderUpsertBulkProducts(WP_REST_Request $request)
     {
+        add_filter('wc_product_pre_lock_on_sku', '__return_true');
+        
         try {
             $this->authenticateRequest($request);
             $this->validateRequiredFields($request, [

@@ -139,6 +139,7 @@ Release date: 2025-12-16
 #### Enhancements
 
 * Variants can now be generated and updated without a valid EAN/GTIN/ISBN number
+* Optimized cleanup for products
 
 #### Bugfixes
 
