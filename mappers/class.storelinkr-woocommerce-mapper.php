@@ -38,12 +38,21 @@ class StoreLinkrWooCommerceMapper
             $allowBackOrder = (bool)$settings['allow_backorder'];
         }
 
-        if (!empty($data['sku']) && method_exists($product, 'set_sku')) {
-            $product->set_sku($data['sku']);
+        if (isset($data['sku']) && method_exists($product, 'set_sku')) {
+            // Normalize SKU like WooCommerce does; avoid setting empty/whitespace-only values
+            $normalizedSku = trim((string)$data['sku']);
+            if ($normalizedSku !== '') {
+                $product->set_sku($normalizedSku);
+            }
         }
 
         if (!empty($data['ean']) && method_exists($product, 'set_global_unique_id')) {
-            $product->set_global_unique_id($data['ean']);
+            // EAN is now optional; only set when valid
+            if (class_exists('StoreLinkrEanHelper')) {
+                if (StoreLinkrEanHelper::validateBarcode($data['ean']) === true) {
+                    $product->set_global_unique_id($data['ean']);
+                }
+            }
         }
 
         if (method_exists($product, 'set_name')) {
@@ -128,6 +137,10 @@ class StoreLinkrWooCommerceMapper
         $product->update_meta_data('site', (isset($data['site'])) ? $data['site'] : null, true);
         $product->update_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null, true);
         $product->update_meta_data('used', (isset($data['isUsed'])) ? (int)$data['isUsed'] : 0, true);
+
+        if (isset($data['uuid'])) {
+            $product->update_meta_data('uuid', $data['uuid'], true);
+        }
 
         if ($updatePriceInfo === true && isset($data['advisedPrice'])) {
             $product->update_meta_data('advised_price', self::formatPrice((int)$data['advisedPrice']), true);

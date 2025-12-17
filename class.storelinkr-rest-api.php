@@ -421,6 +421,8 @@ class StoreLinkrRestApi
 
     public function renderCreateProduct(WP_REST_Request $request)
     {
+        add_filter('wc_product_pre_lock_on_sku', '__return_true');
+
         try {
             $this->authenticateRequest($request);
             $this->validateRequiredFields($request, [
@@ -434,10 +436,18 @@ class StoreLinkrRestApi
                 'hasStock',
             ]);
 
-            if (!empty($request->get_param('ean')) && !empty($request->get_param('id'))) {
+            // Always remove duplicates by EAN/SKU before creation; allow passing an allowed ID when present
+            if (!empty($request->get_param('ean'))) {
                 $this->eCommerceService->removeDuplicateByEan(
                     $request->get_param('ean'),
-                    (int)$request->get_param('id')
+                    !empty($request->get_param('id')) ? (int)$request->get_param('id') : null
+                );
+            }
+
+            if (!empty($item['sku'])) {
+                $this->eCommerceService->removeDuplicateBySku(
+                    $item['sku'],
+                    !empty($request->get_param('id')) ? (int)$request->get_param('id') : null
                 );
             }
 
@@ -464,6 +474,11 @@ class StoreLinkrRestApi
                 $publishNewProduct,
                 true
             );
+
+            // Ensure lookup tables are in sync for the new product.
+            if (!empty($productId)) {
+                $this->eCommerceService->rebuildLookupTableForProduct((int)$productId);
+            }
 
             return [
                 'status' => 'success',
@@ -496,6 +511,20 @@ class StoreLinkrRestApi
             $product = $this->eCommerceService->mapProductFromDataArray(
                 $this->convertRequestToArray($request)
             );
+
+            if (!empty($request->get_param('ean')) && !empty($request->get_param('id'))) {
+                $this->eCommerceService->removeDuplicateByEan(
+                    $request->get_param('ean'),
+                    (int)$request->get_param('id')
+                );
+            }
+
+            if (!empty($item['sku']) && !empty($request->get_param('id'))) {
+                $this->eCommerceService->removeDuplicateBySku(
+                    $item['sku'],
+                    (int)$request->get_param('id')
+                );
+            }
 
             $gallery = (array)$request->get_param('images');
             $facets = (array)$request->get_param('facets');
@@ -554,14 +583,21 @@ class StoreLinkrRestApi
 
             foreach ($request->get_param('products') as $product) {
                 if (!empty($product['ean'])) {
-                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
-                        throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
+                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === true) {
+                        $eanSearch = $this->eCommerceService->findProductByEan($product['ean']);
+                        if ($eanSearch !== false) {
+                            $this->eCommerceService->removeDuplicateByEan(
+                                $product['ean']
+                            );
+                        }
                     }
+                }
 
-                    $eanSearch = $this->eCommerceService->findProductByEan($product['ean']);
-                    if ($eanSearch !== false) {
-                        $this->eCommerceService->removeDuplicateByEan(
-                            $product['ean']
+                if (!empty($product['sku'])) {
+                    $skuSearch = $this->eCommerceService->findProductBySku($product['sku']);
+                    if ($skuSearch !== false) {
+                        $this->eCommerceService->removeDuplicateBySku(
+                            $product['sku']
                         );
                     }
                 }
@@ -593,7 +629,7 @@ class StoreLinkrRestApi
             $json = $request->get_json_params();
             $productVariations = $json['products'] ?? [];
             foreach ($productVariations as $variation) {
-                if (!empty($variation['ean'])) {
+                if (!empty($variation['ean']) && StoreLinkrEanHelper::validateBarcode($variation['ean']) === true) {
                     $this->eCommerceService->removeDuplicateByEan($variation['ean']);
                 }
             }
@@ -605,11 +641,21 @@ class StoreLinkrRestApi
                 $this->fetchSettingsFromRequest($request)
             );
 
+            // Cleanup: ensure this is the only variable product with the exact same title.
+            // Delegate duplicate removal to the WooCommerce service.
+            $this->eCommerceService->removeDuplicateVariableProductsByTitle(
+                (string)$request->get_param('name'),
+                (int)$productId
+            );
+
             return [
                 'status' => 'success',
                 'type' => $product::class,
                 'product_id' => $productId,
-                'variant_options' => $variationMap,
+                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean'])
+                    ? $variationMap['ean'] : [],
+                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid'])
+                    ? $variationMap['uuid'] : [],
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
@@ -633,21 +679,19 @@ class StoreLinkrRestApi
 
             foreach ($request->get_param('products') as $product) {
                 if (!empty($product['ean'])) {
-                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === false) {
-                        throw new \Exception(sprintf('EAN/GTIN/ISBN invalid for %s', $product['ean']));
+                    if (StoreLinkrEanHelper::validateBarcode($product['ean']) === true) {
+                        if (!empty($product['id'])) {
+                            $this->eCommerceService->removeDuplicateByEan(
+                                $product['ean'],
+                                (int)$product['id']
+                            );
+                        } else {
+                            $this->eCommerceService->removeDuplicateByEan(
+                                $product['ean'],
+                                null
+                            );
+                        }
                     }
-                }
-
-                if (!empty($product['id']) && !empty($product['ean'])) {
-                    $this->eCommerceService->removeDuplicateByEan(
-                        $product['ean'],
-                        (int)$product['id']
-                    );
-                } elseif (empty($product['id']) && !empty($product['ean'])) {
-                    $this->eCommerceService->removeDuplicateByEan(
-                        $product['ean'],
-                        null
-                    );
                 }
             }
 
@@ -683,11 +727,21 @@ class StoreLinkrRestApi
                 $this->fetchSettingsFromRequest($request)
             );
 
+            // Cleanup: ensure this is the only variable product with the exact same title.
+            // Delegate duplicate removal to the WooCommerce service.
+            $this->eCommerceService->removeDuplicateVariableProductsByTitle(
+                $product->get_title(),
+                (int)$productId
+            );
+
             return [
                 'status' => 'success',
                 'type' => $product::class,
                 'product_id' => $productId,
-                'variant_options' => $variationMap,
+                'variant_options' => isset($variationMap['ean']) && is_array($variationMap['ean'])
+                    ? $variationMap['ean'] : [],
+                'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid'])
+                    ? $variationMap['uuid'] : [],
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
@@ -977,6 +1031,8 @@ class StoreLinkrRestApi
 
     public function renderUpsertBulkProducts(WP_REST_Request $request)
     {
+        add_filter('wc_product_pre_lock_on_sku', '__return_true');
+        
         try {
             $this->authenticateRequest($request);
             $this->validateRequiredFields($request, [
@@ -1143,6 +1199,7 @@ class StoreLinkrRestApi
     private function convertRequestToArray(WP_REST_Request $request, string $type = 'single'): array
     {
         $data = [
+            'uuid' => $request->get_param('uuid'),
             'updateStock' => $request->get_param('updateStock'),
             'updatePrice' => $request->get_param('updatePrice'),
             'sku' => $request->get_param('sku'),

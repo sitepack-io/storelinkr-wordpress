@@ -117,7 +117,9 @@ class BuildProductVariantOptionsTest extends TestCase
         
         // Assertions
         $this->assertIsArray($result, 'Result should be an array');
-        $this->assertCount(360, $result, 'Should create exactly 360 variants');
+        $this->assertArrayHasKey('ean', $result, 'Result should contain an EAN map');
+        $this->assertArrayHasKey('uuid', $result, 'Result should contain a UUID map');
+        $this->assertCount(360, $result['ean'], 'Should create exactly 360 variants (EAN map)');
         
         // Verify that each product EAN is mapped to a variation ID
         $expectedEans = [];
@@ -125,7 +127,7 @@ class BuildProductVariantOptionsTest extends TestCase
             $expectedEans[] = '213213213' . str_pad($i, 4, '0', STR_PAD_LEFT);
         }
         
-        $resultEans = array_keys($result);
+        $resultEans = array_keys($result['ean']);
         $this->assertEquals($expectedEans, $resultEans, 'All product EANs should be present in result');
     }
     
@@ -180,10 +182,11 @@ class BuildProductVariantOptionsTest extends TestCase
         $result = $service->buildProductVariantOptions(1, $optionLabels, $products, $settings);
         
         // Should create 3 variants, not just 2 (for unique combinations)
-        $this->assertCount(3, $result, 'Should create 3 variants for 3 products with unique EANs');
-        $this->assertArrayHasKey('1111111111', $result);
-        $this->assertArrayHasKey('2222222222', $result);
-        $this->assertArrayHasKey('3333333333', $result);
+        $this->assertArrayHasKey('ean', $result);
+        $this->assertCount(3, $result['ean'], 'Should create 3 variants for 3 products with unique EANs');
+        $this->assertArrayHasKey('1111111111', $result['ean']);
+        $this->assertArrayHasKey('2222222222', $result['ean']);
+        $this->assertArrayHasKey('3333333333', $result['ean']);
     }
     
     /**
@@ -201,6 +204,7 @@ class BuildProductVariantOptionsTest extends TestCase
         for ($i = 1; $i <= $count; $i++) {
             $products[] = [
                 'ean' => '213213213' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                'uuid' => 'uuid-' . $i,
                 'id' => null, // New variation
                 'sku' => 'TEST-SKU-' . $i,
                 'name' => 'Test Product ' . $i,

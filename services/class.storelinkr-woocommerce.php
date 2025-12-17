@@ -309,10 +309,26 @@ class StoreLinkrWooCommerceService
 
     public function findProductBySku(string $sku): WC_Product|WC_Product_Grouped|bool
     {
+        // Normalize SKU similar to WooCommerce internals
+        $normalizedSku = trim((string)$sku);
+        if ($normalizedSku === '') {
+            return false;
+        }
+
+        // Use WooCommerce helper which searches across products AND variations
+        $productId = wc_get_product_id_by_sku($normalizedSku);
+        if (!empty($productId)) {
+            $product = wc_get_product($productId);
+            if ($product) {
+                return $product;
+            }
+        }
+
+        // Fallback search including product variations just in case
         $args = [
-            'post_type' => 'product',
+            'post_type' => ['product', 'product_variation'],
             'meta_key' => '_sku',
-            'meta_value' => sanitize_text_field($sku),
+            'meta_value' => sanitize_text_field($normalizedSku),
             'post_status' => 'any',
             'posts_per_page' => 1,
         ];
@@ -320,9 +336,8 @@ class StoreLinkrWooCommerceService
         $query = new WP_Query($args);
 
         if ($query->have_posts()) {
-            $product_id = $query->posts[0]->ID;
-            $product = wc_get_product($product_id);
-
+            $fallbackId = $query->posts[0]->ID;
+            $product = wc_get_product($fallbackId);
             if ($product) {
                 return $product;
             }
@@ -339,7 +354,7 @@ class StoreLinkrWooCommerceService
         }
 
         $products = get_posts([
-            'post_type' => 'product',
+            'post_type' => ['product', 'product_variation'],
             'meta_query' => [
                 [
                     'key' => 'ean',
@@ -928,16 +943,23 @@ class StoreLinkrWooCommerceService
                 }
             }
             $terms = array_unique($terms);
-            
+
             foreach ($terms as $term_name) {
                 if (!term_exists($term_name, $taxonomy)) {
                     $result = wp_insert_term($term_name, $taxonomy);
                     if (is_wp_error($result)) {
-                        $this->logWarning(sprintf('Failed to create term %s in taxonomy %s: %s', $term_name, $taxonomy, $result->get_error_message()));
+                        $this->logWarning(
+                            sprintf(
+                                'Failed to create term %s in taxonomy %s: %s',
+                                $term_name,
+                                $taxonomy,
+                                $result->get_error_message()
+                            )
+                        );
                     }
                 }
             }
-            
+
             // Clear term cache to ensure newly created terms are available
             clean_term_cache(array(), $taxonomy);
         }
@@ -1007,10 +1029,17 @@ class StoreLinkrWooCommerceService
         }
         $variable_product->save();
 
-        $variation_map = [];
+        // Build mapping for variants
+        $variation_map_ean = [];
+        $variation_map_uuid = [];
         foreach ($products as $productOption) {
             if (!empty($productOption['id'])) {
-                $variation = wc_get_product($productOption['id']);
+                try {
+                    $variation = wc_get_product($productOption['id']);
+                } catch (\Exception $e) {
+                    // sub-product not found
+                    $variation = new WC_Product_Variation();
+                }
 
                 if ($variation === false || $variation === null) {
                     $variation = new WC_Product_Variation();
@@ -1048,13 +1077,20 @@ class StoreLinkrWooCommerceService
                 if (!$term) {
                     $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
                 }
-                
+
                 // If term still not found, try to create it
                 if (!$term) {
                     if (!term_exists($term_value, $taxonomy)) {
                         $result = wp_insert_term($term_value, $taxonomy);
                         if (is_wp_error($result)) {
-                            $this->logWarning(sprintf('Failed to create term %s in taxonomy %s: %s', $term_value, $taxonomy, $result->get_error_message()));
+                            $this->logWarning(
+                                sprintf(
+                                    'Failed to create term %s in taxonomy %s: %s',
+                                    $term_value,
+                                    $taxonomy,
+                                    $result->get_error_message()
+                                )
+                            );
                         } else {
                             // Clear cache and try to get the term again
                             clean_term_cache(array(), $taxonomy);
@@ -1095,7 +1131,24 @@ class StoreLinkrWooCommerceService
             $variation->save();
 
             $variation_id = $variation->get_id();
-            $variation_map[$productOption['ean']] = $variation_id;
+
+            // Map by valid EAN (optional)
+            if (!empty($productOption['ean'])) {
+                $ean = (string)$productOption['ean'];
+                $isValidEan = true;
+                if (class_exists('StoreLinkrEanHelper')) {
+                    $isValidEan = StoreLinkrEanHelper::validateBarcode($ean) === true;
+                }
+                if ($isValidEan) {
+                    $variation_map_ean[$ean] = $variation_id;
+                }
+            }
+
+            // Map by provided UUID (recommended)
+            if (!empty($productOption['uuid'])) {
+                $uuid = (string)$productOption['uuid'];
+                $variation_map_uuid[$uuid] = $variation_id;
+            }
         }
 
         // Clean up unused attribute terms after saving variants
@@ -1103,7 +1156,10 @@ class StoreLinkrWooCommerceService
 
         wc_delete_product_transients($productId);
 
-        return $variation_map;
+        return [
+            'ean' => $variation_map_ean,
+            'uuid' => $variation_map_uuid,
+        ];
     }
 
     public function getWarnings(): array
@@ -1361,6 +1417,99 @@ class StoreLinkrWooCommerceService
                 wp_delete_post($duplicateId, true);
                 wc_delete_product_transients($duplicateId);
             }
+        }
+    }
+
+    public function removeDuplicateBySku(string $sku, ?int $allowedId = null): void
+    {
+        $normalizedSku = trim((string)$sku);
+        if ($normalizedSku === '') {
+            return;
+        }
+
+        // Fetch ALL products and variations that share this SKU and remove
+        // every one except the explicitly allowed ID. This avoids the case
+        // where the first match is the allowed product and we stop early,
+        // leaving other duplicates behind which then trigger the lookup
+        // table/unique SKU errors on insert.
+        $posts = get_posts([
+            'post_type' => ['product', 'product_variation'],
+            'post_status' => 'any',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'meta_query' => [
+                [
+                    'key' => '_sku',
+                    'value' => sanitize_text_field($normalizedSku),
+                    'compare' => '=',
+                ],
+            ],
+            // Ensure we don't miss anything because of caching/pagination.
+            'no_found_rows' => true,
+            'update_post_meta_cache' => false,
+            'update_post_term_cache' => false,
+        ]);
+
+        if (empty($posts)) {
+            return;
+        }
+
+        foreach ($posts as $postId) {
+            $postId = (int)$postId;
+            if ($allowedId !== null && $postId === (int)$allowedId) {
+                continue; // keep the allowed product/variation
+            }
+
+            // Permanently delete the duplicate and clear its transients
+            wp_delete_post($postId, true);
+            wc_delete_product_transients($postId);
+        }
+    }
+
+    /**
+     * Remove duplicate variable products by exact title, limited to those imported by STORELINKR
+     * and that have no child variations. Excludes a specific product ID from removal.
+     *
+     * @param string $title Exact post title to match
+     * @param int $excludeProductId Product ID to ignore
+     * @return void
+     */
+    public function removeDuplicateVariableProductsByTitle(string $title, int $excludeProductId = 0): void
+    {
+        $incomingTitle = trim($title);
+
+        if ($incomingTitle === '') {
+            return;
+        }
+
+        // Query variable products by exact title
+        $products = wc_get_products([
+            'type' => 'variable',
+            'status' => ['publish', 'draft', 'pending', 'private', 'future'],
+            'limit' => -1,
+            'title' => $incomingTitle, // exact match
+            'exclude' => $excludeProductId > 0 ? [(int)$excludeProductId] : [],
+            'return' => 'objects',
+        ]);
+
+        if (empty($products)) {
+            return;
+        }
+
+        foreach ($products as $product) {
+            if (!$product instanceof WC_Product_Variable) {
+                continue;
+            }
+
+            $productId = $product->get_id();
+
+            // Ensure product was imported by STORELINKR
+            if (get_post_meta($productId, 'import_provider', true) !== 'STORELINKR') {
+                continue;
+            }
+
+            // Trash duplicate variable product
+            wp_trash_post($productId);
         }
     }
 
