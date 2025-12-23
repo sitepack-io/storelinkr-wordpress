@@ -66,9 +66,9 @@ fetch(ajaxurl, {
             1.0,
             true
         );
-        wp_localize_script('sitpack-connect', 'productStockNonce', array(
+        wp_localize_script('sitpack-connect', 'productStockNonce', [
             'ajax_nonce_storelinkr' => wp_create_nonce('storelinkr_product_stock'),
-        ));
+        ]);
     }
 
     public function storelinkrEnqueueStyles()
