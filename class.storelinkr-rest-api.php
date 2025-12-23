@@ -331,7 +331,7 @@ class StoreLinkrRestApi
                 $promo_price_cents = round(floatval($product->get_sale_price()) * 100);
 
                 $categories = get_the_terms($product->get_id(), 'product_cat');
-                $category_hierarchy = array();
+                $category_hierarchy = [];
                 if ($categories && !is_wp_error($categories)) {
                     $category_hierarchy = array_pad(
                         wp_list_pluck($categories, 'name'),

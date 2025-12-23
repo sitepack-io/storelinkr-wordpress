@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
 Requires at least: 6.6
 Tested up to: 6.9
-Stable tag: 2.16.1
+Stable tag: 2.16.2
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -131,6 +131,19 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.16.2 =
+
+Release date: 2025-12-23
+
+#### Enhancements
+
+* Minor code optimizations
+
+#### Bugfixes
+
+* When a product ID already was created on a variant as simple product, we remove the ID and create a new product
+* Fixed an edge case in setting the attributes on variant level which caused an error
 
 = 2.16.1 =
 

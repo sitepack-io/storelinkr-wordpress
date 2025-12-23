@@ -198,7 +198,7 @@ class StoreLinkrWooCommerceService
             wp_set_object_terms($productId, [$brandTermId], 'product_brand');
         }
 
-        if (!empty($facets)) {
+        if (!empty($facets) && $product->get_type() !== 'variation') {
             // Preserve cross-sell and upsell IDs before reloading the product
             $crossSellIds = $product->get_cross_sell_ids();
             $upsellIds = $product->get_upsell_ids();
@@ -922,15 +922,7 @@ class StoreLinkrWooCommerceService
             $taxonomy = 'pa_' . $attribute_slug;
 
             if (!taxonomy_exists($taxonomy)) {
-                wc_create_attribute([
-                    'name' => $attribute_label,
-                    'slug' => $attribute_slug,
-                    'type' => 'select',
-                    'order_by' => 'menu_order',
-                    'has_archives' => false,
-                ]);
-                delete_transient('wc_attribute_taxonomies');
-                flush_rewrite_rules();
+                $this->createAttribute($attribute_label, $attribute_slug);
             }
 
             $attribute_taxonomies[$option_name] = $taxonomy;
@@ -961,7 +953,7 @@ class StoreLinkrWooCommerceService
             }
 
             // Clear term cache to ensure newly created terms are available
-            clean_term_cache(array(), $taxonomy);
+            clean_term_cache([], $taxonomy);
         }
 
         // Preserve existing non-variation attributes (main-level facets)
@@ -1036,16 +1028,23 @@ class StoreLinkrWooCommerceService
             if (!empty($productOption['id'])) {
                 try {
                     $variation = wc_get_product($productOption['id']);
+                    if ($variation && !($variation instanceof \WC_Product_Variation)) {
+                        // Product exists but is not a variation.
+                        // Sometimes a product is already known as single product, but now is part of a variable product.
+                        // If the class is a simple product, remove the product and recreate in the normal buildProductVariantOptions flow.
+                        wp_delete_post($productOption['id'], true);
+                        $variation = new \WC_Product_Variation();
+                    }
                 } catch (\Exception $e) {
                     // sub-product not found
-                    $variation = new WC_Product_Variation();
+                    $variation = new \WC_Product_Variation();
                 }
 
                 if ($variation === false || $variation === null) {
-                    $variation = new WC_Product_Variation();
+                    $variation = new \WC_Product_Variation();
                 }
             } else {
-                $variation = new WC_Product_Variation();
+                $variation = new \WC_Product_Variation();
             }
 
             assert($variation instanceof WC_Product_Variation);
@@ -1093,12 +1092,12 @@ class StoreLinkrWooCommerceService
                             );
                         } else {
                             // Clear cache and try to get the term again
-                            clean_term_cache(array(), $taxonomy);
+                            clean_term_cache([], $taxonomy);
                             $term = get_term_by('name', $term_value, $taxonomy);
                         }
                     } else {
                         // Term exists but couldn't be found - try again after cache clear
-                        clean_term_cache(array(), $taxonomy);
+                        clean_term_cache([], $taxonomy);
                         $term = get_term_by('name', $term_value, $taxonomy);
                         if (!$term) {
                             $term = get_term_by('slug', sanitize_title($term_value), $taxonomy);
@@ -1122,7 +1121,18 @@ class StoreLinkrWooCommerceService
                 $this->linkProductGalleryImages($variation, (array)$productOption['images']);
             }
 
-            $variation->set_attributes($attributes);
+            // Ensure attributes are strings (slugs) and not WC_Product_Attribute objects for variations
+            $clean_attributes = [];
+            foreach ($attributes as $key => $value) {
+                if ($value instanceof WC_Product_Attribute) {
+                    $options = $value->get_options();
+                    $clean_attributes[$key] = is_array($options) ? (string)reset($options) : (string)$options;
+                } else {
+                    $clean_attributes[$key] = (string)$value;
+                }
+            }
+
+            $variation->set_attributes($clean_attributes);
 
             if (isset($productOption['facets'])) {
                 $variation->update_meta_data('_product_attributes', $productOption['facets'], true);
@@ -1353,11 +1363,11 @@ class StoreLinkrWooCommerceService
                 $discount_amount = floatval($data['discount_cents']) / 100;
                 $coupon_item = new WC_Order_Item_Coupon();
                 $coupon_item->set_props(
-                    array(
+                    [
                         'code' => 'discount',
                         'discount' => $discount_amount,
                         'discount_tax' => 0, // Assuming no tax on discount for now
-                    )
+                    ]
                 );
                 $order->add_item($coupon_item);
             }
@@ -1597,13 +1607,30 @@ class StoreLinkrWooCommerceService
         $attribute_id = wc_create_attribute([
             'name' => $name,
             'slug' => $slug,
-            'type' => 'select'
+            'type' => 'select',
+            'order_by' => 'menu_order',
+            'has_archives' => false,
         ]);
 
         if (is_wp_error($attribute_id)) {
             $this->logWarning('StoreLinkr error: Attribute create failed: ' . $attribute_id->get_error_message());
 
             return null;
+        }
+
+        $taxonomy = wc_attribute_taxonomy_name($slug);
+        if (!taxonomy_exists($taxonomy)) {
+            register_taxonomy(
+                $taxonomy,
+                apply_filters('woocommerce_taxonomy_objects_' . $taxonomy, ['product']),
+                apply_filters('woocommerce_taxonomy_args_' . $taxonomy, [
+                    'hierarchical' => true,
+                    'label' => $name,
+                    'show_ui' => false,
+                    'query_var' => true,
+                    'rewrite' => ['slug' => $slug],
+                ])
+            );
         }
 
         delete_transient('wc_attribute_taxonomies');
@@ -1668,16 +1695,6 @@ class StoreLinkrWooCommerceService
 
         if ($attribute_exists === false || taxonomy_exists($attribute_taxonomy_key) === false) {
             $attribute_id = $this->createAttribute($name, $slug);
-
-            if (taxonomy_exists($attribute_taxonomy_key) === false) {
-                $registerResult = register_taxonomy($attribute_taxonomy_key, ['product'], []);
-
-                if (is_wp_error($registerResult)) {
-                    $this->logWarning(
-                        'StoreLinkr error: Register attribute failed: ' . $registerResult->get_error_message()
-                    );
-                }
-            }
         }
 
         if (taxonomy_exists($attribute_taxonomy_key)) {
