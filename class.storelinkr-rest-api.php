@@ -148,6 +148,11 @@ class StoreLinkrRestApi
             'callback' => [$this, 'renderUpsertBulkProducts'],
             'permission_callback' => '__return_true',
         ]);
+        register_rest_route('storelinkr/v1', '/products/offline', [
+            'methods' => 'POST',
+            'callback' => [$this, 'renderOfflineProducts'],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route('storelinkr/v1', '/stock-locations/create', [
             'methods' => 'POST',
             'callback' => [$this, 'renderCreateStockLocation'],
@@ -945,8 +950,11 @@ class StoreLinkrRestApi
             ]);
 
             $product = $this->eCommerceService->findProduct($request['id']);
-            $product->set_status('trash');
-            $product->save();
+            
+            if ($product->get_status() !== 'trash') {
+                $product->set_status('trash');
+                $product->save();
+            }
 
             return [
                 'status' => 'success',
@@ -1146,6 +1154,36 @@ class StoreLinkrRestApi
                 'location' => [
                     'id' => $request->get_param('id'),
                 ],
+            ];
+        } catch (\Exception $exception) {
+            return $this->renderError($exception->getMessage());
+        }
+    }
+
+    public function renderOfflineProducts(WP_REST_Request $request)
+    {
+        try {
+            $this->authenticateRequest($request);
+
+            if (!isset($request['gtins']) && !isset($request['product_ids'])) {
+                throw new Exception('At least one of gtins or product_ids field is required');
+            }
+
+            $gtins = $request['gtins'] ?? [];
+            if (!is_array($gtins)) {
+                throw new Exception('gtins field must be an array');
+            }
+
+            $productIds = $request['product_ids'] ?? [];
+            if (!is_array($productIds)) {
+                throw new Exception('product_ids field must be an array');
+            }
+
+            $results = $this->eCommerceService->makeProductsOffline($gtins, $productIds);
+
+            return [
+                'status' => 'success',
+                'results' => $results,
             ];
         } catch (\Exception $exception) {
             return $this->renderError($exception->getMessage());

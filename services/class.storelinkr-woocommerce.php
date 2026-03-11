@@ -371,6 +371,61 @@ class StoreLinkrWooCommerceService
         return false;
     }
 
+    public function makeProductsOffline(array $gtins = [], array $productIds = []): array
+    {
+        $results = [
+            'success' => [],
+            'failed' => [],
+            'not_found' => [],
+        ];
+
+        foreach ($gtins as $gtin) {
+            $product = $this->findProductByEan($gtin);
+            if ($product) {
+                if ($product->get_status() === 'trash') {
+                    $results['success'][] = $gtin;
+                    continue;
+                }
+
+                $product->set_status('trash');
+                $id = $product->save();
+                if ($id) {
+                    $results['success'][] = $gtin;
+                } else {
+                    $results['failed'][] = $gtin;
+                }
+            } else {
+                $results['not_found'][] = $gtin;
+            }
+        }
+
+        foreach ($productIds as $productId) {
+            try {
+                $product = $this->findProduct($productId);
+                if ($product) {
+                    if ($product->get_status() === 'trash') {
+                        $results['success'][] = $productId;
+                        continue;
+                    }
+
+                    $product->set_status('trash');
+                    $id = $product->save();
+                    if ($id) {
+                        $results['success'][] = $productId;
+                    } else {
+                        $results['failed'][] = $productId;
+                    }
+                } else {
+                    $results['not_found'][] = $productId;
+                }
+            } catch (\Exception $e) {
+                $results['not_found'][] = $productId;
+            }
+        }
+
+        return $results;
+    }
+
     public function saveProductImage(WC_Product $product, WP_REST_Request $request): int
     {
         require_once ABSPATH . 'wp-admin/includes/image.php';
