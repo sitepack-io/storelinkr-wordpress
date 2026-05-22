@@ -114,7 +114,7 @@ Yes, you need a StoreLinkr account and an active subscription to use this plugin
 
 = How does the pricing model work? =
 
-StoreLinkr uses a subscription-based pricing model tailored to your business size and needs. Pricing typically depends on the number of products, order volume, and the specific marketplaces you wish to connect. For the most up-to-date pricing details, please visit our [pricing page](https://storelinkr.com).
+StoreLinkr uses a subscription-based pricing model tailored to your business size and needs. Pricing typically depends on the order volume. For the most up-to-date pricing details, please visit our [pricing page](https://storelinkr.com/en/pricing).
 
 = How can I find my StoreLinkr API key? =
 
