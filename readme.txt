@@ -1,47 +1,56 @@
-=== StoreLinkr: all-in-one platform for webshops ===
+=== StoreLinkr: European Marketplace Integrator & Multichannel Sync ===
 Contributors: storelinkr, petervw
-Tags: woocommerce, marketing, returns, marketplace, cyclesoftware
+Tags: bol.com, amazon, kaufland, multichannel, dropshipping, marketplace, inventory sync, order automation, ecommerce, cdiscount, allegro
 Requires at least: 6.6
-Tested up to: 6.9
-Stable tag: 2.17.0
+Tested up to: 7.0
+Stable tag: 2.17.1
 Requires PHP: 8.2
 License: GPLv2 or later
 
-Easily manage your online store and scale your sales with StoreLinkr. Automate product integrations and advertising campaigns, all from one platform.
+The ultimate all-in-one platform for European WooCommerce merchants. Effortlessly sync products, inventory, and orders across Bol.com, Amazon, Kaufland, and 40+ other channels from one central dashboard.
 
 == Description ==
 
-Are you currently managing a WooCommerce webshop with a few sales per day and do you want to grow to hundreds or even thousands of orders? Manually managing your processes can quickly become too much. StoreLinkr helps you to easily automate your sales activities, so that you can focus on what really matters: your growth.
+Are you a European webshop owner looking to scale beyond your own store? Managing multiple sales channels manually is time-consuming and error-prone. **StoreLinkr is your specialized European marketplace integrator**, designed to help WooCommerce stores grow from a few daily sales to thousands of automated orders across the continent.
 
-With StoreLinkr you can manage everything from one central and clear platform. Whether you want to keep your inventory up to date or optimize your product advertisements, we have the solutions to make your webshop more efficient.
+Whether you are dropshipping from wholesalers or selling your own brand on major marketplaces, StoreLinkr centralizes your operations. We provide the technology to keep your inventory perfectly in sync, automate your order flows, and optimize your product data for maximum visibility on platforms like **Bol.com, Amazon.nl/de/fr, Kaufland, Allegro, and more.**
+
+### Why choose StoreLinkr?
+*   **European Expertise:** Tailored for the European eCommerce landscape with deep integrations for regional leaders.
+*   **Real-time Synchronization:** Stock updates as fast as every 15 minutes.
+*   **Centralized Management:** One platform to rule your entire multi-channel empire.
+*   **Automated Dropshipping:** Connect directly to wholesalers and automate your product catalog.
+*   **Scalable Pricing:** Flexible subscription plans that grow with your business needs.
+
+> **Note:** Use of this plugin requires an active [StoreLinkr subscription](https://storelinkr.com).
 
 ## StoreLinkr Solutions
 
-Select one or more solutions for your online store:
+Optimize your WooCommerce store with our powerful multi-channel solutions:
 
-* [**Full webshop integration**](https://storelinkr.com/en/solutions/ecommerce-dropshipping) – Products from your wholesalers are automatically loaded into your webshop and the inventory is continuously updated.
-* [**Product feed management**](https://storelinkr.com/en/solutions/generate-product-feeds) – Promote your products with CPC ads by selecting them directly in StoreLinkr or automate your campaigns with filters such as price, category or availability.
-* [**Accounting for webshops**](https://storelinkr.com/en/solutions/accounting-integration) – Automatically create sales invoices and customers and link your webshop to bookkeeping software.
-* [**Returns management**](https://storelinkr.com/en/solutions/returns-handling-for-web-stores) – From scattered emails to one clear returns portal: customer-friendly, efficient, and fully in your branding with less manual work and more control.
+* [**Marketplace Connector**](https://storelinkr.com) – The ultimate bridge between WooCommerce and Europe’s largest marketplaces.
+* [**Centralized Product Data**](https://storelinkr.com/en/manage-product-data) – Manage and enrich your entire catalog in one place before publishing to multiple channels.
+* [**Automated Order Flows**](https://storelinkr.com/en/order-flows) – Sync sales orders from all channels back to WooCommerce and automate your fulfillment journey.
+* [**Multichannel Publishing**](https://storelinkr.com/en/webshops-marketplaces) – Effortlessly push your products to webshops, marketplaces, and shopping platforms worldwide.
+* [**Smart Dynamic Pricing**](https://storelinkr.com/en/dynamic-pricing) – Stay ahead of the competition with automated price adjustments based on market trends.
+* [**Inventory Guidance**](https://storelinkr.com/en/inventory-guidance) – Keep stock levels accurate across all platforms and get intelligent insights for inventory management.
 
 ## Extensive solutions
 
-### eCommerce Integration
-With our eCommerce integration, managing your webshop becomes much easier. Products from your wholesalers are automatically loaded and your inventory is always kept up to date, without having to perform manual updates.
+### European Marketplace & Webshop Integrations
+Expand your reach instantly by connecting to the platforms that matter most in Europe:
+*   **Marketplaces:** Bol.com, Amazon (All EU regions), Kaufland, Allegro, Book in Belgium, and eBay.
+*   **Webshops:** WooCommerce, Shopify, Magento or use our public API
+*   **Feeds:** Google Shopping, Meta (Facebook/Instagram), and Bing Ads.
 
-#### Most popular integrations
-* [VidaXL](https://storelinkr.com/en/integrations/vidaxl-dropshipment)
-* [Skwirrel](https://storelinkr.com/en/integrations/skwirrel-online-store)
-* [CycleSoftware](https://storelinkr.com/en/integrations/cyclesoftware-dropshipment)
-* [Wilmar](https://storelinkr.com/en/integrations/wilmar-dropshipment)
+### Manage product data centrally
+With StoreLinkr, you effortlessly manage your entire product catalog from a single environment. Connect your inventory from multiple sources such as your WMS, POS, or suppliers. This keeps you in control of your data and prevents errors across your sales channels.
 
-### Product feeds for advertising
-StoreLinkr offers a powerful product feed management system that allows you to easily manage CPC advertising. Manually select the products you want to promote or set up automated campaigns based on filters such as price, category or inventory status. With this solution, you are always visible on the largest advertising platforms such as Google Shopping and Facebook Ads.
+### Order flows and automation
+Automate your entire post-purchase journey with intelligent eCommerce order flows. Connect marketplaces, webshops, and fulfillment partners to centralize orders, sync tracking data, and streamline returns automatically.
 
-#### Popular product feeds
-* Google Merchant Center (formerly Google Shopping)
-* Meta product feeds (Facebook and Instagram)
-* Bing Ads
+### Multi-channel product publishing
+Connect all your webshops and marketplaces and publish your catalog instantly. Multi-channel product publishing keeps products, stock, and content consistent across all channels.
 
 ## THE #1 DATA LINK FOR YOUR WEBSHOP
 
@@ -67,7 +76,7 @@ You can get started within a few minutes. Start your own StoreLinkr trial now an
 
 ### GAIN MORE ECOMMERCE KNOWLEGDE
 
-Our comprehensive [eCommerce blog](https://storelinkr.com/en/blog) provides weekly insights into the industry, and we also have extensive [help articles and live chat](https://storelinkr.com/en/support) available to answer your questions.
+Our comprehensive [eCommerce blog](https://storelinkr.com/en/blog) provides weekly insights into the industry, and we also have an extensive [knowledge base](https://help.storelinkr.com) and live chat available to answer your questions.
 
 ### WE PROVIDE ALL THE TECHNOLOGY
 
@@ -91,9 +100,9 @@ The products and categories will be automatically created shortly.
 
 == Frequently Asked Questions ==
 
-= How can I create a whitelabel return portal? =
+= Which European marketplaces are supported? =
 
-Start by creating a free StoreLinkr account and activate the "Returns" solution. This solutions offers you a whitelabel returns portal to request all data from your customers.
+StoreLinkr supports all major European marketplaces including Bol.com, Amazon (NL, DE, FR, IT, ES, BE, SE, PL), Kaufland.de, Allegro.pl and many others. We are constantly adding new integrations to help you reach more customers.
 
 = Which point of sale systems are supported by this plugin? =
 
@@ -101,7 +110,11 @@ This plugin works with point of sale systems such as CycleSoftware and Wilmar.
 
 = Do I need a StoreLinkr account to use this plugin? =
 
-Yes, you need a StoreLinkr account to use this plugin.
+Yes, you need a StoreLinkr account and an active subscription to use this plugin. We offer a [free trial](https://storelinkr.com) so you can explore all features before choosing a plan.
+
+= How does the pricing model work? =
+
+StoreLinkr uses a subscription-based pricing model tailored to your business size and needs. Pricing typically depends on the number of products, order volume, and the specific marketplaces you wish to connect. For the most up-to-date pricing details, please visit our [pricing page](https://storelinkr.com).
 
 = How can I find my StoreLinkr API key? =
 
@@ -120,9 +133,17 @@ Products are regularly updated; the interval depends on the chosen [StoreLinkr](
 You can programmatically change the rendering of the variant options on a product details page. Use the "storelinkr_variant_dropdown_label" filter the change the label, or the "storelinkr_variant_html" filter to change the complete HTML rendering.
 The style and design of the product variant could also changed by using the "storelinkr_variant_css" filter for the CSS code.
 
+= How do I map my WooCommerce categories to marketplaces? =
+
+Category mapping is managed directly within the [StoreLinkr portal](https://storelinkr.com). This allows you to easily link your WooCommerce categories to the specific category structures of various European marketplaces, ensuring your products are always listed in the right place.
+
+= Does StoreLinkr support automated order routing? =
+
+Yes, StoreLinkr features intelligent order routing. You can configure rules in our portal to automatically route orders from different marketplaces to your WooCommerce store or directly to your fulfillment partners, streamlining your entire shipping process.
+
 = I have another question not listed here =
 
-Perhaps our [online helpdesk](https://storelinkr.com) can assist you further. Otherwise, our support team is also available to answer your question.
+Perhaps our [online knowledge base](https://help.storelinkr.com) can assist you further. Otherwise, our support team is also available to answer your question.
 
 == Developers ==
 
@@ -131,6 +152,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.17.1 =
+
+Release date: 2026-05-22
+
+#### Enhancements
+
+* Version bump for WordPress 7.0 support
+
+#### Bugfixes
+
+None
 
 = 2.17.0 =
 
