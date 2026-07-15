@@ -51,9 +51,9 @@ class BuildProductVariantOptionsTest extends TestCase
             }
         }
         
-        // Mock wc_delete_product_transients
+        // Mock wc_delete_product_transients (id is optional in WooCommerce)
         if (!function_exists('wc_delete_product_transients')) {
-            function wc_delete_product_transients($id) {
+            function wc_delete_product_transients($id = 0) {
                 return true;
             }
         }
@@ -75,6 +75,10 @@ class BuildProductVariantOptionsTest extends TestCase
     
     protected function tearDown(): void
     {
+        // Reset failure-simulation switches so one test cannot leak into the next.
+        $GLOBALS['storelinkr_test_unresolvable_terms'] = [];
+        $GLOBALS['storelinkr_test_force_unpersisted_price'] = false;
+
         M::close();
         parent::tearDown();
     }
@@ -189,6 +193,119 @@ class BuildProductVariantOptionsTest extends TestCase
         $this->assertArrayHasKey('3333333333', $result['ean']);
     }
     
+    /**
+     * When a term cannot be created or found, the variation is saved without its option. This must
+     * be reported in the 'failed' map so the caller does not treat the export as complete.
+     */
+    public function testFlagsVariationWhenOptionCannotBeResolved()
+    {
+        require_once STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php';
+
+        // Simulate a WordPress install where the "Blue" term cannot be created or resolved.
+        $GLOBALS['storelinkr_test_unresolvable_terms'] = ['Blue', 'blue'];
+
+        $products = [
+            [
+                'ean' => '1111111111',
+                'uuid' => 'uuid-red',
+                'id' => null,
+                'options' => ['Color' => 'Red'],
+                'inStock' => 5,
+                'stockSupplier' => 0,
+            ],
+            [
+                'ean' => '2222222222',
+                'uuid' => 'uuid-blue',
+                'id' => null,
+                'options' => ['Color' => 'Blue'],
+                'inStock' => 3,
+                'stockSupplier' => 0,
+            ],
+        ];
+
+        $service = M::mock('StoreLinkrWooCommerceService[logWarning]');
+        $service->shouldReceive('logWarning')->andReturn(null);
+
+        $result = $service->buildProductVariantOptions(1, ['Color'], $products, []);
+
+        $GLOBALS['storelinkr_test_unresolvable_terms'] = [];
+
+        $this->assertArrayHasKey('failed', $result, 'Result should contain a failed map');
+        $this->assertCount(1, $result['failed'], 'Only the unresolved (Blue) variation should be flagged');
+        $this->assertStringContainsString('uuid-blue', $result['failed'][0]);
+        $this->assertStringContainsString('missing options: Color', $result['failed'][0]);
+        // The resolvable variation must still map normally and stay out of the failed list.
+        $this->assertArrayHasKey('uuid-red', $result['uuid']);
+    }
+
+    /**
+     * When a price was supposed to be written but WooCommerce did not persist it, the variation
+     * must be flagged so the caller retries instead of freezing a priceless variant.
+     */
+    public function testFlagsVariationWhenPriceIsNotPersisted()
+    {
+        require_once STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php';
+
+        $GLOBALS['storelinkr_test_unresolvable_terms'] = [];
+        $GLOBALS['storelinkr_test_force_unpersisted_price'] = true;
+
+        $products = [
+            [
+                'ean' => '1111111111',
+                'uuid' => 'uuid-red',
+                'id' => null,
+                'options' => ['Color' => 'Red'],
+                'salesPrice' => 1999,
+                'inStock' => 5,
+                'stockSupplier' => 0,
+            ],
+        ];
+
+        $service = M::mock('StoreLinkrWooCommerceService[logWarning]');
+        $service->shouldReceive('logWarning')->andReturn(null);
+
+        $result = $service->buildProductVariantOptions(
+            1,
+            ['Color'],
+            $products,
+            ['overwrite_product_prices' => true]
+        );
+
+        $this->assertArrayHasKey('failed', $result);
+        $this->assertCount(1, $result['failed']);
+        $this->assertStringContainsString('uuid-red', $result['failed'][0]);
+        $this->assertStringContainsString('price not persisted', $result['failed'][0]);
+    }
+
+    /**
+     * A fully resolvable set of variations must report no failures.
+     */
+    public function testReportsNoFailuresWhenAllOptionsResolve()
+    {
+        require_once STORELINKR_PLUGIN_DIR . 'services/class.storelinkr-woocommerce.php';
+
+        $GLOBALS['storelinkr_test_unresolvable_terms'] = [];
+
+        $products = [
+            [
+                'ean' => '1111111111',
+                'uuid' => 'uuid-red',
+                'id' => null,
+                'options' => ['Color' => 'Red'],
+                'inStock' => 5,
+                'stockSupplier' => 0,
+            ],
+        ];
+
+        $service = M::mock('StoreLinkrWooCommerceService[logWarning]');
+        $service->shouldReceive('logWarning')->andReturn(null);
+
+        $result = $service->buildProductVariantOptions(1, ['Color'], $products, []);
+
+        $this->assertArrayHasKey('failed', $result);
+        $this->assertCount(0, $result['failed'], 'No variation should be flagged when every option resolves');
+    }
+
     /**
      * Generate test products similar to the issue description
      */

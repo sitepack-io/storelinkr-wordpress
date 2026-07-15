@@ -1079,6 +1079,7 @@ class StoreLinkrWooCommerceService
         // Build mapping for variants
         $variation_map_ean = [];
         $variation_map_uuid = [];
+        $failed_variants = [];
         foreach ($products as $productOption) {
             if (!empty($productOption['id'])) {
                 try {
@@ -1167,6 +1168,26 @@ class StoreLinkrWooCommerceService
                 }
             }
 
+            // Detect variations that lost (some of) their attribute options. A variation saved without
+            // its options is the root cause of the "variant without options and prices" symptom, so we
+            // record it and surface it to the caller instead of silently returning success.
+            $variationProblems = [];
+            $expectedOptionLabels = [];
+            foreach (($productOption['options'] ?? []) as $optionLabel => $optionValue) {
+                if (isset($attribute_taxonomies[$optionLabel])) {
+                    $expectedOptionLabels[] = $optionLabel;
+                }
+            }
+            if (!empty($expectedOptionLabels) && count($attributes) < count($expectedOptionLabels)) {
+                $missingOptionLabels = [];
+                foreach ($expectedOptionLabels as $optionLabel) {
+                    if (!isset($attributes[$attribute_taxonomies[$optionLabel]])) {
+                        $missingOptionLabels[] = $optionLabel;
+                    }
+                }
+                $variationProblems[] = 'missing options: ' . implode(', ', $missingOptionLabels);
+            }
+
             $overwriteImages = true;
             if (isset($settings['overwrite_images'])) {
                 $overwriteImages = (bool)$settings['overwrite_images'];
@@ -1197,6 +1218,30 @@ class StoreLinkrWooCommerceService
 
             $variation_id = $variation->get_id();
 
+            // When we were supposed to write a price but it did not persist, flag the variation.
+            $updatePriceInfo = !isset($productOption['updatePrice']) || (bool)$productOption['updatePrice'];
+            if (isset($settings['overwrite_product_prices'])) {
+                $updatePriceInfo = (bool)$settings['overwrite_product_prices'];
+            }
+            if (
+                $updatePriceInfo === true
+                && !empty($productOption['salesPrice'])
+                && method_exists($variation, 'get_regular_price')
+            ) {
+                $savedPrice = $variation->get_regular_price();
+                if ($savedPrice === '' || $savedPrice === null || (float)$savedPrice <= 0) {
+                    $variationProblems[] = 'price not persisted';
+                }
+            }
+
+            if (!empty($variationProblems)) {
+                $variationIdentifier = (string)($productOption['uuid']
+                    ?? $productOption['ean']
+                    ?? $productOption['sku']
+                    ?? ('#' . $variation_id));
+                $failed_variants[] = $variationIdentifier . ' (' . implode('; ', $variationProblems) . ')';
+            }
+
             // Map by valid EAN (optional)
             if (!empty($productOption['ean'])) {
                 $ean = (string)$productOption['ean'];
@@ -1224,6 +1269,7 @@ class StoreLinkrWooCommerceService
         return [
             'ean' => $variation_map_ean,
             'uuid' => $variation_map_uuid,
+            'failed' => $failed_variants,
         ];
     }
 

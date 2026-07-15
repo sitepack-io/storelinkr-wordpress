@@ -653,6 +653,9 @@ class StoreLinkrRestApi
                 (int)$productId
             );
 
+            $failedVariants = isset($variationMap['failed']) && is_array($variationMap['failed'])
+                ? array_values($variationMap['failed']) : [];
+
             return [
                 'status' => 'success',
                 'type' => $product::class,
@@ -661,6 +664,8 @@ class StoreLinkrRestApi
                     ? $variationMap['ean'] : [],
                 'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid'])
                     ? $variationMap['uuid'] : [],
+                'complete' => empty($failedVariants),
+                'failed_variants' => $failedVariants,
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),
@@ -739,6 +744,9 @@ class StoreLinkrRestApi
                 (int)$productId
             );
 
+            $failedVariants = isset($variationMap['failed']) && is_array($variationMap['failed'])
+                ? array_values($variationMap['failed']) : [];
+
             return [
                 'status' => 'success',
                 'type' => $product::class,
@@ -747,6 +755,8 @@ class StoreLinkrRestApi
                     ? $variationMap['ean'] : [],
                 'variant_map' => isset($variationMap['uuid']) && is_array($variationMap['uuid'])
                     ? $variationMap['uuid'] : [],
+                'complete' => empty($failedVariants),
+                'failed_variants' => $failedVariants,
                 'url' => get_permalink($productId),
                 'total_products' => count($productVariations),
                 'warnings' => $this->eCommerceService->getWarnings(),

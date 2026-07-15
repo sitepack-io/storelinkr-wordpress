@@ -1,4 +1,16 @@
 
+= 2.18.0 =
+
+Release date: 2026-07-15
+
+#### Enhancements
+
+* Variant sync now reports incomplete variations: the product push response includes a `complete` flag and a `failed_variants` list so the platform can detect variations that were saved without their attribute options or without a persisted price.
+
+#### Bugfixes
+
+* Surface variations that lost their attribute options or price instead of silently returning success, which was the root cause of the "variant without options and prices" symptom.
+
 = 2.12.0 =
 
 Release date: 2025-10-22

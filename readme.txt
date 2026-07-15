@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: bol.com, amazon, kaufland, multichannel, dropshipping, marketplace, inventory sync, order automation, ecommerce, cdiscount, allegro
 Requires at least: 6.6
 Tested up to: 7.0
-Stable tag: 2.17.1
+Stable tag: 2.18.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -152,6 +152,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.18.0 =
+
+Release date: 2026-07-15
+
+#### Enhancements
+
+* Variant sync now reports incomplete variations: the product push response includes a `complete` flag and a `failed_variants` list so the platform can detect variations that were saved without their attribute options or without a persisted price.
+
+#### Bugfixes
+
+* Surface variations that lost their attribute options or price instead of silently returning success, which was the root cause of the "variant without options and prices" symptom.
 
 = 2.17.1 =
 
