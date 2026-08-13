@@ -55,6 +55,46 @@ if (!function_exists('flush_rewrite_rules')) {
     }
 }
 
+if (!function_exists('wc_attribute_taxonomy_name')) {
+    function wc_attribute_taxonomy_name($slug) {
+        return 'pa_' . $slug;
+    }
+}
+
+if (!function_exists('register_taxonomy')) {
+    function register_taxonomy($taxonomy, $objectType, $args = []) {
+        return true;
+    }
+}
+
+if (!function_exists('apply_filters')) {
+    function apply_filters($hook, $value) {
+        return $value;
+    }
+}
+
+if (!function_exists('is_wp_error')) {
+    function is_wp_error($thing) {
+        return $thing instanceof WP_Error;
+    }
+}
+
+if (!class_exists('WP_Error')) {
+    class WP_Error {
+        private $code;
+        private $message;
+
+        public function __construct($code = '', $message = '') {
+            $this->code = $code;
+            $this->message = $message;
+        }
+
+        public function get_error_message() {
+            return $this->message;
+        }
+    }
+}
+
 if (!function_exists('term_exists')) {
     function term_exists($term, $taxonomy) {
         return false;
@@ -96,12 +136,19 @@ if (!class_exists('WC_Product_Variation')) {
         private $id;
         private $parent_id;
         private $attributes = [];
-        
+        private $regular_price = '';
+
         public function set_parent_id($id) { $this->parent_id = $id; }
         public function set_attributes($attributes) { $this->attributes = $attributes; }
+        public function get_attributes() { return $this->attributes; }
         public function save() { return true; }
         public function get_id() { return $this->id ?: rand(1000, 9999); }
         public function update_meta_data($key, $value, $unique = false) { }
+        public function set_regular_price($price) { $this->regular_price = $price; }
+        public function get_regular_price() { return $this->regular_price; }
+
+        // Swallow any other WooCommerce setter/getter the mapper touches during tests.
+        public function __call($name, $arguments) { return null; }
     }
 }
 

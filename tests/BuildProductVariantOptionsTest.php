@@ -53,7 +53,7 @@ class BuildProductVariantOptionsTest extends TestCase
         
         // Mock wc_delete_product_transients
         if (!function_exists('wc_delete_product_transients')) {
-            function wc_delete_product_transients($id) {
+            function wc_delete_product_transients($id = 0) {
                 return true;
             }
         }
