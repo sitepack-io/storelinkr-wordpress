@@ -6,6 +6,7 @@ Release date: 2026-08-13
 #### Enhancements
 
 * Store all StoreLinkr product metafields, like OE numbers and manufacturer codes, as product meta
+* Every product of a variant keeps its own metafields on the variation itself
 * New Metafields tab on the product page in the admin, showing the metafields of the product
 * New template function storeLinkrGetProductMetafields() to use the metafields in your theme
 * New filter storelinkr_metafield_show_in_rest to expose a metafield through the WordPress REST API

@@ -237,6 +237,51 @@ class MetafieldTest extends TestCase
         self::assertSame('Second', $metafields[1]['value']);
     }
 
+    /**
+     * A variant sends its metafields per product, so they end up on the variation and not on the
+     * variable product that holds it.
+     */
+    public function testTheMapperAppliesTheMetafieldsOfAVariationOption(): void
+    {
+        require_once STORELINKR_PLUGIN_DIR . 'mappers/class.storelinkr-woocommerce-mapper.php';
+
+        $variation = new StoreLinkrMetafieldTestProduct();
+
+        StoreLinkrWooCommerceMapper::convertRequestToProduct($variation, [
+            'name' => 'Accu 60Ah',
+            'salesPrice' => 9995,
+            'options' => ['Capaciteit' => '60Ah'],
+            'metafields' => [
+                ['name' => 'oe_numbers', 'type' => 'datatable', 'value' => '[{"merk":"Bosch","code":"60-AH-001"}]'],
+            ],
+        ]);
+
+        self::assertSame(
+            '[{"merk":"Bosch","code":"60-AH-001"}]',
+            $variation->get_meta('storelinkr_oe_numbers', true)
+        );
+    }
+
+    public function testTheMapperLeavesAVariationAloneWithoutMetafields(): void
+    {
+        require_once STORELINKR_PLUGIN_DIR . 'mappers/class.storelinkr-woocommerce-mapper.php';
+
+        $variation = new StoreLinkrMetafieldTestProduct();
+        StoreLinkrMetafieldHelper::applyToProduct($variation, [
+            ['name' => 'oe_numbers', 'type' => 'datatable', 'value' => '[{"merk":"Bosch","code":"60-AH-001"}]'],
+        ]);
+
+        StoreLinkrWooCommerceMapper::convertRequestToProduct($variation, [
+            'name' => 'Accu 60Ah',
+            'salesPrice' => 9995,
+        ]);
+
+        self::assertSame(
+            '[{"merk":"Bosch","code":"60-AH-001"}]',
+            $variation->get_meta('storelinkr_oe_numbers', true)
+        );
+    }
+
     public function testMetafieldsWithoutAUsableNameAreSkipped(): void
     {
         $product = new StoreLinkrMetafieldTestProduct();
@@ -253,9 +298,10 @@ class MetafieldTest extends TestCase
 }
 
 /**
- * Minimal WC_Data stand-in that stores the meta in memory.
+ * Minimal WC_Data stand-in that stores the meta in memory. Extends the WC_Product_Variation stub of
+ * the bootstrap, so it passes the type hint of the mapper and covers a product of a variant.
  */
-class StoreLinkrMetafieldTestProduct
+class StoreLinkrMetafieldTestProduct extends WC_Product_Variation
 {
     private array $meta = [];
 
@@ -272,5 +318,12 @@ class StoreLinkrMetafieldTestProduct
     public function get_meta($key, $single = false)
     {
         return $this->meta[$key] ?? null;
+    }
+
+    // Swallow the WooCommerce setters and getters the mapper touches, method_exists() returns false
+    // for these so the mapper skips everything that is not meta.
+    public function __call($name, $arguments)
+    {
+        return null;
     }
 }

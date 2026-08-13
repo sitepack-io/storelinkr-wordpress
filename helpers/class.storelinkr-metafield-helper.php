@@ -36,6 +36,15 @@ class StoreLinkrMetafieldHelper
     public const DEFAULT_TYPE = 'single_text';
 
     /**
+     * A metafield belongs to a single StoreLinkr product, which is a WooCommerce product or, when
+     * the product is part of a variant, one of its variations.
+     */
+    public const POST_TYPES = [
+        'product',
+        'product_variation',
+    ];
+
+    /**
      * The meta_key column of WordPress is a varchar(255), a longer key is refused or truncated by
      * the database. Note that the index on the column only covers the first 191 characters.
      */
@@ -144,7 +153,8 @@ class StoreLinkrMetafieldHelper
 
     /**
      * Register all known metafields as post meta, so WordPress knows the meta keys of this shop and
-     * everything that expects registered meta can work with them.
+     * everything that expects registered meta can work with them. Every product of a variant has
+     * its own metafields, so the variations are registered as well.
      *
      * WooCommerce products are readable through the WordPress REST API, and metafields can hold
      * internal data like purchase prices, so they stay out of the REST API unless a shop opts in
@@ -153,7 +163,7 @@ class StoreLinkrMetafieldHelper
     public static function registerPostMeta(): void
     {
         foreach (self::getDefinitions() as $metaKey => $definition) {
-            register_post_meta('product', $metaKey, [
+            $args = [
                 'type' => 'string',
                 'description' => (!empty($definition['name'])) ? (string)$definition['name'] : $metaKey,
                 'single' => true,
@@ -166,7 +176,11 @@ class StoreLinkrMetafieldHelper
                 'auth_callback' => function () {
                     return current_user_can('manage_woocommerce');
                 },
-            ]);
+            ];
+
+            foreach (self::POST_TYPES as $postType) {
+                register_post_meta($postType, $metaKey, $args);
+            }
         }
     }
 
