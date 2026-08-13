@@ -1255,6 +1255,7 @@ class StoreLinkrRestApi
             'inStock' => $request->get_param('inStock'),
             'stockSupplier' => $request->get_param('stockSupplier'),
             'metadata' => $request->get_param('metadata'),
+            'metafields' => $request->get_param('metafields'),
             'importSource' => $request->get_param('importSource'),
             'site' => $request->get_param('site'),
             'stockLocations' => $request->get_param('stockLocations'),

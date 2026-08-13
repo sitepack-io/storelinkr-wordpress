@@ -31,6 +31,42 @@ if (!function_exists('sanitize_title')) {
     }
 }
 
+if (!function_exists('sanitize_key')) {
+    function sanitize_key($key) {
+        return preg_replace('/[^a-z0-9_\-]/', '', strtolower(trim($key)));
+    }
+}
+
+if (!function_exists('get_option')) {
+    function get_option($option, $default = false) {
+        global $storelinkrTestOptions;
+
+        return $storelinkrTestOptions[$option] ?? $default;
+    }
+}
+
+if (!function_exists('update_option')) {
+    function update_option($option, $value, $autoload = null) {
+        global $storelinkrTestOptions;
+
+        $storelinkrTestOptions[$option] = $value;
+
+        return true;
+    }
+}
+
+if (!function_exists('register_post_meta')) {
+    function register_post_meta($postType, $metaKey, $args = []) {
+        return true;
+    }
+}
+
+if (!function_exists('current_user_can')) {
+    function current_user_can($capability) {
+        return true;
+    }
+}
+
 if (!function_exists('taxonomy_exists')) {
     function taxonomy_exists($taxonomy) {
         return false; // For testing, assume taxonomies don't exist
@@ -68,7 +104,7 @@ if (!function_exists('register_taxonomy')) {
 }
 
 if (!function_exists('apply_filters')) {
-    function apply_filters($hook, $value) {
+    function apply_filters($hook, $value, ...$args) {
         return $value;
     }
 }

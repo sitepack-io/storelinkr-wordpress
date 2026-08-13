@@ -291,6 +291,10 @@ p.storelinkr-lead {
     content: "\f512" !important;
 }
 
+.storelinkr_metafields_options a::before {
+    content: "\f535" !important;
+}
+
 label.storelinkr-attachment-name {
     width: 200px !important;
 }
@@ -320,6 +324,17 @@ label.storelinkr-attachment-name {
 .storelinkr-product-page-content .outofstock {
     color: #a44;
     font-weight: 700;
+}
+
+.storelinkr-product-page-content .sl-muted {
+    color: #777;
+}
+
+.storelinkr-product-page-content pre.sl-metafield-json {
+    margin: 0;
+    max-height: 200px;
+    overflow: auto;
+    white-space: pre-wrap;
 }
 
 .notice-storelinkr {

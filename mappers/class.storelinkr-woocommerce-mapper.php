@@ -5,6 +5,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-metafield-helper.php');
+
 class StoreLinkrWooCommerceMapper
 {
 
@@ -126,6 +128,12 @@ class StoreLinkrWooCommerceMapper
                     $product->update_meta_data($key, $value, true);
                 }
             }
+        }
+
+        // Only touch the metafields when StoreLinkr sent them, older versions do not send this key
+        // at all and their products should keep the metafields of the previous sync.
+        if (isset($data['metafields']) && is_array($data['metafields'])) {
+            StoreLinkrMetafieldHelper::applyToProduct($product, $data['metafields']);
         }
 
         $product->update_meta_data('import_provider', 'STORELINKR', true);
