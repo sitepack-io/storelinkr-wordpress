@@ -2,8 +2,8 @@
 Contributors: storelinkr, petervw
 Tags: bol.com, amazon, kaufland, multichannel, dropshipping, marketplace, inventory sync, order automation, ecommerce, cdiscount, allegro
 Requires at least: 6.6
-Tested up to: 7.0
-Stable tag: 2.17.1
+Tested up to: 7.1
+Stable tag: 2.18.1
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -152,6 +152,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.18.1 =
+
+Release date: 2026-08-13
+
+#### Enhancements
+
+* Version bump for WordPress 7.1 support
+
+#### Bugfixes
+
+None
 
 = 2.17.1 =
 
