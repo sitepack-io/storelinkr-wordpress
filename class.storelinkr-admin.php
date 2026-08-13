@@ -20,6 +20,7 @@ class StoreLinkrAdmin
         add_filter('woocommerce_product_data_tabs', [$this, 'storeLinkrProductCustomTab'], 99, 1);
         add_action('woocommerce_product_data_panels', [$this, 'productAttachmentTabContent']);
         add_action('woocommerce_product_data_panels', [$this, 'productStockLocationsTabContent']);
+        add_action('woocommerce_product_data_panels', [$this, 'productMetafieldsTabContent']);
         add_action('edit_form_after_title', [$this, 'storeLinkrProductMessage']);
         add_action('admin_head', function () {
             $screen = get_current_screen();
@@ -259,6 +260,12 @@ class StoreLinkrAdmin
             'class' => ['show_if_simple', 'show_if_variable', 'show_if_grouped'],
             'priority' => 60,
         ];
+        $tabs['storelinkr_metafields'] = [
+            'label' => __('Metafields', 'storelinkr'),
+            'target' => 'storelinkr_metafields',
+            'class' => ['show_if_simple', 'show_if_variable', 'show_if_grouped'],
+            'priority' => 61,
+        ];
 
         return $tabs;
     }
@@ -320,6 +327,113 @@ class StoreLinkrAdmin
 
         echo '</div>';
         echo '</div>';
+    }
+
+    public function productMetafieldsTabContent()
+    {
+        global $post;
+
+        echo '<div id="storelinkr_metafields" class="panel woocommerce_options_panel storelinkr-product-page-content">';
+        echo '<div class="options_group">';
+
+        if ($post && $post->post_type === 'product') {
+            $product = wc_get_product($post->ID);
+            $variations = [];
+
+            if ($product instanceof WC_Product_Variable) {
+                $variations = $product->get_available_variations('object');
+            } elseif ($product) {
+                $variations[] = $product;
+            }
+
+            foreach ($variations as $productData) {
+                $metafields = StoreLinkrMetafieldHelper::getProductMetafields($productData);
+
+                echo '<h3 class="sl-tab-heading">' . esc_attr($productData->get_name()) . '</h3>';
+                echo '<table class="wp-list-table widefat striped">';
+
+                if (count($metafields) >= 1) {
+                    echo '<thead>';
+                    echo '<th>' . esc_html__('Metafield', 'storelinkr') . '</th>';
+                    echo '<th>' . esc_html__('Value', 'storelinkr') . '</th>';
+                    echo '</thead>';
+
+                    foreach ($metafields as $metafield) {
+                        echo '<tr>';
+                        echo '<td><strong>' . esc_html($metafield['name']) . '</strong><br />';
+                        echo '<code>' . esc_html($metafield['key']) . '</code></td>';
+                        echo '<td>';
+                        $this->renderMetafieldValue($metafield);
+                        echo '</td>';
+                        echo '</tr>';
+                    }
+                } else {
+                    echo '<tr>';
+                    echo '<td><i>' . esc_html__('No metafields found for this product.', 'storelinkr') . '</i>';
+                    echo '<br /><br />';
+                    echo '<a href="https://portal.storelinkr.com" target="_blank">';
+                    echo esc_html__('Manage metafields', 'storelinkr');
+                    echo '<span class="dashicons dashicons-external"></span>';
+                    echo '</a>';
+                    echo '</td>';
+                    echo '</tr>';
+                }
+
+                echo '</table>';
+            }
+        }
+
+        echo '</div>';
+        echo '</div>';
+    }
+
+    private function renderMetafieldValue(array $metafield): void
+    {
+        if (is_array($metafield['decoded'])) {
+            $rows = $metafield['decoded'];
+            $isTable = count($rows) >= 1
+                && array_is_list($rows)
+                && count(array_filter($rows, 'is_array')) === count($rows);
+
+            if ($isTable === true) {
+                echo '<table class="wp-list-table widefat">';
+                foreach ($rows as $row) {
+                    echo '<tr>';
+                    foreach ($row as $column => $value) {
+                        echo '<td><span class="sl-muted">' . esc_html((string)$column) . '</span> ';
+                        echo esc_html(is_scalar($value) ? (string)$value : (string)wp_json_encode($value));
+                        echo '</td>';
+                    }
+                    echo '</tr>';
+                }
+                echo '</table>';
+
+                return;
+            }
+
+            echo '<pre class="sl-metafield-json">' . esc_html((string)wp_json_encode(
+                $metafield['decoded'],
+                JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            )) . '</pre>';
+
+            return;
+        }
+
+        if ($metafield['type'] === 'html_text') {
+            echo wp_kses_post($metafield['value']);
+
+            return;
+        }
+
+        if ($metafield['type'] === 'boolean') {
+            echo ($metafield['value'] === '1')
+                ? esc_html__('Yes', 'storelinkr')
+                : esc_html__('No', 'storelinkr');
+
+            return;
+        }
+
+        echo nl2br(esc_html($metafield['value']));
     }
 
     public function productStockLocationsTabContent()

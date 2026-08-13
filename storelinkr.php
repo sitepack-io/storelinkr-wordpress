@@ -7,7 +7,7 @@
 Plugin Name: StoreLinkr
 Plugin URI: https://storelinkr.com/en/integrations/wordpress-woocommerce-dropshipment
 Description: Stop manual work: the all-in-one platform for complete online store automation. Integrate with marketplaces, product feeds, and suppliers.
-Version: 2.17.1
+Version: 2.19.0
 Author: StoreLinkr
 Author URI: https://storelinkr.com
 License: GPLv2 or later
@@ -22,15 +22,17 @@ if (!defined('ABSPATH')) {
 
 define('STORELINKR_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('STORELINKR_PLUGIN_FILE', __FILE__);
-define('STORELINKR_VERSION', '2.17.1');
+define('STORELINKR_VERSION', '2.19.0');
 define('STORELINKR_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STORELINKR_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr.php');
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-rest-api.php');
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-frontend.php');
+require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-metafield-helper.php');
 
 add_action('init', ['StoreLinkr', 'init']);
+add_action('init', ['StoreLinkrMetafieldHelper', 'registerPostMeta'], 20);
 
 $storelinkrRestApi = new StoreLinkrRestApi(STORELINKR_VERSION);
 add_action('rest_api_init', [$storelinkrRestApi, 'init']);
@@ -140,6 +142,28 @@ if (!function_exists('storeLinkrGetProductStockInformation')) {
             $product->get_meta('import_source'),
             $product->get_meta('ean')
         );
+    }
+}
+
+if (!function_exists('storeLinkrGetProductMetafields')) {
+    /**
+     * Fetch all StoreLinkr metafields of a product, for example the OE numbers or manufacturer codes.
+     *
+     * Every metafield is returned as an array with the StoreLinkr name, the metafield type, the
+     * WordPress meta key, the raw value and, for the datatable and JSON types, the decoded value.
+     *
+     * @param int $productId
+     * @return array
+     */
+    function storeLinkrGetProductMetafields(int $productId): array
+    {
+        $product = wc_get_product($productId);
+
+        if (!$product instanceof WC_Product) {
+            return [];
+        }
+
+        return StoreLinkrMetafieldHelper::getProductMetafields($product);
     }
 }
 
