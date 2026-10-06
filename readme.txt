@@ -155,7 +155,7 @@ Please read the changelog.txt for more commit history of this plugin.
 
 = 2.20.0 =
 
-Release date: 2026-10-06
+Release date: 2026-10-07
 
 #### Enhancements
 
