@@ -682,9 +682,11 @@ class StoreLinkrRestApi
                 'importSource',
             ]);
 
+            $checkedEans = [];
             foreach ($request->get_param('products') as $product) {
                 if (!empty($product['ean'])) {
                     if (StoreLinkrEanHelper::validateBarcode($product['ean']) === true) {
+                        $checkedEans[(string)$product['ean']] = true;
                         if (!empty($product['id'])) {
                             $this->eCommerceService->removeDuplicateByEan(
                                 $product['ean'],
@@ -717,7 +719,11 @@ class StoreLinkrRestApi
             $json = $request->get_json_params();
             $productVariations = $json['products'] ?? [];
             foreach ($productVariations as $productVariation) {
-                if (!empty($productVariation['ean']) && !empty($productVariation['id'])) {
+                if (
+                    !empty($productVariation['ean'])
+                    && !empty($productVariation['id'])
+                    && !isset($checkedEans[(string)$productVariation['ean']])
+                ) {
                     $this->eCommerceService->removeDuplicateByEan(
                         $productVariation['ean'],
                         (int)$productVariation['id']

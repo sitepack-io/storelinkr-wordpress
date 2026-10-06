@@ -1216,13 +1216,17 @@ class StoreLinkrWooCommerceService
 
             $variation->set_attributes($clean_attributes);
 
-            if (isset($productOption['facets'])) {
-                $variation->update_meta_data('_product_attributes', $productOption['facets'], true);
+            // Saving a variation clears transients, recounts terms and rewrites the post, so a
+            // large variant timed out when every unchanged variation was saved on each sync.
+            if ($variation->get_id() === 0 || $this->hasPendingChanges($variation)) {
+                $variation->save();
             }
 
-            $variation->save();
-
             $variation_id = $variation->get_id();
+
+            if (isset($productOption['facets'])) {
+                $this->storeVariationFacets($variation_id, $productOption['facets']);
+            }
 
             // Map by valid EAN (optional)
             if (!empty($productOption['ean'])) {
@@ -1252,6 +1256,37 @@ class StoreLinkrWooCommerceService
             'ean' => $variation_map_ean,
             'uuid' => $variation_map_uuid,
         ];
+    }
+
+    public function hasPendingChanges(WC_Data $product): bool
+    {
+        if (!empty($product->get_changes())) {
+            return true;
+        }
+
+        foreach ($product->get_meta_data() as $meta) {
+            if (empty($meta->id) || !empty($meta->get_changes())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * _product_attributes is an internal WooCommerce meta key, so WC_Data::update_meta_data() never finds
+     * the stored row and added a new one on every sync. Keep exactly one row and drop the duplicates.
+     */
+    public function storeVariationFacets(int $variationId, $facets): void
+    {
+        $stored = get_post_meta($variationId, '_product_attributes', false);
+
+        if (count($stored) === 1 && $stored[0] == $facets) {
+            return;
+        }
+
+        delete_post_meta($variationId, '_product_attributes');
+        add_post_meta($variationId, '_product_attributes', wp_slash($facets), true);
     }
 
     public function getWarnings(): array
@@ -1500,6 +1535,15 @@ class StoreLinkrWooCommerceService
 
     public function removeDuplicateByEan(string $ean, ?int $allowedId = null): void
     {
+        if ($allowedId !== null) {
+            // WooCommerce keeps the GTIN unique, so when the allowed product already holds this EAN no
+            // other product can, and the lookup (a scan of the product lookup table) can be skipped.
+            $allowedProduct = wc_get_product($allowedId);
+            if ($allowedProduct instanceof WC_Product && $allowedProduct->get_global_unique_id('edit') === $ean) {
+                return;
+            }
+        }
+
         $duplicateProduct = $this->findProductByEan($ean);
 
         if ($duplicateProduct !== false && method_exists($duplicateProduct, 'get_id')) {
