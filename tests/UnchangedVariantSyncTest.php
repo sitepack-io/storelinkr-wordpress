@@ -4,7 +4,7 @@ use Mockery as M;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A sync of an unchanged variant must not write anything per variation: berla.nl timed out after
+ * A sync of an unchanged variant must not write anything per variation: a shop timed out after
  * 120 seconds on update-variant for a large variant (SPD-2139).
  */
 class UnchangedVariantSyncTest extends TestCase
