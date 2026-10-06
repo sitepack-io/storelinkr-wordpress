@@ -727,11 +727,9 @@ class StoreLinkrWooCommerceService
 
         // Check if any changes are needed to prevent unnecessary updates and thumbnail regeneration
         $featuredImageChanged = $currentFeaturedImage != $featuredImage;
-        $galleryImagesChanged = (
-            count($validGalleryImages) !== count($currentGalleryImages) ||
-            !empty(array_diff($validGalleryImages, $currentGalleryImages)) ||
-            !empty(array_diff($currentGalleryImages, $validGalleryImages))
-        );
+        // Compared in order: an image moved within the gallery in StoreLinkr is a change as well.
+        $galleryImagesChanged = array_map('intval', array_values($validGalleryImages))
+            !== array_map('intval', array_values($currentGalleryImages));
 
         // Return early if no changes are needed
         if (!$featuredImageChanged && !$galleryImagesChanged) {

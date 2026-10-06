@@ -326,3 +326,13 @@ if (!function_exists('absint')) {
         return abs((int)$maybeint);
     }
 }
+
+if (!function_exists('get_post')) {
+    function get_post($post = null) {
+        if (isset($GLOBALS['mockPosts']) && array_key_exists($post, $GLOBALS['mockPosts'])) {
+            return $GLOBALS['mockPosts'][$post];
+        }
+
+        return null;
+    }
+}
