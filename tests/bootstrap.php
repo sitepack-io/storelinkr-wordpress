@@ -320,3 +320,9 @@ if (!function_exists('wc_delete_product_transients')) {
         return true;
     }
 }
+
+if (!function_exists('absint')) {
+    function absint($maybeint) {
+        return abs((int)$maybeint);
+    }
+}

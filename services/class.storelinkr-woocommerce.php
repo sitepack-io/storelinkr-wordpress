@@ -225,6 +225,16 @@ class StoreLinkrWooCommerceService
                         $this->buildAttributeSlug(self::formatName($facet['name']))
                     );
 
+                    // A variation attribute is owned by buildProductVariantOptions(); turning it into a plain
+                    // facet here, even for a moment, rewrites every variation title and recounts its terms.
+                    if (
+                        isset($product_attributes[$attribute_taxonomy_key])
+                        && $product_attributes[$attribute_taxonomy_key]->get_variation() === true
+                    ) {
+                        $existing_facets[] = $attribute_taxonomy_key;
+                        continue;
+                    }
+
                     // Check if facet value contains commas and split into multiple terms
                     // Since facets are not used for variations (set_variation(false) below),
                     // we can safely split comma-separated values
@@ -272,7 +282,7 @@ class StoreLinkrWooCommerceService
             }
 
             foreach ($product_attributes as $key => $attribute) {
-                if (!in_array($key, $existing_facets)) {
+                if (!in_array($key, $existing_facets) && $attribute->get_variation() !== true) {
                     unset($product_attributes[$key]);
                 }
             }
@@ -1264,7 +1274,19 @@ class StoreLinkrWooCommerceService
             return true;
         }
 
-        foreach ($product->get_meta_data() as $meta) {
+        // get_meta_data() hides the rows marked for deletion (value null), so read the raw meta.
+        // This mirrors WC_Data::save_meta_data(): a null value without a stored row writes nothing.
+        $metaData = (fn () => $this->meta_data)->call($product) ?? [];
+
+        foreach ($metaData as $meta) {
+            if ($meta->value === null) {
+                if (!empty($meta->id)) {
+                    return true;
+                }
+
+                continue;
+            }
+
             if (empty($meta->id) || !empty($meta->get_changes())) {
                 return true;
             }

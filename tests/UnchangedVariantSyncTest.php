@@ -94,6 +94,12 @@ class UnchangedVariantSyncTest extends TestCase
         $this->assertFalse($service->hasPendingChanges(new UnchangedVariantSyncTestProduct([
             new UnchangedVariantSyncTestMeta(id: 12, changes: []),
         ])));
+        $this->assertTrue($service->hasPendingChanges(new UnchangedVariantSyncTestProduct([
+            new UnchangedVariantSyncTestMeta(id: 12, changes: [], value: null),
+        ])), 'A meta row marked for deletion, which get_meta_data() hides');
+        $this->assertFalse($service->hasPendingChanges(new UnchangedVariantSyncTestProduct([
+            new UnchangedVariantSyncTestMeta(id: 0, changes: [], value: null),
+        ])), 'A null value without a stored row, WooCommerce writes nothing for it');
     }
 
     public function testVariationFacetsKeepOneRowAndDropTheDuplicates(): void
@@ -160,10 +166,59 @@ class UnchangedVariantSyncTest extends TestCase
         $this->assertSame([['instock']], $variation->calls['set_stock_status']);
 
         $outOfStock = new UnchangedVariantSyncTestMappedVariation();
-        StoreLinkrWooCommerceMapper::convertRequestToProduct($outOfStock, ['inStock' => 0, 'stockSupplier' => 0]);
+        StoreLinkrWooCommerceMapper::convertRequestToProduct(
+            $outOfStock,
+            ['inStock' => 0, 'stockSupplier' => 0],
+            ['allow_backorder' => false]
+        );
 
         $this->assertSame([[0]], $outOfStock->calls['set_stock_quantity']);
         $this->assertSame([['outofstock']], $outOfStock->calls['set_stock_status']);
+    }
+
+    public function testTheMapperUsesTheStockStatusWooCommerceDerives(): void
+    {
+        // Backorders are allowed by default; WooCommerce then saves an empty stock as on backorder
+        $backorder = new UnchangedVariantSyncTestMappedVariation();
+        StoreLinkrWooCommerceMapper::convertRequestToProduct($backorder, ['inStock' => 0, 'stockSupplier' => 0]);
+        $this->assertSame([['onbackorder']], $backorder->calls['set_stock_status']);
+
+        // At or below the "out of stock threshold" of the shop the product is not in stock any more
+        global $storelinkrTestOptions;
+        $storelinkrTestOptions['woocommerce_notify_no_stock_amount'] = 2;
+        try {
+            $belowThreshold = new UnchangedVariantSyncTestMappedVariation();
+            StoreLinkrWooCommerceMapper::convertRequestToProduct(
+                $belowThreshold,
+                ['inStock' => 2, 'stockSupplier' => 0],
+                ['allow_backorder' => false]
+            );
+            $this->assertSame([[2]], $belowThreshold->calls['set_stock_quantity']);
+            $this->assertSame([['outofstock']], $belowThreshold->calls['set_stock_status']);
+
+            $aboveThreshold = new UnchangedVariantSyncTestMappedVariation();
+            StoreLinkrWooCommerceMapper::convertRequestToProduct($aboveThreshold, ['inStock' => 3, 'stockSupplier' => 0]);
+            $this->assertSame([['instock']], $aboveThreshold->calls['set_stock_status']);
+        } finally {
+            unset($storelinkrTestOptions['woocommerce_notify_no_stock_amount']);
+        }
+    }
+
+    public function testTheMapperStoresNumericMetaAsItIsReadBack(): void
+    {
+        $variation = new UnchangedVariantSyncTestMappedVariation();
+        StoreLinkrWooCommerceMapper::convertRequestToProduct($variation, [
+            'advisedPrice' => 135000,
+            'metadata' => json_encode(['pieces' => 4, 'weight' => 1.5, 'dimmable' => true, 'remote' => false, 'code' => 'A1', 'list' => [1, 2]]),
+        ]);
+
+        $this->assertSame('1350', $variation->meta['advised_price']);
+        $this->assertSame('4', $variation->meta['pieces']);
+        $this->assertSame('1.5', $variation->meta['weight']);
+        $this->assertSame('1', $variation->meta['dimmable']);
+        $this->assertSame('', $variation->meta['remote']);
+        $this->assertSame('A1', $variation->meta['code']);
+        $this->assertSame([1, 2], $variation->meta['list'], 'Arrays are serialized with their types intact');
     }
 
     public function testTheMapperOnlySetsAChangedSkuOrEan(): void
@@ -218,7 +273,7 @@ class UnchangedVariantSyncTest extends TestCase
 
 class UnchangedVariantSyncTestMeta
 {
-    public function __construct(public int $id, private array $changes)
+    public function __construct(public int $id, private array $changes, public $value = 'stored')
     {
     }
 

@@ -112,15 +112,23 @@ class StoreLinkrWooCommerceMapper
 
             // Set each stock prop once: WC_Data keeps a prop flagged as changed once it was set to another
             // value, even when it ends up unchanged, which forced a save of every variation on each sync.
-            $stockStatus = 'outofstock';
             $stockQuantity = 0;
             if (
                 (isset($data['hasStock']) && (bool)$data['hasStock'] === true) ||
                 (isset($data['inStock']) && (int)$data['inStock'] >= 1) ||
                 (isset($data['stockSupplier']) && (int)$data['stockSupplier'] >= 1)
             ) {
-                $stockStatus = 'instock';
                 $stockQuantity = max(1, (int)($data['inStock'] ?? 0) + (int)($data['stockSupplier'] ?? 0));
+            }
+
+            // The status WooCommerce derives on save for a stock managed product (WC_Product::validate_props),
+            // so an unchanged product is not flagged as changed, for example out of stock with backorders.
+            if ($stockQuantity > absint(get_option('woocommerce_notify_no_stock_amount', 0))) {
+                $stockStatus = 'instock';
+            } elseif ($allowBackOrder === true) {
+                $stockStatus = 'onbackorder';
+            } else {
+                $stockStatus = 'outofstock';
             }
 
             $product->set_stock_quantity($stockQuantity);
@@ -132,7 +140,7 @@ class StoreLinkrWooCommerceMapper
 
             if (is_array($json)) {
                 foreach ($json as $key => $value) {
-                    $product->update_meta_data($key, $value);
+                    $product->update_meta_data($key, self::metaValue($value));
                 }
             }
         }
@@ -158,7 +166,7 @@ class StoreLinkrWooCommerceMapper
         }
 
         if ($updatePriceInfo === true && isset($data['advisedPrice'])) {
-            $product->update_meta_data('advised_price', self::formatPrice((int)$data['advisedPrice']));
+            $product->update_meta_data('advised_price', self::metaValue(self::formatPrice((int)$data['advisedPrice'])));
         }
 
         if (!empty($data['stockLocations'])) {
@@ -221,6 +229,23 @@ class StoreLinkrWooCommerceMapper
      * @param int|null $priceCents
      * @return float
      */
+    /**
+     * A scalar meta value as WordPress stores it and reads it back. WC_Meta_Data compares strictly, so a
+     * float or bool that equals the stored string would otherwise count as a change and force a save.
+     */
+    private static function metaValue($value)
+    {
+        if (is_bool($value)) {
+            return $value ? '1' : '';
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (string)$value;
+        }
+
+        return $value;
+    }
+
     private static function formatPrice(?int $priceCents): float
     {
         if (empty($priceCents)) {

@@ -14,6 +14,7 @@ None
 * Large variants no longer time out on a sync: unchanged variations are not saved again, SKU and EAN checks only run when they change, and the duplicate EAN check runs once per variation
 * The variation attributes meta (_product_attributes) is stored as one row; every sync used to add a row, the duplicates are removed on the next sync
 * Product meta is updated in place instead of being deleted and inserted again on every sync
+* A variable product keeps its variation attributes during a sync, so variation titles and term counts are no longer rewritten
 
 = 2.19.0 =
 
