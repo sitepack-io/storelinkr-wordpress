@@ -1,11 +1,11 @@
 
-= 2.19.1 =
+= 2.20.0 =
 
 Release date: 2026-10-06
 
 #### Enhancements
 
-None
+* Store the condition description of a second-hand product as the product meta condition_description
 
 #### Bugfixes
 
@@ -15,6 +15,7 @@ None
 * The variation attributes meta (_product_attributes) is stored as one row; every sync used to add a row, the duplicates are removed on the next sync
 * Product meta is updated in place instead of being deleted and inserted again on every sync
 * A variable product keeps its variation attributes during a sync, so variation titles and term counts are no longer rewritten
+* A new image order from StoreLinkr is applied to the product gallery, also when only the order of the gallery images changed
 
 = 2.19.0 =
 

@@ -161,6 +161,16 @@ class StoreLinkrWooCommerceMapper
         // Stored as a string, as it is read back from the database, so an unchanged value is no change
         $product->update_meta_data('used', (string)((isset($data['isUsed'])) ? (int)$data['isUsed'] : 0));
 
+        // Older StoreLinkr versions do not send the key, their products keep what is stored.
+        if (isset($data['conditionDescription'])) {
+            $conditionDescription = trim((string)$data['conditionDescription']);
+            if ($conditionDescription !== '') {
+                $product->update_meta_data('condition_description', $conditionDescription);
+            } else {
+                $product->delete_meta_data('condition_description');
+            }
+        }
+
         if (isset($data['uuid'])) {
             $product->update_meta_data('uuid', $data['uuid']);
         }

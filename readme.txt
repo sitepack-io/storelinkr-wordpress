@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: bol.com, amazon, kaufland, multichannel, dropshipping, marketplace, inventory sync, order automation, ecommerce, cdiscount, allegro
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.19.1
+Stable tag: 2.20.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -153,13 +153,13 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 
 Please read the changelog.txt for more commit history of this plugin.
 
-= 2.19.1 =
+= 2.20.0 =
 
 Release date: 2026-10-06
 
 #### Enhancements
 
-None
+* Store the condition description of a second-hand product as the product meta condition_description
 
 #### Bugfixes
 
