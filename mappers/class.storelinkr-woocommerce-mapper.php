@@ -43,7 +43,8 @@ class StoreLinkrWooCommerceMapper
         if (isset($data['sku']) && method_exists($product, 'set_sku')) {
             // Normalize SKU like WooCommerce does; avoid setting empty/whitespace-only values
             $normalizedSku = trim((string)$data['sku']);
-            if ($normalizedSku !== '') {
+            // The setter runs a uniqueness query, only call it when the SKU really changes
+            if ($normalizedSku !== '' && $product->get_sku('edit') !== $normalizedSku) {
                 $product->set_sku($normalizedSku);
             }
         }
@@ -51,13 +52,20 @@ class StoreLinkrWooCommerceMapper
         if (!empty($data['ean']) && method_exists($product, 'set_global_unique_id')) {
             // EAN is now optional; only set when valid
             if (class_exists('StoreLinkrEanHelper')) {
-                if (StoreLinkrEanHelper::validateBarcode($data['ean']) === true) {
+                // The setter scans the product lookup table (global_unique_id has no index), so only call
+                // it when the EAN really changes
+                if (
+                    StoreLinkrEanHelper::validateBarcode($data['ean']) === true
+                    && $product->get_global_unique_id('edit') !== preg_replace('/[^0-9\-]/', '', (string)$data['ean'])
+                ) {
                     $product->set_global_unique_id($data['ean']);
                 }
             }
         }
 
-        if (method_exists($product, 'set_name')) {
+        // WooCommerce always derives a variation title from its parent and attributes, so setting
+        // a name on a variation only marks it as changed and forces a needless save.
+        if (method_exists($product, 'set_name') && !$product instanceof WC_Product_Variation) {
             $product->set_name((isset($data['name'])) ? $data['name'] : null);
         }
 
@@ -96,28 +104,35 @@ class StoreLinkrWooCommerceMapper
 
         if ($updateStockInfo === true && method_exists($product, 'set_stock_status')) {
             $product->set_manage_stock(true);
-            $product->set_stock_quantity(0);
-            $product->set_stock_status('outofstock');
             if ($allowBackOrder === true) {
                 $product->set_backorders('yes');
             } else {
                 $product->set_backorders('no');
             }
 
+            // Set each stock prop once: WC_Data keeps a prop flagged as changed once it was set to another
+            // value, even when it ends up unchanged, which forced a save of every variation on each sync.
+            $stockQuantity = 0;
             if (
                 (isset($data['hasStock']) && (bool)$data['hasStock'] === true) ||
                 (isset($data['inStock']) && (int)$data['inStock'] >= 1) ||
                 (isset($data['stockSupplier']) && (int)$data['stockSupplier'] >= 1)
             ) {
-                $product->set_stock_status('instock');
-                $product->set_stock_quantity(
-                    (int)$data['inStock'] + (int)$data['stockSupplier']
-                );
-
-                if ($product->get_stock_quantity() < 1) {
-                    $product->set_stock_quantity(1);
-                }
+                $stockQuantity = max(1, (int)($data['inStock'] ?? 0) + (int)($data['stockSupplier'] ?? 0));
             }
+
+            // The status WooCommerce derives on save for a stock managed product (WC_Product::validate_props),
+            // so an unchanged product is not flagged as changed, for example out of stock with backorders.
+            if ($stockQuantity > absint(get_option('woocommerce_notify_no_stock_amount', 0))) {
+                $stockStatus = 'instock';
+            } elseif ($allowBackOrder === true) {
+                $stockStatus = 'onbackorder';
+            } else {
+                $stockStatus = 'outofstock';
+            }
+
+            $product->set_stock_quantity($stockQuantity);
+            $product->set_stock_status($stockStatus);
         }
 
         if (!empty($data['metadata'])) {
@@ -125,7 +140,7 @@ class StoreLinkrWooCommerceMapper
 
             if (is_array($json)) {
                 foreach ($json as $key => $value) {
-                    $product->update_meta_data($key, $value, true);
+                    $product->update_meta_data($key, self::metaValue($value));
                 }
             }
         }
@@ -136,22 +151,32 @@ class StoreLinkrWooCommerceMapper
             StoreLinkrMetafieldHelper::applyToProduct($product, $data['metafields']);
         }
 
-        $product->update_meta_data('import_provider', 'STORELINKR', true);
+        $product->update_meta_data('import_provider', 'STORELINKR');
         $product->update_meta_data(
             'import_source',
-            (isset($data['importSource'])) ? $data['importSource'] : null,
-            true
+            (isset($data['importSource'])) ? $data['importSource'] : null
         );
-        $product->update_meta_data('site', (isset($data['site'])) ? $data['site'] : null, true);
-        $product->update_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null, true);
-        $product->update_meta_data('used', (isset($data['isUsed'])) ? (int)$data['isUsed'] : 0, true);
+        $product->update_meta_data('site', (isset($data['site'])) ? $data['site'] : null);
+        $product->update_meta_data('ean', (isset($data['ean'])) ? $data['ean'] : null);
+        // Stored as a string, as it is read back from the database, so an unchanged value is no change
+        $product->update_meta_data('used', (string)((isset($data['isUsed'])) ? (int)$data['isUsed'] : 0));
+
+        // Older StoreLinkr versions do not send the key, their products keep what is stored.
+        if (isset($data['conditionDescription'])) {
+            $conditionDescription = trim((string)$data['conditionDescription']);
+            if ($conditionDescription !== '') {
+                $product->update_meta_data('condition_description', $conditionDescription);
+            } else {
+                $product->delete_meta_data('condition_description');
+            }
+        }
 
         if (isset($data['uuid'])) {
-            $product->update_meta_data('uuid', $data['uuid'], true);
+            $product->update_meta_data('uuid', $data['uuid']);
         }
 
         if ($updatePriceInfo === true && isset($data['advisedPrice'])) {
-            $product->update_meta_data('advised_price', self::formatPrice((int)$data['advisedPrice']), true);
+            $product->update_meta_data('advised_price', self::metaValue(self::formatPrice((int)$data['advisedPrice'])));
         }
 
         if (!empty($data['stockLocations'])) {
@@ -162,7 +187,7 @@ class StoreLinkrWooCommerceMapper
                 $stockMeta = $stockInfo['locations'];
             }
 
-            $product->update_meta_data('stock_locations', $stockMeta, true);
+            $product->update_meta_data('stock_locations', $stockMeta);
         }
 
         if (method_exists($product, 'set_date_created') && $product->get_date_created() === null) {
@@ -191,13 +216,13 @@ class StoreLinkrWooCommerceMapper
         }
 
         if (isset($data['positive_points'])) {
-            $product->update_meta_data('_positive_points', $data['positive_points'], true);
+            $product->update_meta_data('_positive_points', $data['positive_points']);
         }
         if (isset($data['negative_points'])) {
-            $product->update_meta_data('_negative_points', $data['negative_points'], true);
+            $product->update_meta_data('_negative_points', $data['negative_points']);
         }
 
-        $product->update_meta_data('_product_attachments', json_encode($attachments), true);
+        $product->update_meta_data('_product_attachments', json_encode($attachments));
 
         if (method_exists($product, 'set_cross_sell_ids')) {
             $product->set_cross_sell_ids(array_values($validCrossSellIds));
@@ -214,6 +239,23 @@ class StoreLinkrWooCommerceMapper
      * @param int|null $priceCents
      * @return float
      */
+    /**
+     * A scalar meta value as WordPress stores it and reads it back. WC_Meta_Data compares strictly, so a
+     * float or bool that equals the stored string would otherwise count as a change and force a save.
+     */
+    private static function metaValue($value)
+    {
+        if (is_bool($value)) {
+            return $value ? '1' : '';
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (string)$value;
+        }
+
+        return $value;
+    }
+
     private static function formatPrice(?int $priceCents): float
     {
         if (empty($priceCents)) {

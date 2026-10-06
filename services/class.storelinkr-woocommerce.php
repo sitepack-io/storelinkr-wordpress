@@ -225,6 +225,16 @@ class StoreLinkrWooCommerceService
                         $this->buildAttributeSlug(self::formatName($facet['name']))
                     );
 
+                    // A variation attribute is owned by buildProductVariantOptions(); turning it into a plain
+                    // facet here, even for a moment, rewrites every variation title and recounts its terms.
+                    if (
+                        isset($product_attributes[$attribute_taxonomy_key])
+                        && $product_attributes[$attribute_taxonomy_key]->get_variation() === true
+                    ) {
+                        $existing_facets[] = $attribute_taxonomy_key;
+                        continue;
+                    }
+
                     // Check if facet value contains commas and split into multiple terms
                     // Since facets are not used for variations (set_variation(false) below),
                     // we can safely split comma-separated values
@@ -272,7 +282,7 @@ class StoreLinkrWooCommerceService
             }
 
             foreach ($product_attributes as $key => $attribute) {
-                if (!in_array($key, $existing_facets)) {
+                if (!in_array($key, $existing_facets) && $attribute->get_variation() !== true) {
                     unset($product_attributes[$key]);
                 }
             }
@@ -717,11 +727,9 @@ class StoreLinkrWooCommerceService
 
         // Check if any changes are needed to prevent unnecessary updates and thumbnail regeneration
         $featuredImageChanged = $currentFeaturedImage != $featuredImage;
-        $galleryImagesChanged = (
-            count($validGalleryImages) !== count($currentGalleryImages) ||
-            !empty(array_diff($validGalleryImages, $currentGalleryImages)) ||
-            !empty(array_diff($currentGalleryImages, $validGalleryImages))
-        );
+        // Compared in order: an image moved within the gallery in StoreLinkr is a change as well.
+        $galleryImagesChanged = array_map('intval', array_values($validGalleryImages))
+            !== array_map('intval', array_values($currentGalleryImages));
 
         // Return early if no changes are needed
         if (!$featuredImageChanged && !$galleryImagesChanged) {
@@ -922,12 +930,10 @@ class StoreLinkrWooCommerceService
         }
 
         if (!empty($data['id'])) {
-            $productSearch = $this->findProduct($data['id']);
+            $productSearch = $this->findExistingProductById($data['id'], $type);
 
-            if ($productSearch !== false) {
+            if ($productSearch !== null) {
                 $product = $productSearch;
-            } elseif ($type === 'variant' && !$productSearch instanceof WC_Product_Variable) {
-                throw new Exception('Product is not an instance of Variable product!');
             }
         }
 
@@ -960,6 +966,29 @@ class StoreLinkrWooCommerceService
             $product,
             (isset($data['images'])) ? (array)$data['images'] : []
         );
+    }
+
+    /**
+     * Returns null when the product was removed in WooCommerce while StoreLinkr still knows the old id,
+     * so the caller continues with the SKU / EAN match or a new product and the next sync heals itself.
+     *
+     * @throws Exception
+     */
+    public function findExistingProductById($productId, string $type = 'simple'): ?WC_Product
+    {
+        $product = wc_get_product($productId);
+
+        if ($product === false || $product === null) {
+            $this->logWarning(sprintf('Product not found with id %s, creating it again.', $productId));
+
+            return null;
+        }
+
+        if ($type === 'variant' && !$product instanceof WC_Product_Variable) {
+            throw new Exception('Product is not an instance of Variable product!');
+        }
+
+        return $product;
     }
 
     public function buildProductVariantOptions(
@@ -1083,7 +1112,13 @@ class StoreLinkrWooCommerceService
             if (!empty($productOption['id'])) {
                 try {
                     $variation = wc_get_product($productOption['id']);
-                    if ($variation && !($variation instanceof \WC_Product_Variation)) {
+                    if (
+                        $variation instanceof \WC_Product_Variable
+                        || (int)$productOption['id'] === $productId
+                    ) {
+                        // Never delete a variable product (or this parent itself) for a stale option id.
+                        $variation = new \WC_Product_Variation();
+                    } elseif ($variation && !($variation instanceof \WC_Product_Variation)) {
                         // Product exists but is not a variation.
                         // Sometimes a product is already known as single product, but now is part of a variable product.
                         // If the class is a simple product, remove the product and recreate in the normal buildProductVariantOptions flow.
@@ -1189,13 +1224,17 @@ class StoreLinkrWooCommerceService
 
             $variation->set_attributes($clean_attributes);
 
-            if (isset($productOption['facets'])) {
-                $variation->update_meta_data('_product_attributes', $productOption['facets'], true);
+            // Saving a variation clears transients, recounts terms and rewrites the post, so a
+            // large variant timed out when every unchanged variation was saved on each sync.
+            if ($variation->get_id() === 0 || $this->hasPendingChanges($variation)) {
+                $variation->save();
             }
 
-            $variation->save();
-
             $variation_id = $variation->get_id();
+
+            if (isset($productOption['facets'])) {
+                $this->storeVariationFacets($variation_id, $productOption['facets']);
+            }
 
             // Map by valid EAN (optional)
             if (!empty($productOption['ean'])) {
@@ -1225,6 +1264,49 @@ class StoreLinkrWooCommerceService
             'ean' => $variation_map_ean,
             'uuid' => $variation_map_uuid,
         ];
+    }
+
+    public function hasPendingChanges(WC_Data $product): bool
+    {
+        if (!empty($product->get_changes())) {
+            return true;
+        }
+
+        // get_meta_data() hides the rows marked for deletion (value null), so read the raw meta.
+        // This mirrors WC_Data::save_meta_data(): a null value without a stored row writes nothing.
+        $metaData = (fn () => $this->meta_data)->call($product) ?? [];
+
+        foreach ($metaData as $meta) {
+            if ($meta->value === null) {
+                if (!empty($meta->id)) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            if (empty($meta->id) || !empty($meta->get_changes())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * _product_attributes is an internal WooCommerce meta key, so WC_Data::update_meta_data() never finds
+     * the stored row and added a new one on every sync. Keep exactly one row and drop the duplicates.
+     */
+    public function storeVariationFacets(int $variationId, $facets): void
+    {
+        $stored = get_post_meta($variationId, '_product_attributes', false);
+
+        if (count($stored) === 1 && $stored[0] == $facets) {
+            return;
+        }
+
+        delete_post_meta($variationId, '_product_attributes');
+        add_post_meta($variationId, '_product_attributes', wp_slash($facets), true);
     }
 
     public function getWarnings(): array
@@ -1473,6 +1555,15 @@ class StoreLinkrWooCommerceService
 
     public function removeDuplicateByEan(string $ean, ?int $allowedId = null): void
     {
+        if ($allowedId !== null) {
+            // WooCommerce keeps the GTIN unique, so when the allowed product already holds this EAN no
+            // other product can, and the lookup (a scan of the product lookup table) can be skipped.
+            $allowedProduct = wc_get_product($allowedId);
+            if ($allowedProduct instanceof WC_Product && $allowedProduct->get_global_unique_id('edit') === $ean) {
+                return;
+            }
+        }
+
         $duplicateProduct = $this->findProductByEan($ean);
 
         if ($duplicateProduct !== false && method_exists($duplicateProduct, 'get_id')) {

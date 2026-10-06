@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: bol.com, amazon, kaufland, multichannel, dropshipping, marketplace, inventory sync, order automation, ecommerce, cdiscount, allegro
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.19.0
+Stable tag: 2.20.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -152,6 +152,24 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.20.0 =
+
+Release date: 2026-10-07
+
+#### Enhancements
+
+* Store the condition description of a second-hand product as the product meta condition_description
+
+#### Bugfixes
+
+* A variable product that was removed in WooCommerce is created again on the next sync, instead of failing with "Product not found"
+* A variation id that points to its own variable product no longer deletes that variable product
+* Large variants no longer time out on a sync: unchanged variations are not saved again, SKU and EAN checks only run when they change, and the duplicate EAN check runs once per variation
+* The variation attributes meta (_product_attributes) is stored as one row; every sync used to add a row, the duplicates are removed on the next sync
+* Product meta is updated in place instead of being deleted and inserted again on every sync
+* A variable product keeps its variation attributes during a sync, so variation titles and term counts are no longer rewritten
+* A new image order from StoreLinkr is applied to the product gallery, also when only the order of the gallery images changed
 
 = 2.19.0 =
 

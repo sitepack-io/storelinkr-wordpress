@@ -31,14 +31,6 @@ class BuildProductVariantOptionsTest extends TestCase
         global $mockVariableProduct;
         $mockVariableProduct = $this->mockVariableProduct;
         
-        // Mock wc_get_product function
-        if (!function_exists('wc_get_product')) {
-            function wc_get_product($id) {
-                global $mockVariableProduct;
-                return $mockVariableProduct;
-            }
-        }
-        
         // Mock wc_get_attribute_taxonomies
         if (!function_exists('wc_get_attribute_taxonomies')) {
             function wc_get_attribute_taxonomies() {

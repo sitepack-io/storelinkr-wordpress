@@ -167,25 +167,172 @@ if (!class_exists('WC_Product_Attribute')) {
     }
 }
 
-if (!class_exists('WC_Product_Variation')) {
-    class WC_Product_Variation {
-        private $id;
-        private $parent_id;
-        private $attributes = [];
-        private $regular_price = '';
+if (!class_exists('WC_Data')) {
+    /**
+     * Keeps pending prop changes and meta like WooCommerce does, so tests can tell whether a save is needed.
+     */
+    class WC_Data {
+        protected $id = 0;
+        protected $changes = [];
+        protected $meta_data = [];
 
-        public function set_parent_id($id) { $this->parent_id = $id; }
-        public function set_attributes($attributes) { $this->attributes = $attributes; }
-        public function get_attributes() { return $this->attributes; }
-        public function save() { return true; }
-        public function get_id() { return $this->id ?: rand(1000, 9999); }
-        public function update_meta_data($key, $value, $unique = false) { }
-        public function set_regular_price($price) { $this->regular_price = $price; }
-        public function get_regular_price() { return $this->regular_price; }
+        public function get_id() { return $this->id; }
+        public function get_changes() { return $this->changes; }
+        public function get_meta_data() { return $this->meta_data; }
 
-        // Swallow any other WooCommerce setter/getter the mapper touches during tests.
+        // Swallow any WooCommerce setter/getter the code under test touches.
         public function __call($name, $arguments) { return null; }
     }
 }
 
+if (!class_exists('WC_Product')) {
+    class WC_Product extends WC_Data {
+    }
+}
+
+if (!class_exists('WC_Product_Simple')) {
+    class WC_Product_Simple extends WC_Product {
+    }
+}
+
+if (!class_exists('WC_Product_Variable')) {
+    class WC_Product_Variable extends WC_Product {
+    }
+}
+
+/**
+ * wc_get_product() returns $GLOBALS['mockProductsById'][$id] when the id is registered there,
+ * otherwise the shared $GLOBALS['mockVariableProduct'].
+ */
+if (!function_exists('wc_get_product')) {
+    function wc_get_product($id = false) {
+        if (isset($GLOBALS['mockProductsById']) && array_key_exists($id, $GLOBALS['mockProductsById'])) {
+            return $GLOBALS['mockProductsById'][$id];
+        }
+
+        return $GLOBALS['mockVariableProduct'] ?? false;
+    }
+}
+
+/**
+ * Records permanently deleted post ids in $GLOBALS['deletedPostIds'].
+ */
+if (!function_exists('wp_delete_post')) {
+    function wp_delete_post($postId = 0, $forceDelete = false) {
+        $GLOBALS['deletedPostIds'][] = (int)$postId;
+
+        return true;
+    }
+}
+
+if (!class_exists('WC_Product_Variation')) {
+    class WC_Product_Variation extends WC_Product {
+        private static $nextId = 1000;
+
+        public $saveCount = 0;
+        private $parent_id;
+        private $attributes = [];
+        private $regular_price = '';
+
+        public function __construct($id = 0) { $this->id = (int)$id; }
+        public function set_parent_id($id) { $this->parent_id = $id; }
+        public function set_attributes($attributes) {
+            if ($attributes !== $this->attributes) {
+                $this->changes['attributes'] = $attributes;
+            }
+            $this->attributes = $attributes;
+        }
+        public function get_attributes() { return $this->attributes; }
+        public function save() {
+            if ($this->id === 0) {
+                $this->id = self::$nextId++;
+            }
+            $this->saveCount++;
+            $this->changes = [];
+
+            return $this->id;
+        }
+        public function update_meta_data($key, $value, $meta_id = 0) { }
+        public function set_regular_price($price) { $this->regular_price = $price; }
+        public function get_regular_price() { return $this->regular_price; }
+    }
+}
+
 echo "Bootstrap loaded successfully\n";
+/**
+ * In memory post meta: $GLOBALS['postMeta'][$postId][$key] is a list of rows.
+ */
+if (!function_exists('get_post_meta')) {
+    function get_post_meta($postId, $key = '', $single = false) {
+        $rows = $GLOBALS['postMeta'][$postId][$key] ?? [];
+
+        return $single ? ($rows[0] ?? '') : $rows;
+    }
+}
+
+if (!function_exists('delete_post_meta')) {
+    function delete_post_meta($postId, $key, $value = '') {
+        unset($GLOBALS['postMeta'][$postId][$key]);
+
+        return true;
+    }
+}
+
+if (!function_exists('add_post_meta')) {
+    function add_post_meta($postId, $key, $value, $unique = false) {
+        $GLOBALS['postMeta'][$postId][$key][] = $value;
+
+        return true;
+    }
+}
+
+if (!function_exists('wp_slash')) {
+    function wp_slash($value) {
+        return $value;
+    }
+}
+
+/**
+ * GTIN lookups read $GLOBALS['gtinIndex'][$gtin] and are counted in $GLOBALS['gtinLookups'].
+ */
+if (!function_exists('wc_get_product_id_by_global_unique_id')) {
+    function wc_get_product_id_by_global_unique_id($gtin) {
+        $GLOBALS['gtinLookups'] = ($GLOBALS['gtinLookups'] ?? 0) + 1;
+
+        return $GLOBALS['gtinIndex'][$gtin] ?? 0;
+    }
+}
+
+if (!function_exists('get_posts')) {
+    function get_posts($args = []) {
+        return [];
+    }
+}
+
+if (!function_exists('sanitize_text_field')) {
+    function sanitize_text_field($text) {
+        return trim((string)$text);
+    }
+}
+
+if (!function_exists('wc_delete_product_transients')) {
+    function wc_delete_product_transients($id = 0) {
+        return true;
+    }
+}
+
+if (!function_exists('absint')) {
+    function absint($maybeint) {
+        return abs((int)$maybeint);
+    }
+}
+
+if (!function_exists('get_post')) {
+    function get_post($post = null) {
+        if (isset($GLOBALS['mockPosts']) && array_key_exists($post, $GLOBALS['mockPosts'])) {
+            return $GLOBALS['mockPosts'][$post];
+        }
+
+        return null;
+    }
+}
