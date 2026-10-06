@@ -922,12 +922,10 @@ class StoreLinkrWooCommerceService
         }
 
         if (!empty($data['id'])) {
-            $productSearch = $this->findProduct($data['id']);
+            $productSearch = $this->findExistingProductById($data['id'], $type);
 
-            if ($productSearch !== false) {
+            if ($productSearch !== null) {
                 $product = $productSearch;
-            } elseif ($type === 'variant' && !$productSearch instanceof WC_Product_Variable) {
-                throw new Exception('Product is not an instance of Variable product!');
             }
         }
 
@@ -960,6 +958,29 @@ class StoreLinkrWooCommerceService
             $product,
             (isset($data['images'])) ? (array)$data['images'] : []
         );
+    }
+
+    /**
+     * Returns null when the product was removed in WooCommerce while StoreLinkr still knows the old id,
+     * so the caller continues with the SKU / EAN match or a new product and the next sync heals itself.
+     *
+     * @throws Exception
+     */
+    public function findExistingProductById($productId, string $type = 'simple'): ?WC_Product
+    {
+        $product = wc_get_product($productId);
+
+        if ($product === false || $product === null) {
+            $this->logWarning(sprintf('Product not found with id %s, creating it again.', $productId));
+
+            return null;
+        }
+
+        if ($type === 'variant' && !$product instanceof WC_Product_Variable) {
+            throw new Exception('Product is not an instance of Variable product!');
+        }
+
+        return $product;
     }
 
     public function buildProductVariantOptions(
@@ -1083,7 +1104,13 @@ class StoreLinkrWooCommerceService
             if (!empty($productOption['id'])) {
                 try {
                     $variation = wc_get_product($productOption['id']);
-                    if ($variation && !($variation instanceof \WC_Product_Variation)) {
+                    if (
+                        $variation instanceof \WC_Product_Variable
+                        || (int)$productOption['id'] === $productId
+                    ) {
+                        // Never delete a variable product (or this parent itself) for a stale option id.
+                        $variation = new \WC_Product_Variation();
+                    } elseif ($variation && !($variation instanceof \WC_Product_Variation)) {
                         // Product exists but is not a variation.
                         // Sometimes a product is already known as single product, but now is part of a variable product.
                         // If the class is a simple product, remove the product and recreate in the normal buildProductVariantOptions flow.

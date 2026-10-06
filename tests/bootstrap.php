@@ -167,8 +167,50 @@ if (!class_exists('WC_Product_Attribute')) {
     }
 }
 
+if (!class_exists('WC_Product')) {
+    class WC_Product {
+        // Swallow any WooCommerce setter/getter the code under test touches.
+        public function __call($name, $arguments) { return null; }
+    }
+}
+
+if (!class_exists('WC_Product_Simple')) {
+    class WC_Product_Simple extends WC_Product {
+    }
+}
+
+if (!class_exists('WC_Product_Variable')) {
+    class WC_Product_Variable extends WC_Product {
+    }
+}
+
+/**
+ * wc_get_product() returns $GLOBALS['mockProductsById'][$id] when the id is registered there,
+ * otherwise the shared $GLOBALS['mockVariableProduct'].
+ */
+if (!function_exists('wc_get_product')) {
+    function wc_get_product($id = false) {
+        if (isset($GLOBALS['mockProductsById']) && array_key_exists($id, $GLOBALS['mockProductsById'])) {
+            return $GLOBALS['mockProductsById'][$id];
+        }
+
+        return $GLOBALS['mockVariableProduct'] ?? false;
+    }
+}
+
+/**
+ * Records permanently deleted post ids in $GLOBALS['deletedPostIds'].
+ */
+if (!function_exists('wp_delete_post')) {
+    function wp_delete_post($postId = 0, $forceDelete = false) {
+        $GLOBALS['deletedPostIds'][] = (int)$postId;
+
+        return true;
+    }
+}
+
 if (!class_exists('WC_Product_Variation')) {
-    class WC_Product_Variation {
+    class WC_Product_Variation extends WC_Product {
         private $id;
         private $parent_id;
         private $attributes = [];
