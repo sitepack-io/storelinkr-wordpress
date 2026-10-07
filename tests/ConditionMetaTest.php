@@ -3,10 +3,10 @@
 use PHPUnit\Framework\TestCase;
 
 /**
- * The condition description of a second-hand product is stored as the plain meta key
- * condition_description, like used and advised_price, not as a prefixed StoreLinkr metafield.
+ * The condition and condition description of a second-hand product are stored as the plain meta keys
+ * condition and condition_description, like used and advised_price, not as prefixed metafields.
  */
-class ConditionDescriptionTest extends TestCase
+class ConditionMetaTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -17,7 +17,7 @@ class ConditionDescriptionTest extends TestCase
 
     public function testTheDescriptionIsStoredWithoutPrefix(): void
     {
-        $product = new ConditionDescriptionTestProduct();
+        $product = new ConditionMetaTestProduct();
 
         StoreLinkrWooCommerceMapper::convertRequestToProduct(
             $product,
@@ -30,7 +30,7 @@ class ConditionDescriptionTest extends TestCase
 
     public function testAnEmptyDescriptionRemovesTheMeta(): void
     {
-        $product = new ConditionDescriptionTestProduct();
+        $product = new ConditionMetaTestProduct();
         $product->meta['condition_description'] = 'Oude omschrijving';
 
         StoreLinkrWooCommerceMapper::convertRequestToProduct($product, ['conditionDescription' => '']);
@@ -40,7 +40,7 @@ class ConditionDescriptionTest extends TestCase
 
     public function testAnOlderStoreLinkrWithoutTheFieldKeepsTheStoredDescription(): void
     {
-        $product = new ConditionDescriptionTestProduct();
+        $product = new ConditionMetaTestProduct();
         $product->meta['condition_description'] = 'Bestaande omschrijving';
 
         StoreLinkrWooCommerceMapper::convertRequestToProduct($product, ['conditionDescription' => null]);
@@ -48,9 +48,30 @@ class ConditionDescriptionTest extends TestCase
 
         $this->assertSame('Bestaande omschrijving', $product->meta['condition_description']);
     }
+
+    public function testTheConditionIsStoredWithoutPrefix(): void
+    {
+        $product = new ConditionMetaTestProduct();
+
+        StoreLinkrWooCommerceMapper::convertRequestToProduct($product, ['condition' => 'as new']);
+
+        $this->assertSame('as new', $product->meta['condition']);
+        $this->assertArrayNotHasKey('storelinkr_condition', $product->meta);
+    }
+
+    public function testAnOlderStoreLinkrWithoutTheConditionKeepsTheStoredOne(): void
+    {
+        $product = new ConditionMetaTestProduct();
+        $product->meta['condition'] = 'good';
+
+        StoreLinkrWooCommerceMapper::convertRequestToProduct($product, ['condition' => null]);
+        StoreLinkrWooCommerceMapper::convertRequestToProduct($product, []);
+
+        $this->assertSame('good', $product->meta['condition']);
+    }
 }
 
-class ConditionDescriptionTestProduct extends WC_Product_Variation
+class ConditionMetaTestProduct extends WC_Product_Variation
 {
     public array $meta = [];
 
