@@ -1,4 +1,16 @@
 
+= 2.21.0 =
+
+Release date: 2026-10-07
+
+#### Enhancements
+
+* Store the condition of a product from the StoreLinkr PIM (new, as new, refurbished, good, used, reasonable, moderate or damaged) as the product meta condition
+
+#### Bugfixes
+
+None
+
 = 2.20.0 =
 
 Release date: 2026-10-07

@@ -1269,6 +1269,7 @@ class StoreLinkrRestApi
             'images' => $request->get_param('images'),
             'facets' => $request->get_param('facets'),
             'isUsed' => $request->get_param('isUsed'),
+            'condition' => $request->get_param('condition'),
             'conditionDescription' => $request->get_param('conditionDescription'),
             'settings' => $request->get_param('settings'),
             'positive_points' => $request->get_param('positive_points'),

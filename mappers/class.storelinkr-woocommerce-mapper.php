@@ -161,6 +161,17 @@ class StoreLinkrWooCommerceMapper
         // Stored as a string, as it is read back from the database, so an unchanged value is no change
         $product->update_meta_data('used', (string)((isset($data['isUsed'])) ? (int)$data['isUsed'] : 0));
 
+        // The value of the StoreLinkr PIM condition select (new, as new, good, ...), not translated.
+        // Older StoreLinkr versions do not send the key, their products keep what is stored.
+        if (isset($data['condition'])) {
+            $condition = trim((string)$data['condition']);
+            if ($condition !== '') {
+                $product->update_meta_data('condition', $condition);
+            } else {
+                $product->delete_meta_data('condition');
+            }
+        }
+
         // Older StoreLinkr versions do not send the key, their products keep what is stored.
         if (isset($data['conditionDescription'])) {
             $conditionDescription = trim((string)$data['conditionDescription']);
