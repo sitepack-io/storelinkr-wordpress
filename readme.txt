@@ -164,7 +164,7 @@ None
 #### Bugfixes
 
 * A product image is only saved when the download returns a real image (JPG, PNG, GIF or WebP); an error page or empty response is no longer stored as a broken image
-* Images are stored with the extension of their real type instead of always .webp
+* Images stay WebP as delivered by the StoreLinkr CDN; an image that arrives in another format (for example sent directly as content) is stored with its own extension and type instead of being labelled .webp
 * A product update repairs an attached image whose file is missing or not a valid image, so StoreLinkr sends it again
 
 = 2.21.0 =
