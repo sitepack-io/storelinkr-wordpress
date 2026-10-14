@@ -450,11 +450,7 @@ class StoreLinkrWooCommerceService
                 ],
             ]);
 
-            if (is_wp_error($response)) {
-                throw new Exception('Image download failed:' . $response->get_error_message());
-            }
-
-            $imageContent = wp_remote_retrieve_body($response);
+            $imageContent = StoreLinkrImageHelper::imageContentFromResponse($response, $request['cdn_url']);
         }
 
         if (empty($request['cdn_url']) && empty($request['imageContent'])) {
@@ -465,13 +461,19 @@ class StoreLinkrWooCommerceService
             throw new Exception('Empty image content!');
         }
 
+        $imageType = StoreLinkrImageHelper::detectImageType((string)$imageContent);
+        if ($imageType === null) {
+            throw new Exception('Image content is not a valid image!');
+        }
+
         $filename = sprintf(
-            '%d_%s_%d.webp',
+            '%d_%s_%d.%s',
             $product->get_id(),
             self::formatName($product->get_name()),
-            wp_rand(1, 50000)
+            wp_rand(1, 50000),
+            $imageType['extension']
         );
-        $file_type = 'image/webp';
+        $file_type = $imageType['mime'];
 
         $upload = wp_upload_bits($filename, null, $imageContent);
 

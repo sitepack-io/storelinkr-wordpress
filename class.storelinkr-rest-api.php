@@ -548,9 +548,8 @@ class StoreLinkrRestApi
             foreach ($gallery as $mediaId) {
                 $mediaItem = get_post($mediaId);
                 if ($mediaItem && $mediaItem->post_type === 'attachment') {
-                    $filePath = get_attached_file($mediaId);
-
-                    if (!$filePath || !file_exists($filePath)) {
+                    // A missing or broken file lets StoreLinkr reset the image and export it again.
+                    if (!StoreLinkrImageHelper::isValidImageFile(get_attached_file($mediaId))) {
                         $invalidMediaIds[] = $mediaId;
                     }
 
@@ -883,17 +882,7 @@ class StoreLinkrRestApi
                 ],
             ]);
 
-            if (is_wp_error($response)) {
-                throw new Exception(
-                    sprintf(
-                        'Image download failed: %s for url %s',
-                        $response->get_error_message(),
-                        $request['cdn_url']
-                    )
-                );
-            }
-
-            $imageContent = wp_remote_retrieve_body($response);
+            $imageContent = StoreLinkrImageHelper::imageContentFromResponse($response, $request['cdn_url']);
         }
 
         if (empty($request['cdn_url']) && empty($request['imageContent'])) {
@@ -908,14 +897,20 @@ class StoreLinkrRestApi
             throw new Exception('Empty image content!');
         }
 
+        $imageType = StoreLinkrImageHelper::detectImageType((string)$imageContent);
+        if ($imageType === null) {
+            throw new Exception('Image content is not a valid image!');
+        }
+
         // Generate filename using alt text or timestamp
         $alt = sanitize_text_field($request['alt']);
         $filename = sprintf(
-            'storelinkr_%s_%d.webp',
+            'storelinkr_%s_%d.%s',
             sanitize_file_name($alt ?: 'image'),
-            wp_rand(1, 50000)
+            wp_rand(1, 50000),
+            $imageType['extension']
         );
-        $file_type = 'image/webp';
+        $file_type = $imageType['mime'];
 
         $upload = wp_upload_bits($filename, null, $imageContent);
 

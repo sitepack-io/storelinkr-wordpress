@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: bol.com, amazon, kaufland, multichannel, dropshipping, marketplace, inventory sync, order automation, ecommerce, cdiscount, allegro
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.21.0
+Stable tag: 2.21.1
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -152,6 +152,20 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.21.1 =
+
+Release date: 2026-10-14
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* A product image is only saved when the download returns a real image (JPG, PNG, GIF or WebP); an error page or empty response is no longer stored as a broken image
+* Images are stored with the extension of their real type instead of always .webp
+* A product update repairs an attached image whose file is missing or not a valid image, so StoreLinkr sends it again
 
 = 2.21.0 =
 
