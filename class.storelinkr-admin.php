@@ -484,7 +484,10 @@ class StoreLinkrAdmin
                             echo '</td>';
                             echo '<td>';
                             if ((int)$stockLocation['quantity'] >= 1) {
-                                echo '<span class="instock">' . __('In stock', 'storelinkr') . '</span>';
+                                $locationStatus = StoreLinkrStockStatusHelper::locationStatus($stockLocation)
+                                    ?? StoreLinkrStockStatusHelper::IN_STOCK;
+                                echo '<span class="instock">'
+                                    . esc_html(StoreLinkrStockStatusHelper::label($locationStatus)) . '</span>';
                             } else {
                                 echo '<span class="outofstock">' . __('Sold out', 'storelinkr') . '</span>';
                             }
