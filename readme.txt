@@ -1,24 +1,25 @@
 === StoreLinkr: European Marketplace Integrator & Multichannel Sync ===
 Contributors: storelinkr, petervw
-Tags: bol.com, amazon, kaufland, multichannel, dropshipping, marketplace, inventory sync, order automation, ecommerce, cdiscount, allegro
+Tags: marketplace, bol.com, kaufland, mirakl, multichannel
 Requires at least: 6.6
 Tested up to: 7.1
 Stable tag: 2.21.1
 Requires PHP: 8.2
 License: GPLv2 or later
 
-The ultimate all-in-one platform for European WooCommerce merchants. Effortlessly sync products, inventory, and orders across Bol.com, Amazon, Kaufland, and 40+ other channels from one central dashboard.
+Sync WooCommerce products, stock, prices and orders with bol, Kaufland, MediaMarkt, Decathlon, Allegro, eBay and 70+ European marketplaces.
 
 == Description ==
 
 Are you a European webshop owner looking to scale beyond your own store? Managing multiple sales channels manually is time-consuming and error-prone. **StoreLinkr is your specialized European marketplace integrator**, designed to help WooCommerce stores grow from a few daily sales to thousands of automated orders across the continent.
 
-Whether you are dropshipping from wholesalers or selling your own brand on major marketplaces, StoreLinkr centralizes your operations. We provide the technology to keep your inventory perfectly in sync, automate your order flows, and optimize your product data for maximum visibility on platforms like **Bol.com, Amazon.nl/de/fr, Kaufland, Allegro, and more.**
+Whether you are dropshipping from wholesalers or selling your own brand on major marketplaces, StoreLinkr centralizes your operations. We keep your inventory in sync, automate your order flows, protect your margins with smart pricing and optimize your product data for maximum visibility on platforms like **bol, Kaufland, MediaMarkt, Decathlon, Allegro, eBay and many more.**
 
 ### Why choose StoreLinkr?
-*   **European Expertise:** Tailored for the European eCommerce landscape with deep integrations for regional leaders.
+*   **European Expertise:** Tailored for the European eCommerce landscape, with 70+ marketplaces across the Benelux, DACH, France, Spain, Portugal, Italy, Poland and the Czech Republic.
 *   **Real-time Synchronization:** Stock updates as fast as every 15 minutes.
-*   **Centralized Management:** One platform to rule your entire multi-channel empire.
+*   **Centralized Management:** One platform for your products, stock, prices and orders on every channel.
+*   **Smart Pricing:** Price lists per country, advised prices with margin insights and competitor prices from bol and Kaufland.
 *   **Automated Dropshipping:** Connect directly to wholesalers and automate your product catalog.
 *   **Scalable Pricing:** Flexible subscription plans that grow with your business needs.
 
@@ -28,23 +29,33 @@ Whether you are dropshipping from wholesalers or selling your own brand on major
 
 Optimize your WooCommerce store with our powerful multi-channel solutions:
 
-* [**Marketplace Connector**](https://storelinkr.com) – The ultimate bridge between WooCommerce and Europe’s largest marketplaces.
-* [**Centralized Product Data**](https://storelinkr.com/en/manage-product-data) – Manage and enrich your entire catalog in one place before publishing to multiple channels.
-* [**Automated Order Flows**](https://storelinkr.com/en/order-flows) – Sync sales orders from all channels back to WooCommerce and automate your fulfillment journey.
-* [**Multichannel Publishing**](https://storelinkr.com/en/webshops-marketplaces) – Effortlessly push your products to webshops, marketplaces, and shopping platforms worldwide.
-* [**Smart Dynamic Pricing**](https://storelinkr.com/en/dynamic-pricing) – Stay ahead of the competition with automated price adjustments based on market trends.
-* [**Inventory Guidance**](https://storelinkr.com/en/inventory-guidance) – Keep stock levels accurate across all platforms and get intelligent insights for inventory management.
+* [**Marketplace Connector**](https://storelinkr.com): the bridge between WooCommerce and Europe's largest marketplaces.
+* [**Centralized Product Data**](https://storelinkr.com/en/manage-product-data): manage and enrich your entire catalog in one place before publishing to multiple channels.
+* [**Automated Order Flows**](https://storelinkr.com/en/order-flows): sync sales orders from all channels back to WooCommerce and automate your fulfillment journey.
+* [**Multichannel Publishing**](https://storelinkr.com/en/webshops-marketplaces): push your products to webshops, marketplaces and shopping platforms.
+* [**Smart Dynamic Pricing**](https://storelinkr.com/en/dynamic-pricing): stay ahead of the competition with price lists, advised prices and competitor insights.
+* [**Inventory Guidance**](https://storelinkr.com/en/inventory-guidance): keep stock levels accurate across all platforms and get insights for inventory management.
 
 ## Extensive solutions
 
 ### European Marketplace & Webshop Integrations
 Expand your reach instantly by connecting to the platforms that matter most in Europe:
-*   **Marketplaces:** Bol.com, Amazon (All EU regions), Kaufland, Allegro, Book in Belgium, and eBay.
-*   **Webshops:** WooCommerce, Shopify, Magento or use our public API
-*   **Feeds:** Google Shopping, Meta (Facebook/Instagram), and Bing Ads.
+*   **Marketplaces:** bol, Kaufland, Allegro, eBay, Books in Belgium and Boekwinkeltjes.
+*   **Mirakl marketplaces:** 66 marketplaces running on Mirakl, including MediaMarkt, Decathlon, Douglas, Conrad, Praxis, Kruidvat, ANWB, Leen Bakker, XXXLutz, BAUHAUS, HORNBACH, home24, Fressnapf, zooplus, Leroy Merlin, Carrefour, Boulanger, La Redoute, El Corte Inglés, PcComponentes, Worten, Empik and Media Expert. Orders and returns are imported per marketplace.
+*   **Webshops:** WooCommerce, Shopify, Magento, SitePack or use our public API.
+*   **Feeds:** Google Shopping, Meta (Facebook/Instagram), Microsoft Advertising and TikTok.
+
+### Suppliers, POS and back office
+Bring in product data and stock from the systems you already use:
+*   **POS and wholesalers:** CycleSoftware, Wilmar, Kruitbosch, Skwirrel, Shots, Everspring and Van der Meer.
+*   **Warehouse:** Picqer and StockHub.
+*   **Accounting:** Exact Online and Jortt.
 
 ### Manage product data centrally
 With StoreLinkr, you effortlessly manage your entire product catalog from a single environment. Connect your inventory from multiple sources such as your WMS, POS, or suppliers. This keeps you in control of your data and prevents errors across your sales channels.
+
+### Smart pricing and repricing
+Set up price lists per country and currency, and let StoreLinkr calculate an advised sales price with the margin you make on every product. Accept or reject each suggestion. For bol and Kaufland, StoreLinkr reads the competing offers, so you see the lowest and highest competitor price and the number of sellers before you change a price. Approved prices are sent to every connected channel automatically.
 
 ### Order flows and automation
 Automate your entire post-purchase journey with intelligent eCommerce order flows. Connect marketplaces, webshops, and fulfillment partners to centralize orders, sync tracking data, and streamline returns automatically.
@@ -102,11 +113,15 @@ The products and categories will be automatically created shortly.
 
 = Which European marketplaces are supported? =
 
-StoreLinkr supports all major European marketplaces including Bol.com, Amazon (NL, DE, FR, IT, ES, BE, SE, PL), Kaufland.de, Allegro.pl and many others. We are constantly adding new integrations to help you reach more customers.
+StoreLinkr supports bol, Kaufland, Allegro, eBay, Books in Belgium, Boekwinkeltjes and 66 Mirakl marketplaces such as MediaMarkt, Decathlon, Douglas, Conrad, Leroy Merlin, Carrefour, El Corte Inglés, Worten and Empik. That is more than 70 marketplaces across the Benelux, DACH, France, Spain, Portugal, Italy, Poland and the Czech Republic. We are constantly adding new integrations to help you reach more customers.
+
+= Does StoreLinkr help me set competitive prices? =
+
+Yes. You can create price lists per country and currency, and StoreLinkr suggests an advised sales price based on your purchase price and margin. For bol and Kaufland you also see the competing offers, with the lowest and highest price and the number of sellers. Approved prices are pushed to WooCommerce and your marketplaces automatically.
 
 = Which point of sale systems are supported by this plugin? =
 
-This plugin works with point of sale systems such as CycleSoftware and Wilmar.
+This plugin works with point of sale systems such as CycleSoftware and Wilmar, and with suppliers and wholesalers such as Kruitbosch, Skwirrel, Shots, Everspring and Van der Meer.
 
 = Do I need a StoreLinkr account to use this plugin? =
 
