@@ -31,6 +31,7 @@ require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-rest-api.php');
 require_once(STORELINKR_PLUGIN_DIR . 'class.storelinkr-frontend.php');
 require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-metafield-helper.php');
 require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-image-helper.php');
+require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-stock-status-helper.php');
 
 add_action('init', ['StoreLinkr', 'init']);
 add_action('init', ['StoreLinkrMetafieldHelper', 'registerPostMeta'], 20);
@@ -393,13 +394,7 @@ if (!function_exists('storeLinkrVariantDropdown')) {
                 $html .= '<tr>';
                 $html .= '<td>' . esc_html($location['name']) . '</td>';
                 $html .= '<td class="sl-text-right">';
-                if ((int)$location['quantity'] === 0) {
-                    $html .= '<span class="sl-sold-out">' . __('Out of stock', 'storelinkr') . '</span>';
-                } else {
-                    $html .= '<span class="sl-in-stock">' . __('In stock', 'storelinkr') . '</span>';
-                    $html .= ' <span class="sl-muted">' . esc_attr($location['quantity']);
-                    $html .= ' ' . __('piece(s)', 'storelinkr') . '</span>';
-                }
+                $html .= StoreLinkrStockStatusHelper::renderLocationAvailability($location);
                 $html .= '</td>';
                 $html .= '</tr>';
             }
@@ -416,6 +411,8 @@ if (!function_exists('storeLinkrVariantDropdown')) {
             $css .= '#sl-product-stock-locations tr td.sl-text-right { text-align: right; }';
             $css .= '#sl-product-stock-locations tr td span.sl-sold-out { color: #a94442 }';
             $css .= '#sl-product-stock-locations tr td span.sl-in-stock { color: #3c763d }';
+            $css .= '#sl-product-stock-locations tr td span.sl-in-stock-supplier { color: #8a6d3b }';
+            $css .= '#sl-product-stock-locations tr td span.sl-dropshipping { color: #31708f }';
             $css .= '#sl-product-stock-locations tr td span.sl-muted { color: #777 }';
 
             $css = apply_filters('storelinkr_stock_css', $css);

@@ -6,6 +6,7 @@ if (!defined('ABSPATH')) {
 }
 
 require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-metafield-helper.php');
+require_once(STORELINKR_PLUGIN_DIR . 'helpers/class.storelinkr-stock-status-helper.php');
 
 class StoreLinkrWooCommerceMapper
 {
@@ -200,6 +201,8 @@ class StoreLinkrWooCommerceMapper
 
             $product->update_meta_data('stock_locations', $stockMeta);
         }
+
+        StoreLinkrStockStatusHelper::applyToProduct($product, $data);
 
         if (method_exists($product, 'set_date_created') && $product->get_date_created() === null) {
             $product->set_date_created((new DateTimeImmutable())->format('Y-m-d H:i:s'));

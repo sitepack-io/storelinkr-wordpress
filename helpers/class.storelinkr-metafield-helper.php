@@ -57,6 +57,7 @@ class StoreLinkrMetafieldHelper
      */
     private const RESERVED_META_KEYS = [
         'storelinkr_variant_ids',
+        'storelinkr_stock_status',
     ];
 
     /**
