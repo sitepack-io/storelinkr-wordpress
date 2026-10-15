@@ -695,10 +695,12 @@ class StoreLinkrWooCommerceService
         WC_Product|WC_Product_Grouped|WC_Product_Variable|WC_Product_Variation $product,
         array $images
     ): WC_Product|WC_Product_Grouped|WC_Product_Variable|WC_Product_Variation {
-        if (
-            empty($images)
-            && ($product->get_gallery_image_ids() !== [] || !empty($product->get_image_id()))
-        ) {
+        // 'edit' context: a variation without an own image reports the parent's image in 'view' context,
+        // which would hide that the variation itself still needs its image written.
+        $currentGalleryImages = $product->get_gallery_image_ids('edit');
+        $currentFeaturedImage = $product->get_image_id('edit');
+
+        if (empty($images) && ($currentGalleryImages !== [] || !empty($currentFeaturedImage))) {
             $product->set_gallery_image_ids([]);
             $product->set_image_id('');
 
@@ -708,27 +710,42 @@ class StoreLinkrWooCommerceService
         }
 
         $featuredImage = current($images);
-        $currentGalleryImages = $product->get_gallery_image_ids();
-        $currentFeaturedImage = $product->get_image_id();
+        $featuredImageExists = false;
         $validGalleryImages = [];
 
         // Build the complete list of valid gallery images (all except featured)
         foreach ($images as $imageId) {
-            // Validate if image id still exists, otherwise, log in output:
-            $attachment = get_post($imageId);
-            if (!$attachment || $attachment->post_type !== 'attachment') {
+            // Validate if image id still exists, otherwise, log in output (StoreLinkr uploads it again):
+            if (!$this->attachmentExists($imageId)) {
                 $this->warnings[] = sprintf('Image %s does not exist anymore!', $imageId);
                 continue;
             }
 
-            // Add to gallery if it's not the featured image
-            if ($imageId !== $featuredImage) {
-                $validGalleryImages[] = $imageId;
+            if ($imageId === $featuredImage) {
+                $featuredImageExists = true;
+                continue;
             }
+
+            $validGalleryImages[] = $imageId;
         }
 
+        if ($featuredImageExists === false) {
+            // Never point the product at a missing attachment, and never promote the next image (often a
+            // dimension drawing) to the main image. Keep the current own image until StoreLinkr sends the
+            // re-uploaded one, unless that current image is gone as well.
+            $featuredImage = (!empty($currentFeaturedImage) && $this->attachmentExists($currentFeaturedImage))
+                ? $currentFeaturedImage
+                : '';
+        }
+
+        // The main image is never part of the gallery as well, also when it is the kept current image.
+        $validGalleryImages = array_values(array_filter(
+            $validGalleryImages,
+            fn ($imageId) => (int)$imageId !== (int)$featuredImage
+        ));
+
         // Check if any changes are needed to prevent unnecessary updates and thumbnail regeneration
-        $featuredImageChanged = $currentFeaturedImage != $featuredImage;
+        $featuredImageChanged = (int)$currentFeaturedImage !== (int)$featuredImage;
         // Compared in order: an image moved within the gallery in StoreLinkr is a change as well.
         $galleryImagesChanged = array_map('intval', array_values($validGalleryImages))
             !== array_map('intval', array_values($currentGalleryImages));
@@ -744,11 +761,22 @@ class StoreLinkrWooCommerceService
         }
 
         // Update featured image only if it changed
-        if ($featuredImageChanged && !empty($featuredImage)) {
+        if ($featuredImageChanged) {
             $product->set_image_id($featuredImage);
         }
 
         return $product;
+    }
+
+    private function attachmentExists(mixed $imageId): bool
+    {
+        if (empty($imageId) || !is_numeric($imageId)) {
+            return false;
+        }
+
+        $attachment = get_post((int)$imageId);
+
+        return !empty($attachment) && $attachment->post_type === 'attachment';
     }
 
     public function rebuildLookupTableForProduct($product_id): void
