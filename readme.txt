@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: marketplace, bol.com, kaufland, mirakl, multichannel
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.21.1
+Stable tag: 2.21.2
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -167,6 +167,19 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.21.2 =
+
+Release date: 2026-10-15
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* A variation without an image of its own now gets its image saved, also when that image is the same as the main product image (WooCommerce showed the main product image for it, which hid the missing variation image)
+* When the first image of a product or variation no longer exists in WordPress, StoreLinkr is told so it sends the image again, and the next image (for example a dimension drawing) is no longer used as the main image in the meantime
 
 = 2.21.1 =
 

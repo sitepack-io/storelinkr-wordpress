@@ -1,4 +1,17 @@
 
+= 2.21.2 =
+
+Release date: 2026-10-15
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* A variation without an image of its own now gets its image saved, also when that image is the same as the main product image (WooCommerce showed the main product image for it, which hid the missing variation image)
+* When the first image of a product or variation no longer exists in WordPress, StoreLinkr is told so it sends the image again, and the next image (for example a dimension drawing) is no longer used as the main image in the meantime
+
 = 2.21.1 =
 
 Release date: 2026-10-14
