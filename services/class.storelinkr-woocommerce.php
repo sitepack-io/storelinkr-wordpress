@@ -738,6 +738,12 @@ class StoreLinkrWooCommerceService
                 : '';
         }
 
+        // The main image is never part of the gallery as well, also when it is the kept current image.
+        $validGalleryImages = array_values(array_filter(
+            $validGalleryImages,
+            fn ($imageId) => (int)$imageId !== (int)$featuredImage
+        ));
+
         // Check if any changes are needed to prevent unnecessary updates and thumbnail regeneration
         $featuredImageChanged = (int)$currentFeaturedImage !== (int)$featuredImage;
         // Compared in order: an image moved within the gallery in StoreLinkr is a change as well.

@@ -111,4 +111,20 @@ class GalleryImageOrderTest extends TestCase
 
         (new StoreLinkrWooCommerceService())->linkProductGalleryImages($product, [10, 11]);
     }
+
+    public function testKeptCurrentImageIsDroppedFromTheGallery(): void
+    {
+        unset($GLOBALS['mockPosts'][10]);
+
+        $product = M::mock('WC_Product_Simple');
+        $product->shouldReceive('get_gallery_image_ids')->with('edit')->andReturn([11, 12]);
+        $product->shouldReceive('get_image_id')->with('edit')->andReturn('11');
+        $product->shouldReceive('set_gallery_image_ids')->once()->with([12]);
+        $product->shouldNotReceive('set_image_id');
+
+        $service = new StoreLinkrWooCommerceService();
+        $service->linkProductGalleryImages($product, [10, 11, 12]);
+
+        $this->assertSame(['Image 10 does not exist anymore!'], $service->getWarnings());
+    }
 }

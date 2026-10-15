@@ -9,8 +9,9 @@ None
 
 #### Bugfixes
 
-* A variation without an image of its own now gets its image saved, also when that image is the same as the main product image (WooCommerce showed the main product image for it, which hid the missing variation image)
-* When the first image of a product or variation no longer exists in WordPress, StoreLinkr is told so it sends the image again, and the next image (for example a dimension drawing) is no longer used as the main image in the meantime
+* When StoreLinkr sends a full product or variable product with its variations, a variation without an image of its own now gets its image saved, also when that image is the same as the main product image (WooCommerce showed the main product image for it, which hid the missing variation image)
+* When the first image in such a full product or variation sync no longer exists in WordPress, StoreLinkr is told so it sends the image again. Until then the product keeps its current image, the next image (for example a dimension drawing) is no longer used as the main image, and the main image no longer also appears in the gallery
+* Sending a single image to a product is unchanged
 
 = 2.21.1 =
 
