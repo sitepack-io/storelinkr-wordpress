@@ -235,7 +235,15 @@ if (!class_exists('WC_Product_Variation')) {
         private $regular_price = '';
 
         public function __construct($id = 0) { $this->id = (int)$id; }
+        public $status = 'publish';
         public function set_parent_id($id) { $this->parent_id = $id; }
+        public function get_status($context = 'view') { return $this->status; }
+        public function set_status($status) {
+            if ($status !== $this->status) {
+                $this->changes['status'] = $status;
+            }
+            $this->status = $status;
+        }
         public function set_attributes($attributes) {
             if ($attributes !== $this->attributes) {
                 $this->changes['attributes'] = $attributes;
