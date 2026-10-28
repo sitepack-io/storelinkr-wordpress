@@ -1170,6 +1170,14 @@ class StoreLinkrWooCommerceService
             assert($variation instanceof WC_Product_Variation);
 
             $variation->set_parent_id($productId);
+
+            // StoreLinkr trashes a variation when its product leaves the source feed (archive). When the product
+            // comes back StoreLinkr sends the same id again, and WooCommerce keeps the variation in the trash,
+            // so it never showed up again. A variation a merchant disabled on purpose (private) is left alone.
+            if ($variation->get_id() !== 0 && $variation->get_status('edit') === 'trash') {
+                $variation->set_status('publish');
+            }
+
             $variation = StoreLinkrWooCommerceMapper::convertRequestToProduct(
                 $variation,
                 $productOption,

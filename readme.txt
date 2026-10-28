@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: marketplace, bol.com, kaufland, mirakl, multichannel
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.21.2
+Stable tag: 2.21.3
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -167,6 +167,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.21.3 =
+
+Release date: 2026-10-28
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* A variation that StoreLinkr had removed from the shop (because its product left the source feed for a while) now comes back when StoreLinkr sends that variation again. Before, WooCommerce kept it in the trash, so the variation stayed missing although the sync reported success. Variations you disabled yourself are left as they are
 
 = 2.21.2 =
 

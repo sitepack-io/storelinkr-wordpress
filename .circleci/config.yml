@@ -1,0 +1,30 @@
+version: 2.1
+jobs:
+  tests:
+    machine:
+      image: cimg/php:8.5.4
+    resource_class: sitepack-io/storelinkr
+
+    steps:
+      - checkout
+
+      - run: php -v
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "composer.lock" }}
+      - run:
+          name: "Install Dependencies"
+          command: composer install -n --prefer-dist --no-progress --ignore-platform-reqs
+      - save_cache:
+          key: v1-dependencies-{{ checksum "composer.lock" }}
+          paths:
+            - ./vendor
+      - run:
+          name: "Run PHPUnit tests"
+          command: vendor/bin/phpunit
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - tests

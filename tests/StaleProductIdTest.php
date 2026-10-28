@@ -114,6 +114,34 @@ class StaleProductIdTest extends TestCase
         $this->assertArrayHasKey('8719615081107', $result['ean']);
     }
 
+    public function testATrashedVariationComesBackWhenItsProductIsSentAgain(): void
+    {
+        $trashed = new WC_Product_Variation(7001);
+        $trashed->status = 'trash';
+        $GLOBALS['mockProductsById'][7001] = $trashed;
+
+        $result = $this->buildOptions([
+            $this->option(ean: '8719615081114', id: 7001),
+        ]);
+
+        $this->assertSame('publish', $trashed->status);
+        $this->assertSame(7001, $result['ean']['8719615081114']);
+        $this->assertSame(1, $trashed->saveCount, 'The restored status is saved');
+    }
+
+    public function testAVariationDisabledByTheMerchantStaysDisabled(): void
+    {
+        $disabled = new WC_Product_Variation(7002);
+        $disabled->status = 'private';
+        $GLOBALS['mockProductsById'][7002] = $disabled;
+
+        $this->buildOptions([
+            $this->option(ean: '8719615081121', id: 7002),
+        ]);
+
+        $this->assertSame('private', $disabled->status);
+    }
+
     private function buildOptions(array $products): array
     {
         $service = M::mock('StoreLinkrWooCommerceService[logWarning]');
