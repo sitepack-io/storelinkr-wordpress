@@ -15,7 +15,7 @@ if (!defined('ABSPATH')) {
 }
 
 if (!defined('STORELINKR_PLUGIN_DIR')) {
-    define('STORELINKR_PLUGIN_DIR', dirname(__DIR__, 2) . '/storelinkr/');
+    define('STORELINKR_PLUGIN_DIR', dirname(__DIR__) . '/');
 }
 
 // Mock WordPress functions that might be used in tests
