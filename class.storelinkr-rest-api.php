@@ -534,6 +534,9 @@ class StoreLinkrRestApi
             $gallery = (array)$request->get_param('images');
             $facets = (array)$request->get_param('facets');
             $settings = $this->fetchSettingsFromRequest($request);
+            if ($this->eCommerceService->keepsShopValue($product, $settings, 'overwrite_facets')) {
+                $facets = [];
+            }
             if (isset($settings['overwrite_images']) && $settings['overwrite_images'] === true) {
                 $this->eCommerceService->linkProductGalleryImages($product, $gallery);
             }
@@ -614,10 +617,12 @@ class StoreLinkrRestApi
 
             assert($product instanceof WC_Product_Variable);
 
-            $product->set_category_ids($request->get_param('categories'));
-
             $publishNewProduct = true;
             $settings = $this->fetchSettingsFromRequest($request);
+            if (!$this->eCommerceService->keepsShopValue($product, $settings, 'overwrite_categories')) {
+                $product->set_category_ids((array)$request->get_param('categories'));
+            }
+
             if (isset($settings['publish_new_products'])) {
                 $publishNewProduct = (bool)$settings['publish_new_products'];
             }
@@ -707,11 +712,19 @@ class StoreLinkrRestApi
             );
             assert($product instanceof WC_Product_Variable);
 
-            $product->set_category_ids($request->get_param('categories'));
+            $settings = $this->fetchSettingsFromRequest($request);
+            if (!$this->eCommerceService->keepsShopValue($product, $settings, 'overwrite_categories')) {
+                $product->set_category_ids((array)$request->get_param('categories'));
+            }
+
+            $facets = (array)$request->get_param('facets');
+            if ($this->eCommerceService->keepsShopValue($product, $settings, 'overwrite_facets')) {
+                $facets = [];
+            }
 
             $productId = $this->eCommerceService->saveProduct(
                 $product,
-                (array)$request->get_param('facets'),
+                $facets,
                 (isset($request['brand'])) ? $request['brand'] : null
             );
 
@@ -1074,9 +1087,15 @@ class StoreLinkrRestApi
                         $this->eCommerceService->linkProductGalleryImages($product, $gallery);
                     }
 
+                    $facets = (!empty($rawProduct['facets']) && is_array($rawProduct['facets']))
+                        ? $rawProduct['facets'] : [];
+                    if ($this->eCommerceService->keepsShopValue($product, $settings, 'overwrite_facets')) {
+                        $facets = [];
+                    }
+
                     $productId = $this->eCommerceService->saveProduct(
                         $product,
-                        (!empty($rawProduct['facets']) && is_array($rawProduct['facets'])) ? $rawProduct['facets'] : [],
+                        $facets,
                         (isset($rawProduct['brand'])) ? $rawProduct['brand'] : null
                     );
 

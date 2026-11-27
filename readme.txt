@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: marketplace, bol.com, kaufland, mirakl, multichannel
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.21.4
+Stable tag: 2.22.0
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -167,6 +167,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.22.0 =
+
+Release date: 2026-11-27
+
+#### Enhancements
+
+* New export settings in StoreLinkr: "Overwrite categories" and "Overwrite product properties". When you turn one off, StoreLinkr only fills that value on new products, so categories and attributes you change in WooCommerce stay as they are
+
+#### Bugfixes
+
+None
 
 = 2.21.4 =
 

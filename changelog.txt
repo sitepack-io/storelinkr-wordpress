@@ -1,3 +1,15 @@
+= 2.22.0 =
+
+Release date: 2026-11-27
+
+#### Enhancements
+
+* New export settings in StoreLinkr: "Overwrite categories" and "Overwrite product properties". When you turn one off, StoreLinkr only fills that value on new products, so categories and attributes you change in WooCommerce stay as they are
+
+#### Bugfixes
+
+None
+
 = 2.21.4 =
 
 Release date: 2026-11-27

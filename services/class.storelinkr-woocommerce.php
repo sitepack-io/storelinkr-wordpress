@@ -925,6 +925,17 @@ class StoreLinkrWooCommerceService
         }
     }
 
+    /**
+     * StoreLinkr fills a value that the shop owner chose to maintain in WooCommerce only on new products.
+     * Older StoreLinkr versions do not send the setting, which keeps overwriting as before.
+     */
+    public function keepsShopValue(WC_Product $product, array $settings, string $setting): bool
+    {
+        return $product->get_id() > 0
+            && array_key_exists($setting, $settings)
+            && (bool)$settings[$setting] === false;
+    }
+
     public function mapProductFromDataArray(array $data, string $type = 'simple'): WC_Product
     {
         if ($type === 'simple') {
@@ -986,7 +997,9 @@ class StoreLinkrWooCommerceService
                 ? $this->onlyValidProductIds($data['upsell_products']) : [],
         );
 
-        if (!empty($data['category_path'])) {
+        if ($this->keepsShopValue($product, $settings, 'overwrite_categories')) {
+            // The shop owner maintains the categories of existing products in WooCommerce
+        } elseif (!empty($data['category_path'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIdsByPath($data['category_path']));
         } elseif (!empty($data['categoryId'])) {
             $product->set_category_ids($this->getCorrespondingCategoryIds((int)$data['categoryId']));
