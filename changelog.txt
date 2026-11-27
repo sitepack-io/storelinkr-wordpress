@@ -1,3 +1,15 @@
+= 2.21.4 =
+
+Release date: 2026-11-27
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* After switching off variants in StoreLinkr, products now come back as separate products. Before, WooCommerce kept updating the old, hidden variation of the trashed variable product, so these products stayed missing from the shop although the sync reported success
+
 = 2.21.3 =
 
 Release date: 2026-10-28
