@@ -967,6 +967,10 @@ class StoreLinkrWooCommerceService
             }
         }
 
+        if ($type === 'simple' && $product instanceof WC_Product_Variation) {
+            $product = $this->replaceVariationBySimpleProduct($product);
+        }
+
         $settings = [];
         if (isset($data['settings'])) {
             $settings = (array)$data['settings'];
@@ -1004,6 +1008,28 @@ class StoreLinkrWooCommerceService
      *
      * @throws Exception
      */
+    /**
+     * A simple product found by its id, SKU or EAN can still be a variation, for instance after variants
+     * were switched off in StoreLinkr and the variable product was trashed. Updating that variation keeps
+     * the product hidden, and it holds the SKU and EAN the simple product needs, so it is removed.
+     */
+    private function replaceVariationBySimpleProduct(WC_Product_Variation $variation): WC_Product_Simple
+    {
+        $variationId = (int)$variation->get_id();
+
+        if ($variationId > 0) {
+            wp_delete_post($variationId, true);
+            wc_delete_product_transients($variationId);
+
+            $this->logWarning(sprintf(
+                'Variation %s removed, the product is created again as a simple product.',
+                $variationId
+            ));
+        }
+
+        return new WC_Product_Simple();
+    }
+
     public function findExistingProductById($productId, string $type = 'simple'): ?WC_Product
     {
         $product = wc_get_product($productId);

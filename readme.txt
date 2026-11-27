@@ -3,7 +3,7 @@ Contributors: storelinkr, petervw
 Tags: marketplace, bol.com, kaufland, mirakl, multichannel
 Requires at least: 6.6
 Tested up to: 7.1
-Stable tag: 2.21.3
+Stable tag: 2.21.4
 Requires PHP: 8.2
 License: GPLv2 or later
 
@@ -167,6 +167,18 @@ If you want to contribute, please take a look at our [Github Repository](https:/
 == Changelog ==
 
 Please read the changelog.txt for more commit history of this plugin.
+
+= 2.21.4 =
+
+Release date: 2026-11-27
+
+#### Enhancements
+
+None
+
+#### Bugfixes
+
+* After switching off variants in StoreLinkr, products now come back as separate products. Before, WooCommerce kept updating the old, hidden variation of the trashed variable product, so these products stayed missing from the shop although the sync reported success
 
 = 2.21.3 =
 
